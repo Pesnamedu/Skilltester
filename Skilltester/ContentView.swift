@@ -9,13 +9,18 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var timeElapsed = 0
-    @State private var state: String = "start"
+    @State private var state: String = "start" // nezapomen zmenit na start
     @State private var randomWait: Float = 0.0
     @State private var isMeasuring: Bool = false
     @State private var result = 0
-    @State private var clickTimes: [Float] = []
+    @State private var clickTimes: [Float] = []//[213, 170, 190, 205, 187] // SMAZAT PRED RUNEM
     @State private var testCount = 0
+    @State private var avaTime: Float = 0
     let testCountGoal = 5
+    
+    let graphWh: CGFloat = 50
+    let graphCr: CGFloat = 8
+
     
     let timer = Timer.publish(every: 0.001, on: .main, in: .common).autoconnect()
     
@@ -27,13 +32,13 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            
             if state == "start" {
                 Button(action: {
                     randomWait = Float.random(in: 3...4)
                     print("starting game..")
                     state = "wait"
                     print("Waiting..")
+                    testCount += 1
                     Task {
                         try? await Task.sleep(nanoseconds: UInt64(randomWait * 1_000_000_000))
                         
@@ -120,7 +125,13 @@ struct ContentView: View {
                         }
                     } else {
                         print("End")
+                        print(clickTimes)
                         state = "end"
+                        for i in clickTimes {
+                            avaTime = avaTime + i
+                        }
+                        avaTime = avaTime / Float(testCountGoal)
+                        print(avaTime)
                     }
                     
                 }) {
@@ -172,7 +183,7 @@ struct ContentView: View {
             
             if state == "end" {
                 Button(action: {
-                    
+                    state = "results"
                 }) {
                     Text("End")
                         .bold()
@@ -184,6 +195,44 @@ struct ContentView: View {
                     
                 }.foregroundColor(.white)
                     .buttonStyle(.plain)
+                
+                Text("Click to see results.")
+                    .padding(.top, 35)
+            }
+            
+            if state == "results" {
+                
+                VStack {
+                    Text("Results")
+                        .bold()
+                        .font(.largeTitle)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 200)
+                    HStack(spacing: 10) {
+                        Text("First: \(Int(clickTimes[0]))ms")
+                        Text("Second: \(Int(clickTimes[1]))ms")
+                        Text("Third: \(Int(clickTimes[2]))ms")
+                        Text("Fourth: \(Int(clickTimes[3]))ms")
+                        Text("Fifth: \(Int(clickTimes[4]))ms")
+
+                    }.padding(.vertical, 10)
+                    HStack {
+                        Text("Best: \(Int(clickTimes.min() ?? 0.0))ms")
+                            .bold()
+                            .font(.title2)
+                            .foregroundColor(.green)
+                        Text("Avarage: \(Int(avaTime))ms")
+                            .bold()
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                        Text("Worst: \(Int(clickTimes.max() ?? 0.0))ms")
+                            .bold()
+                            .font(.title2)
+                            .foregroundColor(.red)
+                    }
+                }
+                
+                
             }
             
         }
