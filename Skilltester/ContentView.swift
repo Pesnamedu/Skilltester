@@ -9,11 +9,11 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var timeElapsed = 0
-    @State private var state: String = "results" // nezapomen zmenit na start
+    @State private var state: String = "start" // nezapomen zmenit na start
     @State private var randomWait: Float = 0.0
     @State private var isMeasuring: Bool = false
     @State private var result = 0
-    @State private var clickTimes: [Float] = [214, 170, 190, 200, 230, 400, 320, 200, 178, 300] // SMAZAT PRED RUNEM
+    @State private var clickTimes: [Float] = []//[214, 170, 190, 200, 230, 400, 320, 200, 178, 30 0]// SMAZAT PRED RUNEM
     @State private var testCount = 0
     @State private var avaTime: Float = 0
     
