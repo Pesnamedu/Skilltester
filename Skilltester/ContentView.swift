@@ -9,11 +9,11 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var timeElapsed = 0
-    @State private var state: String = "settings" // nezapomen zmenit na start
+    @State private var state: String = "start" // nezapomen zmenit na start
     @State private var randomWait: Float = 0.0
     @State private var isMeasuring: Bool = false
     @State private var result = 0
-    @State private var clickTimes: [Float] = []//[214, 170, 190, 305, 187] // SMAZAT PRED RUNEM
+    @State private var clickTimes: [Float] = [] //[214, 170, 190, 305, 187] // SMAZAT PRED RUNEM
     @State private var testCount = 0
     @State private var avaTime: Float = 0
     
@@ -21,6 +21,9 @@ struct ContentView: View {
     @State private var maxWaitTime: Float = 3.0
     @State private var slider1Value: Double = 1.5
     @State private var slider2Value: Double = 3.0
+    @State private var slider3Value: Double = 5
+    
+    @State private var saveMessage: String = "No changes made."
     
     var slider1ValueText: String {
         String(format: "%.1f", slider1Value)
@@ -28,8 +31,11 @@ struct ContentView: View {
     var slider2ValueText: String {
         String(format: "%.1f", slider2Value)
     }
+    var slider3ValueText: String {
+        String(format: "%.0f", slider3Value)
+    }
     
-    let testCountGoal = 5
+    @State private var testCountGoal: Int = 5
     
     let graphWh: CGFloat = 50
     let graphCr: CGFloat = 8
@@ -80,6 +86,10 @@ struct ContentView: View {
                     Button(action: {
                         state = "settings"
                         clickTimes.removeAll()
+                        saveMessage = "No changes made."
+                        slider1Value = Double(minWaitTime)
+                        slider2Value = Double(maxWaitTime)
+                        slider3Value = Double(testCountGoal)
                     }) {
                         Text("Settings")
                             .bold()
@@ -216,6 +226,7 @@ struct ContentView: View {
             if state == "end" {
                 Button(action: {
                     state = "results"
+                    testCount = 0
                 }) {
                     Text("End")
                         .bold()
@@ -234,61 +245,12 @@ struct ContentView: View {
             
             if state == "results" {
                 
-                VStack {
-                    ZStack {
-                        Text("Results")
-                            .bold()
-                            .font(.largeTitle)
-                            //.padding(.vertical, 1)
-                            .padding(.horizontal, 200)
-                        Text("Results")
-                            .bold()
-                            .font(.largeTitle)
-                            //.padding(.vertical, 10)
-                            .padding(.horizontal, 50)
-                    }
-                    
-                    HStack(spacing: 10) {
-                        Text("First: \(Int(clickTimes[0]))ms")
-                        Text("Second: \(Int(clickTimes[1]))ms")
-                        Text("Third: \(Int(clickTimes[2]))ms")
-                        Text("Fourth: \(Int(clickTimes[3]))ms")
-                        Text("Fifth: \(Int(clickTimes[4]))ms")
-
-                    }// .padding(.vertical, 10)
-                    
-                    HStack(spacing: 30) {
-                        RoundedRectangle(cornerRadius: graphCr)
-                            .size(width: graphWh, height: CGFloat(clickTimes[0]/(clickTimes.max() ?? 150)*150))
-                            .frame(width: 50)
-                        RoundedRectangle(cornerRadius: graphCr)
-                            .size(width: graphWh, height: CGFloat(clickTimes[1]/(clickTimes.max() ?? 150)*150))
-                            .frame(width: 50)
-                        RoundedRectangle(cornerRadius: graphCr)
-                            .size(width: graphWh, height: CGFloat(clickTimes[2]/(clickTimes.max() ?? 150)*150))
-                            .frame(width: 50)
-                        RoundedRectangle(cornerRadius: graphCr)
-                            .size(width: graphWh, height: CGFloat(clickTimes[3]/(clickTimes.max() ?? 150)*150))
-                            .frame(width: 50)
-                        RoundedRectangle(cornerRadius: graphCr)
-                            .size(width: graphWh, height: CGFloat(clickTimes[4]/(clickTimes.max() ?? 150)*150))
-                            .frame(width: 50)
-                    }.navigationTitle("Skilltester - Reaction time, Results")
-                    
-                    HStack {
-                        Text("Best: \(Int(clickTimes.min() ?? 0.0))ms")
-                            .bold()
-                            .font(.title2)
-                            .foregroundColor(.green)
-                        Text("Avarage: \(Int(avaTime))ms")
-                            .bold()
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                        Text("Worst: \(Int(clickTimes.max() ?? 0.0))ms")
-                            .bold()
-                            .font(.title2)
-                            .foregroundColor(.red)
-                    }//.padding(.vertical, 1)
+                ZStack {
+                    Text("Results")
+                        .bold()
+                        .font(.largeTitle)
+                        .padding(.bottom, 530)
+                        .padding(.horizontal, 200)
                     Button(action: {
                         state = "start"
                         clickTimes.removeAll()
@@ -299,13 +261,44 @@ struct ContentView: View {
                             .frame(width: 200, height: 50)
                             .background(Color.blue)
                             .clipShape(Capsule())
-                            .padding(.top, 100)
+                            .padding(.top, 500)
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
                 }.padding(.vertical, 10)
                     .navigationTitle("Skilltester - Reaction time")
                 
-                
+                VStack {
+                    ForEach(0..<clickTimes.count, id: \.self) { index in
+                        ZStack {
+                            Text("Run: \(index + 1). \(Int(clickTimes[index])) ms.")
+                                .foregroundColor(.white)
+                                .font(.title3)
+                                .padding(.trailing, 550)
+                            RoundedRectangle(cornerRadius: 8)
+                                .size(width: CGFloat(clickTimes[index]/(clickTimes.max() ?? 150)*150), height: 15)
+                                .padding(.top, 4)
+                                .padding(.leading, 130)
+                        }
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 20)
+                    .padding(.bottom, 400)
+                    .padding(.top, 50)
+                    
+                HStack {
+                    Text("Best: \(Int(clickTimes.min() ?? 0.0))ms")
+                        .bold()
+                        .font(.title2)
+                        .foregroundColor(.green)
+                    Text("Avarage: \(Int(avaTime))ms")
+                        .bold()
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                    Text("Worst: \(Int(clickTimes.max() ?? 0.0))ms")
+                        .bold()
+                        .font(.title2)
+                        .foregroundColor(.red)
+                }.padding(.top, 390)
                 
             }
             
@@ -325,6 +318,7 @@ struct ContentView: View {
                     
                     Button(action: {
                         state = "start"
+                        testCountGoal = Int(slider3Value)
                     }) {
                         Text("Back")
                             .bold()
@@ -335,22 +329,73 @@ struct ContentView: View {
                     }.padding(.top, 500)
                         .buttonStyle(.plain)
                     
-                    VStack(alignment: .leading, spacing: 1) {
-                        HStack {
+                    VStack(spacing: 1) {
+                        Text("Wait time:")
+                            .font(.title2)
+                        ZStack {
                             Text("Min. wait time:")
-                            Slider(value: $slider1Value, in: 0.5...10, step: 0.5)
+                                .padding(.trailing, 350)
+                            Slider(value: $slider1Value, in: 0.5...8, step: 0.5)
                                 .tint(.green)
                                 .frame(width: 250)
+                                .onChange(of: slider1Value) { newValue in
+                                    saveMessage = "Click Save to save values."
+                                }
                             Text("\(slider1ValueText) ms.")
+                                .padding(.leading, 305)
+                        }
+                        ZStack {
+                            Text("Max. wait time:")
+                                .padding(.trailing, 350)
+                            Slider(value: $slider2Value, in: 1.5...9, step: 0.5)
+                                .tint(.green)
+                                .frame(width: 250)
+                                .onChange(of: slider2Value) { newValue in
+                                    saveMessage = "Click Save to save values."
+                                }
+                            Text("\(slider2ValueText) ms.")
+                                .padding(.leading, 305)
                         }
                         HStack {
-                            Text("Max. wait time:")
-                            Slider(value: $slider2Value, in: 0.5...10, step: 0.5)
+                            Button(action: {
+                                print("Save button clicked.")
+                                if slider2Value >= slider1Value + 1 {
+                                    minWaitTime = Float(slider1Value)
+                                    maxWaitTime = Float(slider2Value)
+                                    saveMessage = "Changes Saved."
+                                    print("Saved changes.")
+                                } else if slider1Value > slider2Value{
+                                    saveMessage = "Min. wait time has to be smaller than Max. wait!"
+                                    print("Min is large than Max; didnt save.")
+                                } else if slider1Value == slider2Value || slider1Value == slider2Value - 0.5 {
+                                    saveMessage = "Min. and Max. wait have to be atleast 1 second apart!"
+                                    print("Min and Max not 1s or more part; didnt save.")
+                                }
+                                
+                            }) {
+                                Text("Save")
+                                    .bold()
+                                    .font(.title2)
+                                    .frame(width: 56, height: 24)
+                                    .background(Color.green)
+                                    .clipShape(Capsule())
+                            }.buttonStyle(.plain)
+                            
+                            Text(saveMessage)
+                        }
+                        
+                        Text("Number of rounds:")
+                            .font(.title2)
+                            .padding(.top, 20)
+                        ZStack {
+                            Slider(value: $slider3Value, in: 3...10, step: 1)
                                 .tint(.green)
                                 .frame(width: 250)
-                            Text("\(slider2ValueText) ms.")
+                            Text("\(slider3ValueText) rounds.")
+                                .padding(.leading, 320)
                         }
-                    }
+                        
+                    }.padding(.bottom, 320)
                     
                 }.padding(.vertical, 10)
                     .navigationTitle("Skilltester - Reaction time, Settings")
