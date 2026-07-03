@@ -9,11 +9,11 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var timeElapsed = 0
-    @State private var state: String = "start" // nezapomen zmenit na start
+    @State private var state: String = "results" // nezapomen zmenit na start
     @State private var randomWait: Float = 0.0
     @State private var isMeasuring: Bool = false
     @State private var result = 0
-    @State private var clickTimes: [Float] = [] //[214, 170, 190, 305, 187] // SMAZAT PRED RUNEM
+    @State private var clickTimes: [Float] = [214, 170, 190, 200, 230, 400, 320, 200, 178, 300] // SMAZAT PRED RUNEM
     @State private var testCount = 0
     @State private var avaTime: Float = 0
     
@@ -275,15 +275,15 @@ struct ContentView: View {
                                 .font(.title3)
                                 .padding(.trailing, 550)
                             RoundedRectangle(cornerRadius: 8)
-                                .size(width: CGFloat(clickTimes[index]/(clickTimes.max() ?? 150)*150), height: 15)
-                                .padding(.top, 4)
+                                .size(width: CGFloat(clickTimes[index]/(clickTimes.max() ?? 150)*520), height: 15)
+                                .padding(.top, 100/(CGFloat(clickTimes.count)*CGFloat(clickTimes.count)))
                                 .padding(.leading, 130)
                         }
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, 20)
                     .padding(.bottom, 400)
-                    .padding(.top, 50)
+                    .padding(.top, 18 * CGFloat(clickTimes.count))
                     
                 HStack {
                     Text("Best: \(Int(clickTimes.min() ?? 0.0))ms")
