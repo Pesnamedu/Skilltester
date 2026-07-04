@@ -86,6 +86,7 @@ struct ContentView: View {
                 ZStack {
                     Button(action: {
                         randomWait = Float.random(in: minWaitTime...maxWaitTime)
+                        print("Waiting randomly \(randomWait)")
                         print("starting game..")
                         state = "wait"
                         print("Waiting..")
@@ -184,6 +185,7 @@ struct ContentView: View {
             if state == "clicked" {
                 Button(action: {
                     randomWait = Float.random(in: minWaitTime...maxWaitTime)
+                    print("Waiting randomly \(randomWait)")
                     if testCount <= testCountGoal {
                         print("starting new game.. (\(testCount)/5)")
                         state = "wait"
@@ -228,6 +230,7 @@ struct ContentView: View {
                     state = "wait"
                     print("Waiting..")
                     randomWait = Float.random(in: minWaitTime...maxWaitTime)
+                    print("Waiting randomly \(randomWait)")
                     Task {
                         try? await Task.sleep(nanoseconds: UInt64(randomWait) * 1_000_000_000)
                         
@@ -385,7 +388,7 @@ struct ContentView: View {
                                 .onChange(of: slider1Value) { newValue in
                                     saveMessage = "Click Save to save values."
                                 }
-                            Text("\(slider1ValueText) seconds.")
+                            Text("\(slider1ValueText) s.")
                                 .padding(.leading, 305)
                         }
                         ZStack {
@@ -397,7 +400,7 @@ struct ContentView: View {
                                 .onChange(of: slider2Value) { newValue in
                                     saveMessage = "Click Save to save values."
                                 }
-                            Text("\(slider2ValueText) seconds.")
+                            Text("\(slider2ValueText) s.")
                                 .padding(.leading, 305)
                         }
                         HStack {
