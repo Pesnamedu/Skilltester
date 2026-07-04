@@ -9,11 +9,11 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var timeElapsed = 0
-    @State private var state: String = "results" // nezapomen zmenit na start
+    @State private var state: String = "start" // nezapomen zmenit na start
     @State private var randomWait: Float = 0.0
     @State private var isMeasuring: Bool = false
     @State private var result = 0
-    @State private var clickTimes: [Float] = [214, 170, 190, 213, 233, 200, 240, 205, 149, 214]// SMAZAT PRED RUNEM, 233, 200, 240, 205, 149, 214
+    @State private var clickTimes: [Float] = []//[203, 190, 187, 213, 233, 200, 240]// SMAZAT PRED RUNEM , 205, 149, 214
     @State private var testCount = 0
     //@State private var avaTime: Float = 0
     
@@ -35,6 +35,15 @@ struct ContentView: View {
         case 9: return 160
         case 10: return 178
         default: return 0
+        }
+    }
+    func getColorById(index: Int) -> Color {
+        if clickTimes[index] == clickTimes.min() {
+            return .green
+        } else if clickTimes[index] == clickTimes.max() {
+            return .red
+        } else {
+            return .white
         }
     }
     
@@ -103,6 +112,7 @@ struct ContentView: View {
                         
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [])
                     
                     Button(action: {
                         state = "settings"
@@ -121,6 +131,7 @@ struct ContentView: View {
                             .padding(.top, 500)
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
                     
                 }.navigationTitle("Skilltester - Reaction time")
             }
@@ -140,6 +151,7 @@ struct ContentView: View {
                     
                 }.foregroundColor(.white)
                     .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [])
             }
             
             if state == "click" {
@@ -162,6 +174,7 @@ struct ContentView: View {
                     
                 }.foregroundColor(.white)
                     .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [])
                 if isMeasuring == true {
                     Text("\(timeElapsed) ms.")
                         .padding(.top, 35)
@@ -203,6 +216,7 @@ struct ContentView: View {
                     
                 }.foregroundColor(.white)
                     .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [])
                 
                 Text("\(result) ms.")
                     .padding(.top, 35)
@@ -235,6 +249,7 @@ struct ContentView: View {
                     
                 }.foregroundColor(.white)
                     .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [])
                 
                 Text("Click again to start.")
                     .padding(.top, 35)
@@ -255,6 +270,7 @@ struct ContentView: View {
                     
                 }.foregroundColor(.white)
                     .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [])
                 
                 Text("Click to see results.")
                     .padding(.top, 35)
@@ -280,21 +296,23 @@ struct ContentView: View {
                             .padding(.top, 500)
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
                 }.padding(.vertical, 10)
-                    .navigationTitle("Skilltester - Reaction time")
+                    .navigationTitle("Skilltester - Reaction time, Results")
                 
                 ZStack(alignment: .topLeading) {
                     VStack {
                         ForEach(0..<clickTimes.count, id: \.self) { index in
                             ZStack {
                                 Text("Run: \(index + 1). \(Int(clickTimes[index])) ms.")
-                                    .foregroundColor(.white)
+                                    .foregroundColor(getColorById(index: index))
                                     .font(.title3)
                                     .padding(.trailing, 550)
                                 RoundedRectangle(cornerRadius: 8)
                                     .size(width: CGFloat(clickTimes[index]/(clickTimes.max() ?? 150)*520), height: 15)
                                     .padding(.top, 100/(CGFloat(clickTimes.count)*CGFloat(clickTimes.count)))
                                     .padding(.leading, 130)
+                                    .foregroundColor(getColorById(index: index))
                             }
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
@@ -335,11 +353,6 @@ struct ContentView: View {
             if state == "settings" {
                 ZStack {
                     
-                    Rectangle()
-                        .size(width: 700, height: 700)
-                        .fill(Color.black)
-                        .ignoresSafeArea()
-                    
                     Text("Settings")
                         .bold()
                         .font(.largeTitle)
@@ -358,6 +371,7 @@ struct ContentView: View {
                             .clipShape(Capsule())
                     }.padding(.top, 500)
                         .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
                     
                     VStack(spacing: 1) {
                         Text("Wait time:")
@@ -371,7 +385,7 @@ struct ContentView: View {
                                 .onChange(of: slider1Value) { newValue in
                                     saveMessage = "Click Save to save values."
                                 }
-                            Text("\(slider1ValueText) ms.")
+                            Text("\(slider1ValueText) seconds.")
                                 .padding(.leading, 305)
                         }
                         ZStack {
@@ -383,7 +397,7 @@ struct ContentView: View {
                                 .onChange(of: slider2Value) { newValue in
                                     saveMessage = "Click Save to save values."
                                 }
-                            Text("\(slider2ValueText) ms.")
+                            Text("\(slider2ValueText) seconds.")
                                 .padding(.leading, 305)
                         }
                         HStack {
