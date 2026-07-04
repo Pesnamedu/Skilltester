@@ -9,13 +9,34 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var timeElapsed = 0
-    @State private var state: String = "start" // nezapomen zmenit na start
+    @State private var state: String = "results" // nezapomen zmenit na start
     @State private var randomWait: Float = 0.0
     @State private var isMeasuring: Bool = false
     @State private var result = 0
-    @State private var clickTimes: [Float] = []//[214, 170, 190, 200, 230, 400, 320, 200, 178, 30 0]// SMAZAT PRED RUNEM
+    @State private var clickTimes: [Float] = [214, 170, 190, 213, 233, 200, 240, 205, 149, 214]// SMAZAT PRED RUNEM, 233, 200, 240, 205, 149, 214
     @State private var testCount = 0
-    @State private var avaTime: Float = 0
+    //@State private var avaTime: Float = 0
+    
+    var avaTime: Float {
+        guard !clickTimes.isEmpty else {return 0}
+        return clickTimes.reduce(Float(0.0), +) / Float(clickTimes.count)
+    }
+    var dynamicAvaLine: CGFloat {
+        CGFloat(148 + CGFloat(avaTime/(clickTimes.max() ?? 150)*520))
+    }
+    var dynamicAvaLinePadding: CGFloat {
+        switch clickTimes.count{
+        case 3: return 60
+        case 4: return 75
+        case 5: return 90
+        case 6: return 106
+        case 7: return 124
+        case 8: return 142
+        case 9: return 160
+        case 10: return 178
+        default: return 0
+        }
+    }
     
     @State private var minWaitTime: Float = 1.5
     @State private var maxWaitTime: Float = 3.0
@@ -168,10 +189,6 @@ struct ContentView: View {
                         print("End")
                         print(clickTimes)
                         state = "end"
-                        for i in clickTimes {
-                            avaTime = avaTime + i
-                        }
-                        avaTime = avaTime / Float(testCountGoal)
                         print(avaTime)
                     }
                     
@@ -244,7 +261,6 @@ struct ContentView: View {
             }
             
             if state == "results" {
-                
                 ZStack {
                     Text("Results")
                         .bold()
@@ -267,23 +283,37 @@ struct ContentView: View {
                 }.padding(.vertical, 10)
                     .navigationTitle("Skilltester - Reaction time")
                 
-                VStack {
-                    ForEach(0..<clickTimes.count, id: \.self) { index in
-                        ZStack {
-                            Text("Run: \(index + 1). \(Int(clickTimes[index])) ms.")
-                                .foregroundColor(.white)
-                                .font(.title3)
-                                .padding(.trailing, 550)
-                            RoundedRectangle(cornerRadius: 8)
-                                .size(width: CGFloat(clickTimes[index]/(clickTimes.max() ?? 150)*520), height: 15)
-                                .padding(.top, 100/(CGFloat(clickTimes.count)*CGFloat(clickTimes.count)))
-                                .padding(.leading, 130)
+                ZStack(alignment: .topLeading) {
+                    VStack {
+                        ForEach(0..<clickTimes.count, id: \.self) { index in
+                            ZStack {
+                                Text("Run: \(index + 1). \(Int(clickTimes[index])) ms.")
+                                    .foregroundColor(.white)
+                                    .font(.title3)
+                                    .padding(.trailing, 550)
+                                RoundedRectangle(cornerRadius: 8)
+                                    .size(width: CGFloat(clickTimes[index]/(clickTimes.max() ?? 150)*520), height: 15)
+                                    .padding(.top, 100/(CGFloat(clickTimes.count)*CGFloat(clickTimes.count)))
+                                    .padding(.leading, 130)
+                            }
                         }
-                    }
-                }.frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 20)
-                    .padding(.bottom, 400)
-                    .padding(.top, 18 * CGFloat(clickTimes.count))
+                    }.frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 20)
+                        .padding(.bottom, 400)
+                        .padding(.top, 18 * CGFloat(clickTimes.count))
+                    
+                    RoundedRectangle(cornerRadius: 8)
+                        .size(width: 2, height: 25*CGFloat(clickTimes.count) + 20 + 300/pow(CGFloat(clickTimes.count), 2))
+                        .padding(.top, dynamicAvaLinePadding)
+                        .padding(.leading, dynamicAvaLine)
+                        .foregroundColor(.blue)
+                    
+                    Text("Avarage")
+                        .foregroundColor(.blue)
+                        .padding(.top, dynamicAvaLinePadding + (25*CGFloat(clickTimes.count)+20 + 300/pow(CGFloat(clickTimes.count), 2)))
+                        .padding(.leading, dynamicAvaLine)
+                    
+                }
                     
                 HStack {
                     Text("Best: \(Int(clickTimes.min() ?? 0.0))ms")
