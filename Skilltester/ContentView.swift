@@ -8,8 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var timeElapsed = 0
-    @State private var state: String = "start" // nezapomen zmenit na start
+    @State private var state: String = "menu" // nezapomen zmenit na start
     @State private var randomWait: Float = 0.0
     @State private var isMeasuring: Bool = false
     @State private var result = 0
@@ -70,10 +69,20 @@ struct ContentView: View {
     let graphWh: CGFloat = 50
     let graphCr: CGFloat = 8
     let graphHt: CGFloat = 100
-
     
+    // SPAMMING BELOW
+    @State private var spamCount: Int = 0
+    @State private var spamWaitTime: Int = 5
+    @State private var cps = 0
+
+    var actualCps: String {
+        String(format: "%.0f", Float(spamCount) / (0.0001 + Float(timeElapsed))*1000)
+    }
+    //TIMER BELOW
+    @State private var timeElapsed = 0
     let timer = Timer.publish(every: 0.001, on: .main, in: .common).autoconnect()
     
+    // FUNCTIONS BELOW
     func startTest(name: String) -> String {
         
         return "0"
@@ -81,8 +90,160 @@ struct ContentView: View {
 
     
     var body: some View {
+        
+        if state == "menu" {
+            ZStack {
+                ZStack (alignment: .top) {
+                    Button(action: {
+                        print("clicked button 1 (Reflex)")
+                        state = "start R"
+                    }) {
+                        Text("Reflex")
+                            .bold()
+                            .font(.title2)
+                            .frame(width: 200, height: 200)
+                            .background(Color.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                        
+                    }.buttonStyle(.plain)
+                        .padding(.bottom, 340)
+                        .padding(.trailing, 440)
+                    
+                    Button(action: {
+                        print("clicked button 2")
+                        state = "start S"
+                    }) {
+                        Text("Spam")
+                            .bold()
+                            .font(.title2)
+                            .frame(width: 200, height: 200)
+                            .background(Color.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                        
+                    }.buttonStyle(.plain)
+                        .padding(.bottom, 340)
+                    
+                    Button(action: {
+                        print("clicked button 3")
+                    }) {
+                        Text("Time")
+                            .bold()
+                            .font(.title2)
+                            .frame(width: 200, height: 200)
+                            .background(Color.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                        
+                    }.buttonStyle(.plain)
+                        .padding(.bottom, 340)
+                        .padding(.leading, 440)
+                    
+                    
+                    
+                    
+                }
+            }.navigationTitle("Menu")
+        }
         ZStack {
-            if state == "start" {
+            if state == "start S" {
+                ZStack {
+                    Button(action: {
+                        timeElapsed = 0
+                        spamCount = 0
+                        state = "spamming"
+                        print("Started spamming")
+                        Task {
+                            try? await Task.sleep(nanoseconds: UInt64(spamWaitTime * 1_000_000_000))
+                            state = "spammed"
+                        }
+                    }) {
+                        Text("Start spamming to begin.")
+                            .bold()
+                            .padding(.horizontal, 50)
+                            .padding(.vertical, 50)
+                            .frame(minWidth: 700, minHeight: 600)
+                            .background(Color.green)
+                            .font(.largeTitle)
+                        
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [])
+                
+                    Button(action: {
+                        state = "menu"
+                        clickTimes.removeAll()
+                        print("Pressed back; sending to \(state)")
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.black)
+                            .clipShape(Capsule())
+                            .padding(.top, 500)
+                            .padding(.trailing, 500)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("b", modifiers: [])
+                }.navigationTitle("Skilltester - Spamming")
+            }
+            
+            if state == "spamming" {
+                Button(action: {
+                    spamCount += 1
+                    print(spamCount / timeElapsed)
+                }) {
+                    Text("Spam!")
+                        .bold()
+                        .padding(.horizontal, 50)
+                        .padding(.vertical, 50)
+                        .frame(minWidth: 700, minHeight: 600)
+                        .background(Color.blue)
+                        .font(.largeTitle)
+                    
+                }.foregroundColor(.white)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [])
+                Text("\(actualCps) cps.")
+                    .padding(.top, 35)
+            }
+            
+            if state == "spammed" {
+                Button(action: {
+                    cps = spamCount / spamWaitTime
+                    print("Clicked \(spamCount) times, over \(spamWaitTime) s. (Rate of \(cps) cps.")
+                    state = "results S"
+                }) {
+                    Text("Done.")
+                        .bold()
+                        .padding(.horizontal, 50)
+                        .padding(.vertical, 50)
+                        .frame(minWidth: 700, minHeight: 600)
+                        .background(Color.black)
+                        .font(.largeTitle)
+                    
+                }.foregroundColor(.white)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [.shift])
+                
+                Text("Click to see results.")
+                    .padding(.top, 35)
+            }
+            
+            if state == "results S" {
+                VStack {
+                    Text("You spammed at an avarage rate of")
+                    Text("\(cps) cps.")
+                        .bold()
+                        .font(.largeTitle)
+                        .foregroundColor(.white)
+                    
+                    Text("For total length of \(spamWaitTime) s.")
+                }
+            }
+        }
+        
+        ZStack {
+            if state == "start R" {
                 ZStack {
                     Button(action: {
                         randomWait = Float.random(in: minWaitTime...maxWaitTime)
@@ -133,6 +294,23 @@ struct ContentView: View {
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
                         .keyboardShortcut(.space, modifiers: [.shift])
+                    
+                    Button(action: {
+                        state = "menu"
+                        clickTimes.removeAll()
+                        print("Pressed back; sending to \(state)")
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.black)
+                            .clipShape(Capsule())
+                            .padding(.top, 500)
+                            .padding(.trailing, 500)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.control])
                     
                 }.navigationTitle("Skilltester - Reaction time")
             }
@@ -260,7 +438,7 @@ struct ContentView: View {
             
             if state == "end" {
                 Button(action: {
-                    state = "results"
+                    state = "results R"
                     testCount = 0
                 }) {
                     Text("End")
@@ -279,7 +457,7 @@ struct ContentView: View {
                     .padding(.top, 35)
             }
             
-            if state == "results" {
+            if state == "results R" {
                 ZStack {
                     Text("Results")
                         .bold()
@@ -287,7 +465,7 @@ struct ContentView: View {
                         .padding(.bottom, 530)
                         .padding(.horizontal, 200)
                     Button(action: {
-                        state = "start"
+                        state = "start R"
                         clickTimes.removeAll()
                     }) {
                         Text("Start again")
@@ -300,6 +478,21 @@ struct ContentView: View {
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
                         .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        state = "menu"
+                        clickTimes.removeAll()
+                    }) {
+                        Text("Menu")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red)
+                            .clipShape(Capsule())
+                            .padding(.top, 500)
+                            .padding(.trailing, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("b", modifiers: [])
                 }.padding(.vertical, 10)
                     .navigationTitle("Skilltester - Reaction time, Results")
                 
@@ -363,8 +556,9 @@ struct ContentView: View {
                         .padding(.bottom, 550)
                     
                     Button(action: {
-                        state = "start"
+                        state = "start R"
                         testCountGoal = Int(slider3Value)
+                        print("Pressed back; sending to \(state)")
                     }) {
                         Text("Back")
                             .bold()
@@ -446,7 +640,10 @@ struct ContentView: View {
                     
                 }.padding(.vertical, 10)
                     .navigationTitle("Skilltester - Reaction time, Settings")
+                
+                
             }
+            
             
         }.navigationTitle("Skilltester - Reaction time")
         // .frame(width: 300, height: 400)
