@@ -9,6 +9,10 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var state: String = "menu" // nezapomen zmenit na start
+    var dynamicEndBarWidth: CGFloat {
+        CGFloat(340 * Double(timeElapsed) * 0.001)
+    }
+    
     @State private var randomWait: Float = 0.0
     @State private var isMeasuring: Bool = false
     @State private var result = 0
@@ -74,10 +78,21 @@ struct ContentView: View {
     @State private var spamCount: Int = 0
     @State private var spamWaitTime: Int = 5
     @State private var cps = 0
+    @State private var sentFrom: String = ""
+    
+    @State private var slider4Value: Double = 5
+    var slider4ValueText: String {
+        String(format: "%.0f", slider4Value)
+    }
 
     var actualCps: String {
         String(format: "%.0f", Float(spamCount) / (0.0001 + Float(timeElapsed))*1000)
     }
+    //LOG
+    @State private var spamLogValues: [Int] = []
+    @State private var spamLogDates: [String] = []
+    @State private var spamLogDurations: [Int] = []
+    
     //TIMER BELOW
     @State private var timeElapsed = 0
     let timer = Timer.publish(every: 0.001, on: .main, in: .common).autoconnect()
@@ -91,6 +106,7 @@ struct ContentView: View {
     
     var body: some View {
         
+        //MARK: Menu
         if state == "menu" {
             ZStack {
                 ZStack (alignment: .top) {
@@ -143,6 +159,7 @@ struct ContentView: View {
                 }
             }.navigationTitle("Menu")
         }
+        //MARK: Spam
         ZStack {
             if state == "start S" {
                 ZStack {
@@ -154,6 +171,15 @@ struct ContentView: View {
                         Task {
                             try? await Task.sleep(nanoseconds: UInt64(spamWaitTime * 1_000_000_000))
                             state = "spammed"
+                            timeElapsed = 0
+                            cps = spamCount / spamWaitTime
+                            spamLogValues.append(cps);
+                            spamLogDates.append(Date().formatted(date: .omitted, time: .standard));
+                            spamLogDurations.append(spamWaitTime)
+                            Task {
+                                try? await Task.sleep(nanoseconds: UInt64(2 * 1_000_000_000))
+                                state = "results S"
+                            }
                         }
                     }) {
                         Text("Start spamming to begin.")
@@ -167,7 +193,23 @@ struct ContentView: View {
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
                         .keyboardShortcut(.space, modifiers: [])
-                
+                    Text("Spam duration is set to \(spamWaitTime) s.")
+                        .padding(.top, 45)
+                    
+                    Button(action: {
+                        state = "settings S"
+                    }) {
+                        Text("Settings")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.black)
+                            .clipShape(Capsule())
+                            .padding(.top, 500)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    
                     Button(action: {
                         state = "menu"
                         clickTimes.removeAll()
@@ -184,7 +226,23 @@ struct ContentView: View {
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
                         .keyboardShortcut("b", modifiers: [])
+                    Button(action: {
+                        sentFrom = state
+                        state = "log S"
+                    }) {
+                        Text("Log")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.black)
+                            .clipShape(Capsule())
+                            .padding(.leading, 550)
+                            .padding(.top, 500)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("l", modifiers: [])
                 }.navigationTitle("Skilltester - Spamming")
+                
             }
             
             if state == "spamming" {
@@ -208,8 +266,8 @@ struct ContentView: View {
             }
             
             if state == "spammed" {
+                
                 Button(action: {
-                    cps = spamCount / spamWaitTime
                     print("Clicked \(spamCount) times, over \(spamWaitTime) s. (Rate of \(cps) cps.")
                     state = "results S"
                 }) {
@@ -227,6 +285,11 @@ struct ContentView: View {
                 
                 Text("Click to see results.")
                     .padding(.top, 35)
+                
+                RoundedRectangle(cornerRadius: 18)
+                    .size(width: dynamicEndBarWidth, height: 18)
+                    .padding(.trailing, 350)
+                    .padding(.top, 586)
             }
             
             if state == "results S" {
@@ -239,9 +302,161 @@ struct ContentView: View {
                     
                     Text("For total length of \(spamWaitTime) s.")
                 }
+                ZStack {
+                    Button(action: {
+                        state = "start S"
+                    }) {
+                        Text("Start again")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.blue)
+                            .clipShape(Capsule())
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        state = "menu"
+                        clickTimes.removeAll()
+                    }) {
+                        Text("Menu")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red)
+                            .clipShape(Capsule())
+                            .padding(.trailing, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("m", modifiers: [])
+                    
+                    Button(action: {
+                        sentFrom = state
+                        state = "log S"
+                    }) {
+                        Text("Log")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.green)
+                            .clipShape(Capsule())
+                            .padding(.leading, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("m", modifiers: [])
+                }.padding(.top, 510)
+            }
+            
+            if state == "settings S" {
+                ZStack {
+                    Text("Settings")
+                        .bold()
+                        .font(.largeTitle)
+                        .padding(.bottom, 530)
+                    
+                    Button(action: {
+                        state = "start S"
+                        spamWaitTime = Int(slider4Value)
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.green)
+                            .clipShape(Capsule())
+                    }.padding(.top, 500)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    
+                    ZStack {
+                        Text("Spam duration:")
+                            .padding(.bottom, 45)
+                            .font(.title2)
+                        Slider(value: $slider4Value, in: 1...10, step: 1)
+                            .tint(.green)
+                            .frame(width: 250)
+                        Text("\(slider4ValueText) s.")
+                            .padding(.leading, 285)
+                    }
+                    
+                
+                }
+            }
+            if state == "log S" {
+                    if 0 < spamLogValues.count && 0 < spamLogDates.count {
+                        ScrollView {
+                            VStack {
+                                ForEach(0..<spamLogValues.count, id: \.self) { index in
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        Text("\(spamLogValues[index]) cps. (\(spamLogDurations[index]) s.)")
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(spamLogDates[index])")
+                                            .font(.title2)
+                                            .padding(.trailing, 40)
+                                    }
+                                }
+                            }.frame(maxWidth: .infinity)
+                        }.frame(height: 400)
+                    } else {
+                        Text("No log stored.")
+                            .font(.title2)
+                        }
+                
+                Button(action: {
+                    print(sentFrom)
+                    if sentFrom == "results S" {
+                        state = "results S"
+                    } else if sentFrom == "start S" {
+                        state = "start S"
+                    }
+                }) {
+                    Text("Back")
+                        .bold()
+                        .font(.largeTitle)
+                        .frame(width: 200, height: 50)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
+                }.padding(.top, 510)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [.shift])
+                Button(action: {
+                    state = "menu"
+                }) {
+                    Text("Menu")
+                        .bold()
+                        .font(.largeTitle)
+                        .frame(width: 100, height: 50)
+                        .background(Color.red)
+                        .clipShape(Capsule())
+                        .padding(.trailing, 550)
+                }.padding(.top, 510)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut("m", modifiers: [])
+                Button(action: {
+                    spamLogDates.removeAll()
+                    spamLogValues.removeAll()
+                    spamLogDurations.removeAll()
+                }) {
+                    Text("Clear")
+                        .bold()
+                        .font(.largeTitle)
+                        .frame(width: 100, height: 50)
+                        .background(Color.red)
+                        .clipShape(Capsule())
+                        .padding(.leading, 550)
+                }.padding(.top, 510)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut("m", modifiers: [])
+                
             }
         }
         
+        //MARK: Reaction
         ZStack {
             if state == "start R" {
                 ZStack {
@@ -275,6 +490,9 @@ struct ContentView: View {
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
                         .keyboardShortcut(.space, modifiers: [])
+                    
+                    Text("You will do \(testCountGoal) rounds.")
+                        .padding(.top, 45)
                     
                     Button(action: {
                         state = "settings"
@@ -492,7 +710,7 @@ struct ContentView: View {
                             .padding(.trailing, 550)
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
-                        .keyboardShortcut("b", modifiers: [])
+                        .keyboardShortcut("m", modifiers: [])
                 }.padding(.vertical, 10)
                     .navigationTitle("Skilltester - Reaction time, Results")
                 
