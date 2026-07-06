@@ -89,9 +89,14 @@ struct ContentView: View {
         String(format: "%.0f", Float(spamCount) / (0.0001 + Float(timeElapsed))*1000)
     }
     //LOG
-    @State private var spamLogValues: [Int] = []
     @State private var spamLogDates: [String] = []
+    @State private var spamLogValues: [Int] = []
     @State private var spamLogDurations: [Int] = []
+    
+    @State private var reactLogDates: [String] = []
+    @State private var reactLogBestV: [Int] = []
+    @State private var reactLogAvaV: [Int] = []
+    @State private var reactLogWorstV: [Int] = []
     
     //TIMER BELOW
     @State private var timeElapsed = 0
@@ -153,8 +158,7 @@ struct ContentView: View {
                         .padding(.bottom, 340)
                         .padding(.leading, 440)
                     
-                    
-                    
+
                     
                 }
             }.navigationTitle("Menu")
@@ -328,7 +332,7 @@ struct ContentView: View {
                             .padding(.trailing, 550)
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
-                        .keyboardShortcut("m", modifiers: [])
+                        .keyboardShortcut("l", modifiers: [])
                     
                     Button(action: {
                         sentFrom = state
@@ -530,6 +534,22 @@ struct ContentView: View {
                         .buttonStyle(.plain)
                         .keyboardShortcut(.space, modifiers: [.control])
                     
+                    Button(action: {
+                        sentFrom = state
+                        state = "log R"
+                    }) {
+                        Text("Log")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.black)
+                            .clipShape(Capsule())
+                            .padding(.top, 500)
+                            .padding(.leading, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("l", modifiers: [])
+                    
                 }.navigationTitle("Skilltester - Reaction time")
             }
             
@@ -601,6 +621,15 @@ struct ContentView: View {
                         print(clickTimes)
                         state = "end"
                         print(avaTime)
+                        timeElapsed = 0
+                        Task {
+                            try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
+                            state = "results R"
+                            reactLogDates.append(Date().formatted(date: .omitted, time: .standard));
+                            reactLogAvaV.append(Int(avaTime))
+                            reactLogBestV.append(Int(clickTimes.min() ?? 0))
+                            reactLogWorstV.append(Int(clickTimes.max() ?? 0))
+                        }
                     }
                     
                 }) {
@@ -682,37 +711,52 @@ struct ContentView: View {
                         .font(.largeTitle)
                         .padding(.bottom, 530)
                         .padding(.horizontal, 200)
-                    Button(action: {
-                        state = "start R"
-                        clickTimes.removeAll()
-                    }) {
-                        Text("Start again")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.blue)
-                            .clipShape(Capsule())
-                            .padding(.top, 500)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    Button(action: {
-                        state = "menu"
-                        clickTimes.removeAll()
-                    }) {
-                        Text("Menu")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red)
-                            .clipShape(Capsule())
-                            .padding(.top, 500)
-                            .padding(.trailing, 550)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("m", modifiers: [])
-                }.padding(.vertical, 10)
-                    .navigationTitle("Skilltester - Reaction time, Results")
+                    ZStack {
+                        Button(action: {
+                            state = "start R"
+                            clickTimes.removeAll()
+                        }) {
+                            Text("Start again")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 200, height: 50)
+                                .background(Color.blue)
+                                .clipShape(Capsule())
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut(.space, modifiers: [.shift])
+                        Button(action: {
+                            state = "menu"
+                            clickTimes.removeAll()
+                        }) {
+                            Text("Menu")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 100, height: 50)
+                                .background(Color.red)
+                                .clipShape(Capsule())
+                                .padding(.trailing, 550)
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut("m", modifiers: [])
+                        Button(action: {
+                            sentFrom = state
+                            state = "log R"
+                        }) {
+                            Text("Log")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 100, height: 50)
+                                .background(Color.green)
+                                .clipShape(Capsule())
+                                .padding(.leading, 550)
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut("l", modifiers: [])
+                    }//.padding(.vertical, 10)
+                        .padding(.top, 510)
+                        .navigationTitle("Skilltester - Reaction time, Results")
+                }
                 
                 ZStack(alignment: .topLeading) {
                     VStack {
@@ -861,6 +905,79 @@ struct ContentView: View {
                 
                 
             }
+            if state == "log R" {
+                if 0 < reactLogBestV.count && 0 < reactLogWorstV.count && 0 < reactLogAvaV.count && 0 < reactLogDates.count {
+                    ScrollView {
+                        VStack {
+                            ForEach(0..<reactLogAvaV.count, id: \.self) { index in
+                                HStack {
+                                    Text("Attempt: \(index + 1)")
+                                        .font(.title2)
+                                        .padding(.leading, 40)
+                                    Spacer()
+                                    Text("Best \(reactLogBestV[index]) ms. Avarge: \(reactLogAvaV[index]) ms. Worst\(reactLogWorstV[index]) ms.")
+                                        .font(.title2)
+                                    Spacer()
+                                    Text("\(reactLogDates[index])")
+                                        .font(.title2)
+                                        .padding(.trailing, 40)
+                                }
+                            }
+                        }.frame(maxWidth: .infinity)
+                    }.frame(height: 400)
+                } else {
+                    Text("No log stored.")
+                        .font(.title2)
+                    }
+            
+            Button(action: {
+                print(sentFrom)
+                if sentFrom == "results R" {
+                    state = "results R"
+                } else if sentFrom == "start R" {
+                    state = "start R"
+                }
+            }) {
+                Text("Back")
+                    .bold()
+                    .font(.largeTitle)
+                    .frame(width: 200, height: 50)
+                    .background(Color.blue)
+                    .clipShape(Capsule())
+            }.padding(.top, 510)
+                .buttonStyle(.plain)
+                .keyboardShortcut(.space, modifiers: [.shift])
+            Button(action: {
+                state = "menu"
+            }) {
+                Text("Menu")
+                    .bold()
+                    .font(.largeTitle)
+                    .frame(width: 100, height: 50)
+                    .background(Color.red)
+                    .clipShape(Capsule())
+                    .padding(.trailing, 550)
+            }.padding(.top, 510)
+                .buttonStyle(.plain)
+                .keyboardShortcut("m", modifiers: [])
+            Button(action: {
+                reactLogDates.removeAll();
+                reactLogAvaV.removeAll();
+                reactLogBestV.removeAll();
+                reactLogWorstV.removeAll()
+            }) {
+                Text("Clear")
+                    .bold()
+                    .font(.largeTitle)
+                    .frame(width: 100, height: 50)
+                    .background(Color.red)
+                    .clipShape(Capsule())
+                    .padding(.leading, 550)
+            }.padding(.top, 510)
+                .buttonStyle(.plain)
+                .keyboardShortcut("m", modifiers: [])
+            
+        }
             
             
         }.navigationTitle("Skilltester - Reaction time")
