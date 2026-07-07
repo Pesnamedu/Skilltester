@@ -88,6 +88,11 @@ struct ContentView: View {
     var actualCps: String {
         String(format: "%.0f", Float(spamCount) / (0.0001 + Float(timeElapsed))*1000)
     }
+    //TIME BELOW
+    @State private var timeStopped: Int = 0
+    @State private var isViewBlocked: Bool = false
+    @State private var timeStopGoal: Int = 0
+    
     //LOG
     @State private var spamLogDates: [String] = []
     @State private var spamLogValues: [Int] = []
@@ -102,7 +107,7 @@ struct ContentView: View {
     @State private var timeElapsed = 0
     let timer = Timer.publish(every: 0.001, on: .main, in: .common).autoconnect()
     var timeElapsedText: String {
-        String(format: "%.2f", timeElapsed / 1000)
+        String(format: "%.2f", Double(timeElapsed) / 1000)
     }
     
     // FUNCTIONS BELOW
@@ -177,11 +182,11 @@ struct ContentView: View {
                     Button(action: {
                         timeElapsed = 0
                         spamCount = 0
-                        state = "spamming"
+                        state = "spamming S"
                         print("Started spamming")
                         Task {
                             try? await Task.sleep(nanoseconds: UInt64(spamWaitTime * 1_000_000_000))
-                            state = "spammed"
+                            state = "spammed S"
                             timeElapsed = 0
                             cps = spamCount / spamWaitTime
                             spamLogValues.append(cps);
@@ -256,7 +261,7 @@ struct ContentView: View {
                 
             }
             
-            if state == "spamming" {
+            if state == "spamming S" {
                 Button(action: {
                     spamCount += 1
                     print(spamCount / timeElapsed)
@@ -276,7 +281,7 @@ struct ContentView: View {
                     .padding(.top, 35)
             }
             
-            if state == "spammed" {
+            if state == "spammed S" {
                 
                 Button(action: {
                     print("Clicked \(spamCount) times, over \(spamWaitTime) s. (Rate of \(cps) cps.")
@@ -467,9 +472,8 @@ struct ContentView: View {
             }
         }
     }
-    
+    //MARK: Reaction
     var reactView: some View {
-        //MARK: Reaction
         ZStack {
             if state == "start R" {
                 ZStack {
@@ -477,21 +481,21 @@ struct ContentView: View {
                         randomWait = Float.random(in: minWaitTime...maxWaitTime)
                         print("Waiting randomly \(randomWait)")
                         print("starting game..")
-                        state = "wait"
+                        state = "wait R"
                         print("Waiting..")
                         testCount += 1
                         Task {
                             try? await Task.sleep(nanoseconds: UInt64(randomWait * 1_000_000_000))
                             
-                            if state == "wait" {
+                            if state == "wait R" {
                                 print("Done waiting!")
                                 isMeasuring = true
-                                state = "click"
+                                state = "click R"
                                 timeElapsed = 0
                                 Task {
                                     try? await Task.sleep(nanoseconds: UInt64(3 * 1_000_000_000))
-                                    if state == "click" {
-                                        state = "clicked"
+                                    if state == "click R" {
+                                        state = "clicked R"
                                         result = 3000
                                         //clickTimes.append(Float(result))
                                         //testCount += 1
@@ -572,9 +576,9 @@ struct ContentView: View {
                 }.navigationTitle("Skilltester - Reaction time")
             }
             
-            if state == "wait" {
+            if state == "wait R" {
                 Button(action: {
-                    state = "prefired"
+                    state = "prefired R"
                     print("Prefired.")
                 }) {
                     Text("Wait for green")
@@ -590,7 +594,7 @@ struct ContentView: View {
                     .keyboardShortcut(.space, modifiers: [])
             }
             
-            if state == "click" {
+            if state == "click R" {
                 Button(action: {
                     result = timeElapsed
                     isMeasuring = false
@@ -598,7 +602,7 @@ struct ContentView: View {
                     testCount += 1
                     
                     print("Clicked at \(result) ms!")
-                    state = "clicked"
+                    state = "clicked R"
                 }) {
                     Text("Click!")
                         .bold()
@@ -617,26 +621,26 @@ struct ContentView: View {
                 }
             }
             
-            if state == "clicked" {
+            if state == "clicked R" {
                 Button(action: {
                     randomWait = Float.random(in: minWaitTime...maxWaitTime)
                     print("Waiting randomly \(randomWait)")
                     if testCount <= testCountGoal {
                         print("starting new game.. (\(testCount)/5)")
-                        state = "wait"
+                        state = "wait R"
                         print("Waiting..")
                         Task {
                             try? await Task.sleep(nanoseconds: UInt64(randomWait * 1_000_000_000))
                             
-                            if state == "wait" {
+                            if state == "wait R" {
                                 print("Done waiting!")
                                 isMeasuring = true
-                                state = "click"
+                                state = "click R"
                                 timeElapsed = 0
                                 Task {
                                     try? await Task.sleep(nanoseconds: UInt64(3 * 1_000_000_000))
-                                    if state == "click" {
-                                        state = "clicked"
+                                    if state == "click R" {
+                                        state = "clicked R"
                                         result = 3000
                                         //clickTimes.append(Float(result))
                                         //testCount += 1
@@ -648,7 +652,7 @@ struct ContentView: View {
                     } else {
                         print("End")
                         print(clickTimes)
-                        state = "end"
+                        state = "end R"
                         print(avaTime)
                         timeElapsed = 0
                         Task {
@@ -683,20 +687,20 @@ struct ContentView: View {
                 }
             }
             
-            if state == "prefired" {
+            if state == "prefired R" {
                 Button(action: {
                     print("starting game..")
-                    state = "wait"
+                    state = "wait R"
                     print("Waiting..")
                     randomWait = Float.random(in: minWaitTime...maxWaitTime)
                     print("Waiting randomly \(randomWait)")
                     Task {
                         try? await Task.sleep(nanoseconds: UInt64(randomWait) * 1_000_000_000)
                         
-                        if state == "wait" {
+                        if state == "wait R" {
                             print("Done waiting!")
                             isMeasuring = true
-                            state = "click"
+                            state = "click R"
                             timeElapsed = 0
                         }
                     }
@@ -717,7 +721,7 @@ struct ContentView: View {
                     .padding(.top, 35)
             }
             
-            if state == "end" {
+            if state == "end R" {
                 Button(action: {
                     state = "results R"
                     testCount = 0
@@ -880,7 +884,7 @@ struct ContentView: View {
                                 .tint(.green)
                                 .frame(width: 250)
                                 .onChange(of: slider1Value) { newValue in
-                                    saveMessage = "Click Save to save values."
+                                    saveMessage = "Press Save to save values."
                                 }
                             Text("\(slider1ValueText) s.")
                                 .padding(.leading, 305)
@@ -892,7 +896,7 @@ struct ContentView: View {
                                 .tint(.green)
                                 .frame(width: 250)
                                 .onChange(of: slider2Value) { newValue in
-                                    saveMessage = "Click Save to save values."
+                                    saveMessage = "Press Save to save values."
                                 }
                             Text("\(slider2ValueText) s.")
                                 .padding(.leading, 305)
@@ -1025,7 +1029,14 @@ struct ContentView: View {
             if state == "start T" {
                 ZStack {
                     Button(action: {
+                        timeStopGoal = 3 //smazat az udelam nastaveni
                         state = "count T"
+                        isViewBlocked = false
+                        timeElapsed = 0
+                        Task {
+                            try? await Task.sleep(nanoseconds: UInt64(3 * 1_000_000_000))
+                            isViewBlocked = true
+                        }
                     }) {
                         Text("Start")
                             .bold()
@@ -1070,7 +1081,6 @@ struct ContentView: View {
                     Button(action: {
                         sentFrom = state
                         state = "log T"
-                        timeElapsed = 0
                     }) {
                         Text("Log")
                             .bold()
@@ -1090,22 +1100,112 @@ struct ContentView: View {
             if state == "count T" {
                 Button(action: {
                     state = "stopped T"
+                    timeStopped = timeElapsed
                 }) {
-                    Text("\(timeElapsedText) s.")
+                    Text("")
                         .bold()
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
-                        .background(Color.green)
+                        .background(Color.red)
                         .font(.largeTitle)
                 }.buttonStyle(.plain)
+                if isViewBlocked == false {
+                    Text("\(timeElapsedText) s.")
+                        .bold()
+                        .font(.largeTitle)
+                        .foregroundColor(.white)
+                }
+            }
+            
+            if state == "stopped T" {
+                Button(action: {
+                    state = "results T"
+                }) {
+                    Text("You stopped at \(Int(timeStopped)) s.")
+                        .bold()
+                        .padding(.horizontal, 50)
+                        .padding(.vertical, 50)
+                        .frame(minWidth: 700, minHeight: 600)
+                        .background(Color.blue)
+                        .font(.largeTitle)
+                }.buttonStyle(.plain)
+            }
+            
+            if state == "results T" {
+                ZStack {
+                    Text("Results")
+                        .bold()
+                        .font(.largeTitle)
+                        .padding(.bottom, 530)
+                        .padding(.horizontal, 200)
+                    ZStack {
+                        Button(action: {
+                            state = "start T"
+                            clickTimes.removeAll()
+                        }) {
+                            Text("Start again")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 200, height: 50)
+                                .background(Color.blue)
+                                .clipShape(Capsule())
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut(.space, modifiers: [.shift])
+                        Button(action: {
+                            state = "menu"
+                            clickTimes.removeAll()
+                        }) {
+                            Text("Menu")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 100, height: 50)
+                                .background(Color.red)
+                                .clipShape(Capsule())
+                                .padding(.trailing, 550)
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut("m", modifiers: [])
+                        Button(action: {
+                            sentFrom = state
+                            state = "log T"
+                        }) {
+                            Text("Log")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 100, height: 50)
+                                .background(Color.green)
+                                .clipShape(Capsule())
+                                .padding(.leading, 550)
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut("l", modifiers: [])
+                    }//.padding(.vertical, 10)
+                    .padding(.top, 510)
+                    .navigationTitle("Skilltester - Time, Results")
+                    Text("You stopped at")
+                        .padding(.bottom, 45)
+                    Text("\(timeStopped) / \(timeStopGoal)")
+                        .bold()
+                        .font(.largeTitle)
+                }
             }
         }
     }
     
     var body: some View {
         ZStack {
-            Text("Ts is body")
+            // Text("Ts is body")
+            if state == "menu" {
+                menuView
+            } else if state.hasSuffix("S") {
+                spamView
+            } else if state.hasSuffix("R") {
+                reactView
+            } else if state.hasSuffix("T") {
+                timeView
+            }
         }
         .navigationTitle("Skilltester")
         .onReceive(timer) { _ in
