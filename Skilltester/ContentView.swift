@@ -18,6 +18,8 @@ struct ContentView: View {
     @State private var result = 0
     @State private var clickTimes: [Float] = []//[203, 190, 187, 213, 233, 200, 240]// SMAZAT PRED RUNEM , 205, 149, 214
     @State private var testCount = 0
+    @State private var startTimer: Date = Date()
+    
     //@State private var avaTime: Float = 0
     
     var avaTime: Float {
@@ -92,6 +94,35 @@ struct ContentView: View {
     @State private var timeStopped: Int = 0
     @State private var isViewBlocked: Bool = false
     @State private var timeStopGoal: Int = 0
+    @State private var randomTime: Int = 0
+    @State private var slider5Value: Double = 1
+    @State private var minTime: Int = 6000
+    @State private var maxTime: Int = 18000
+    
+    var randomTimeText: String {
+        String(format: "%.1f", round(Float(randomTime) / 100)/10)
+    }
+    var timeStoppedText: String {
+        String(format: "%.1f", round(Float(timeStopped) / 100)/10)
+    }
+    var timeDifference: Int {
+        Int(abs(randomTime - timeStopped))
+    }
+    var timeDifferenceText: String {
+        String(format: "%.2f", (Float(timeStoppedText) ?? 1) - (Float(randomTimeText) ?? 1))
+        //round(Float(timeDifference) / 100)/10)
+    }
+    var slider5Text: String {
+        if slider5Value < 1 {
+            return "Short"
+        } else if slider5Value > 2 {
+            return "Long"
+        } else if slider5Value >= 1 && slider5Value <= 2{
+            return "Medium"
+        } else {
+            return "error"
+        }
+    }
     
     //LOG
     @State private var spamLogDates: [String] = []
@@ -102,6 +133,10 @@ struct ContentView: View {
     @State private var reactLogBestV: [Int] = []
     @State private var reactLogAvaV: [Int] = []
     @State private var reactLogWorstV: [Int] = []
+    
+    @State private var timeLogDates: [String] = []
+    @State private var timeLogValues: [String] = []
+    @State private var timeLogDurations: [String] = []
     
     //TIMER BELOW
     @State private var timeElapsed = 0
@@ -122,7 +157,7 @@ struct ContentView: View {
             //MARK: Menu
             if state == "menu" {
                 ZStack {
-                    ZStack (alignment: .top) {
+                    HStack (alignment: .top, spacing: 25) {
                         Button(action: {
                             print("clicked button 1 (Reflex)")
                             state = "start R"
@@ -132,11 +167,9 @@ struct ContentView: View {
                                 .font(.title2)
                                 .frame(width: 200, height: 200)
                                 .background(Color.blue)
-                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                                .clipShape(RoundedRectangle(cornerRadius: 50))
                             
                         }.buttonStyle(.plain)
-                            .padding(.bottom, 340)
-                            .padding(.trailing, 440)
                         
                         Button(action: {
                             print("clicked button 2")
@@ -147,10 +180,8 @@ struct ContentView: View {
                                 .font(.title2)
                                 .frame(width: 200, height: 200)
                                 .background(Color.blue)
-                                .clipShape(RoundedRectangle(cornerRadius: 18))
-                            
+                                .clipShape(RoundedRectangle(cornerRadius: 50))
                         }.buttonStyle(.plain)
-                            .padding(.bottom, 340)
                         
                         Button(action: {
                             print("clicked button 3")
@@ -161,15 +192,13 @@ struct ContentView: View {
                                 .font(.title2)
                                 .frame(width: 200, height: 200)
                                 .background(Color.blue)
-                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                                .clipShape(RoundedRectangle(cornerRadius: 50))
                             
                         }.buttonStyle(.plain)
-                            .padding(.bottom, 340)
-                            .padding(.leading, 440)
                         
                         
                         
-                    }
+                    }.padding(.bottom, 350)
                 }.navigationTitle("Menu")
             }
         }
@@ -299,7 +328,7 @@ struct ContentView: View {
                     .buttonStyle(.plain)
                     .keyboardShortcut(.space, modifiers: [.shift])
                 
-                Text("Click to see results.")
+                Text("Test is over.")
                     .padding(.top, 35)
                 
                 RoundedRectangle(cornerRadius: 18)
@@ -492,6 +521,7 @@ struct ContentView: View {
                                 isMeasuring = true
                                 state = "click R"
                                 timeElapsed = 0
+                                startTimer = Date()
                                 Task {
                                     try? await Task.sleep(nanoseconds: UInt64(3 * 1_000_000_000))
                                     if state == "click R" {
@@ -522,7 +552,7 @@ struct ContentView: View {
                         .padding(.top, 45)
                     
                     Button(action: {
-                        state = "settings"
+                        state = "settings R"
                         clickTimes.removeAll()
                         saveMessage = "No changes made."
                         slider1Value = Double(minWaitTime)
@@ -596,7 +626,7 @@ struct ContentView: View {
             
             if state == "click R" {
                 Button(action: {
-                    result = timeElapsed
+                    result = Int(Date().timeIntervalSince(startTimer) * 1000)
                     isMeasuring = false
                     clickTimes.append(Float(result))
                     testCount += 1
@@ -637,6 +667,7 @@ struct ContentView: View {
                                 isMeasuring = true
                                 state = "click R"
                                 timeElapsed = 0
+                                startTimer = Date()
                                 Task {
                                     try? await Task.sleep(nanoseconds: UInt64(3 * 1_000_000_000))
                                     if state == "click R" {
@@ -702,6 +733,7 @@ struct ContentView: View {
                             isMeasuring = true
                             state = "click R"
                             timeElapsed = 0
+                            startTimer = Date()
                         }
                     }
                 }) {
@@ -850,7 +882,7 @@ struct ContentView: View {
                 
             }
             
-            if state == "settings" {
+            if state == "settings R" {
                 ZStack {
                     
                     Text("Settings")
@@ -1029,14 +1061,12 @@ struct ContentView: View {
             if state == "start T" {
                 ZStack {
                     Button(action: {
-                        timeStopGoal = 3 //smazat az udelam nastaveni
-                        state = "count T"
+                        randomTime = Int.random(in: minTime...maxTime)
+                        // timeStopGoal = randomTimeText //smazat az udelam nastaveni
+                        state = "make time T"
                         isViewBlocked = false
                         timeElapsed = 0
-                        Task {
-                            try? await Task.sleep(nanoseconds: UInt64(3 * 1_000_000_000))
-                            isViewBlocked = true
-                        }
+                        print("Random time is \(randomTime) ms")
                     }) {
                         Text("Start")
                             .bold()
@@ -1046,6 +1076,9 @@ struct ContentView: View {
                             .background(Color.green)
                             .font(.largeTitle)
                     }.buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [])
+                    Text("Timer duration is set to \(slider5Text).")
+                        .padding(.top, 45)
                     
                     Button(action: {
                         state = "settings T"
@@ -1076,7 +1109,7 @@ struct ContentView: View {
                             .padding(.trailing, 500)
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.control])
+                        .keyboardShortcut("b", modifiers: [])
                     
                     Button(action: {
                         sentFrom = state
@@ -1097,10 +1130,35 @@ struct ContentView: View {
                 }
             }
             
+            if state == "make time T" {
+                ZStack {
+                    Button(action: {
+                        state = "count T"
+                        timeElapsed = 0
+                        Task {
+                            try? await Task.sleep(nanoseconds: UInt64((Float(minTime) / 2) * 1_000_000_000))
+                            isViewBlocked = true
+                        }
+                    }) {
+                        Text("\(randomTimeText) s.")
+                            .padding(.horizontal, 50)
+                            .padding(.vertical, 50)
+                            .frame(minWidth: 700, minHeight: 600)
+                            .background(Color.blue)
+                            .font(.system(size: 80, weight: .bold, design: .default))
+                    }.buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [])
+                    Text("Stop timer at")
+                        .padding(.bottom, 75)
+                }
+            }
+            
             if state == "count T" {
                 Button(action: {
                     state = "stopped T"
                     timeStopped = timeElapsed
+                    timeLogDates.append(Date().formatted(date: .omitted, time: .standard));
+                    timeLogValues.append(timeDifferenceText)
                 }) {
                     Text("")
                         .bold()
@@ -1110,10 +1168,10 @@ struct ContentView: View {
                         .background(Color.red)
                         .font(.largeTitle)
                 }.buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [])
                 if isViewBlocked == false {
                     Text("\(timeElapsedText) s.")
-                        .bold()
-                        .font(.largeTitle)
+                        .font(.system(size: 80, weight: .bold, design: .default))
                         .foregroundColor(.white)
                 }
             }
@@ -1122,14 +1180,17 @@ struct ContentView: View {
                 Button(action: {
                     state = "results T"
                 }) {
-                    Text("You stopped at \(Int(timeStopped)) s.")
-                        .bold()
+                    Text("\(Int(timeStopped)) s.")
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
                         .background(Color.blue)
-                        .font(.largeTitle)
+                        .font(.system(size: 80, weight: .bold, design: .default))
                 }.buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [])
+                
+                Text("You stopped timer at")
+                    .padding(.bottom, 75)
             }
             
             if state == "results T" {
@@ -1181,22 +1242,142 @@ struct ContentView: View {
                         }.foregroundColor(.white)
                             .buttonStyle(.plain)
                             .keyboardShortcut("l", modifiers: [])
-                    }//.padding(.vertical, 10)
+                    }
                     .padding(.top, 510)
                     .navigationTitle("Skilltester - Time, Results")
                     Text("You stopped at")
                         .padding(.bottom, 45)
-                    Text("\(timeStopped) / \(timeStopGoal)")
+                    Text("\(timeStoppedText) / \(randomTimeText) s.")
                         .bold()
                         .font(.largeTitle)
+                    Text("Difference: \(timeDifferenceText) s.")
+                        .padding(.top, 45)
+                    
                 }
+            }
+            
+            if state == "settings T" {
+                ZStack {
+                    Text("Settings")
+                        .bold()
+                        .font(.largeTitle)
+                        .padding(.bottom, 530)
+                    
+                    Button(action: {
+                        state = "start T"
+                        if slider5Text == "Short" {
+                            minTime = 5000
+                            maxTime = 10000
+                        } else if slider5Text == "Medium" {
+                            minTime = 7000
+                            maxTime = 15000
+                        } else {
+                            minTime = 10000
+                            maxTime = 25000
+                        }
+                        spamWaitTime = Int(slider5Value)
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.green)
+                            .clipShape(Capsule())
+                    }.padding(.top, 500)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    ZStack {
+                        Slider(value: $slider5Value, in: 0...3)
+                            .tint(.green)
+                            .frame(width: 250)
+                        Text("Wait time: ")
+                            .font(.title3)
+                            .foregroundColor(.white)
+                            .padding(.trailing, 320)
+                        Text("\(slider5Text)")
+                            .font(.title3)
+                            .foregroundColor(.white)
+                            .padding(.leading, 290)
+                    }
+                }
+            }
+            
+            if state == "log T" {
+                if 0 < timeLogValues.count && 0 < timeLogDates.count {
+                    ScrollView {
+                        VStack {
+                            ForEach(0..<timeLogValues.count, id: \.self) { index in
+                                HStack {
+                                    Text("Attempt: \(index + 1)")
+                                        .font(.title2)
+                                        .padding(.leading, 40)
+                                    Spacer()
+                                    Text("\(timeLogValues[index]) second difference. ")
+                                        .font(.title2)
+                                    Spacer()
+                                    Text("\(timeLogDates[index])")
+                                        .font(.title2)
+                                        .padding(.trailing, 40)
+                                }
+                            }
+                        }.frame(maxWidth: .infinity)
+                    }.frame(height: 400)
+                } else {
+                    Text("No log stored.")
+                        .font(.title2)
+                }
+                
+                Button(action: {
+                    print(sentFrom)
+                    if sentFrom == "results T" {
+                        state = "results T"
+                    } else if sentFrom == "start T" {
+                        state = "start T"
+                    }
+                }) {
+                    Text("Back")
+                        .bold()
+                        .font(.largeTitle)
+                        .frame(width: 200, height: 50)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
+                }.padding(.top, 510)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [.shift])
+                Button(action: {
+                    state = "menu"
+                }) {
+                    Text("Menu")
+                        .bold()
+                        .font(.largeTitle)
+                        .frame(width: 100, height: 50)
+                        .background(Color.red)
+                        .clipShape(Capsule())
+                        .padding(.trailing, 550)
+                }.padding(.top, 510)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut("m", modifiers: [])
+                Button(action: {
+                    timeLogDates.removeAll()
+                    timeLogValues.removeAll()
+                    //timeLogDurations.removeAll()
+                }) {
+                    Text("Clear")
+                        .bold()
+                        .font(.largeTitle)
+                        .frame(width: 100, height: 50)
+                        .background(Color.red)
+                        .clipShape(Capsule())
+                        .padding(.leading, 550)
+                }.padding(.top, 510)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut("m", modifiers: [])
             }
         }
     }
     
     var body: some View {
         ZStack {
-            // Text("Ts is body")
             if state == "menu" {
                 menuView
             } else if state.hasSuffix("S") {
@@ -1207,6 +1388,7 @@ struct ContentView: View {
                 timeView
             }
         }
+        .frame(minWidth: 700, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
         .navigationTitle("Skilltester")
         .onReceive(timer) { _ in
             timeElapsed += 1
