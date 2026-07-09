@@ -8,11 +8,17 @@
 import SwiftUI
 
 struct ContentView: View {
+    //MARK: SETUP variables
     @State private var state: String = "menu" // nezapomen zmenit na start
-    var dynamicEndBarWidth: CGFloat {
-        CGFloat(340 * Double(timeElapsed) * 0.001)
-    }
     
+    //MARK: DESIGN variables
+    var dynamicEndBarWidth: CGFloat {
+        CGFloat(700 * Double(timeElapsed) * 0.00121)
+    }
+    @State private var bgOpacity: Double = 0.6
+    @State private var elementOpacity: Double = 0.45
+    
+    //MARK: REACTION variables
     @State private var randomWait: Float = 0.0
     @State private var isMeasuring: Bool = false
     @State private var result = 0
@@ -51,6 +57,13 @@ struct ContentView: View {
             return .white
         }
     }
+    func getExistenceById(index: Int) -> Double{
+        if index % 2 == 0 {
+            return 0
+        } else {
+            return 0.1
+        }
+    }
     
     @State private var minWaitTime: Float = 1.5
     @State private var maxWaitTime: Float = 3.0
@@ -76,7 +89,7 @@ struct ContentView: View {
     let graphCr: CGFloat = 8
     let graphHt: CGFloat = 100
     
-    // SPAMMING BELOW
+    //MARK: SPAMMING variables
     @State private var spamCount: Int = 0
     @State private var spamWaitTime: Int = 5
     @State private var cps = 0
@@ -90,7 +103,7 @@ struct ContentView: View {
     var actualCps: String {
         String(format: "%.0f", Float(spamCount) / (0.0001 + Float(timeElapsed))*1000)
     }
-    //TIME BELOW
+    //MARK: TIME variables
     @State private var timeStopped: Int = 0
     @State private var isViewBlocked: Bool = false
     @State private var timeStopGoal: Int = 0
@@ -109,7 +122,7 @@ struct ContentView: View {
         Int(abs(randomTime - timeStopped))
     }
     var timeDifferenceText: String {
-        String(format: "%.2f", (Float(timeStoppedText) ?? 1) - (Float(randomTimeText) ?? 1))
+        String(format: "%.2f", abs((Float(timeStoppedText) ?? 1) - (Float(randomTimeText) ?? 1)))
         //round(Float(timeDifference) / 100)/10)
     }
     var slider5Text: String {
@@ -124,7 +137,7 @@ struct ContentView: View {
         }
     }
     
-    //LOG
+    //MARK: LOG variables
     @State private var spamLogDates: [String] = []
     @State private var spamLogValues: [Int] = []
     @State private var spamLogDurations: [Int] = []
@@ -166,7 +179,8 @@ struct ContentView: View {
                                 .bold()
                                 .font(.title2)
                                 .frame(width: 200, height: 200)
-                                .background(Color.blue)
+                                //.background(.ultraThinMaterial)
+                                .background(Color.blue.opacity(elementOpacity))
                                 .clipShape(RoundedRectangle(cornerRadius: 50))
                             
                         }.buttonStyle(.plain)
@@ -179,7 +193,7 @@ struct ContentView: View {
                                 .bold()
                                 .font(.title2)
                                 .frame(width: 200, height: 200)
-                                .background(Color.blue)
+                                .background(Color.blue.opacity(elementOpacity))
                                 .clipShape(RoundedRectangle(cornerRadius: 50))
                         }.buttonStyle(.plain)
                         
@@ -191,12 +205,10 @@ struct ContentView: View {
                                 .bold()
                                 .font(.title2)
                                 .frame(width: 200, height: 200)
-                                .background(Color.blue)
+                                .background(Color.blue.opacity(elementOpacity))
                                 .clipShape(RoundedRectangle(cornerRadius: 50))
                             
                         }.buttonStyle(.plain)
-                        
-                        
                         
                     }.padding(.bottom, 350)
                 }.navigationTitle("Menu")
@@ -222,7 +234,7 @@ struct ContentView: View {
                             spamLogDates.append(Date().formatted(date: .omitted, time: .standard));
                             spamLogDurations.append(spamWaitTime)
                             Task {
-                                try? await Task.sleep(nanoseconds: UInt64(2 * 1_000_000_000))
+                                try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
                                 state = "results S"
                             }
                         }
@@ -232,7 +244,7 @@ struct ContentView: View {
                             .padding(.horizontal, 50)
                             .padding(.vertical, 50)
                             .frame(minWidth: 700, minHeight: 600)
-                            .background(Color.green)
+                            .background(Color.green.opacity(bgOpacity))
                             .font(.largeTitle)
                         
                     }.foregroundColor(.white)
@@ -248,7 +260,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 200, height: 50)
-                            .background(Color.black)
+                            .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.top, 500)
                     }.foregroundColor(.white)
@@ -264,7 +276,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 100, height: 50)
-                            .background(Color.black)
+                            .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.top, 500)
                             .padding(.trailing, 500)
@@ -279,7 +291,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 100, height: 50)
-                            .background(Color.black)
+                            .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.leading, 550)
                             .padding(.top, 500)
@@ -300,7 +312,7 @@ struct ContentView: View {
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
-                        .background(Color.blue)
+                        .background(Color.blue.opacity(bgOpacity))
                         .font(.largeTitle)
                     
                 }.foregroundColor(.white)
@@ -321,7 +333,7 @@ struct ContentView: View {
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
-                        .background(Color.black)
+                        .background(Color.black.opacity(0.1))
                         .font(.largeTitle)
                     
                 }.foregroundColor(.white)
@@ -335,6 +347,7 @@ struct ContentView: View {
                     .size(width: dynamicEndBarWidth, height: 18)
                     .padding(.trailing, 350)
                     .padding(.top, 586)
+                    .foregroundColor(Color.black.opacity(elementOpacity))
             }
             
             if state == "results S" {
@@ -355,7 +368,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 200, height: 50)
-                            .background(Color.blue)
+                            .background(Color.blue.opacity(elementOpacity))
                             .clipShape(Capsule())
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
@@ -368,7 +381,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 100, height: 50)
-                            .background(Color.red)
+                            .background(Color.red.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.trailing, 550)
                     }.foregroundColor(.white)
@@ -383,7 +396,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 100, height: 50)
-                            .background(Color.green)
+                            .background(Color.green.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.leading, 550)
                     }.foregroundColor(.white)
@@ -407,7 +420,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 200, height: 50)
-                            .background(Color.green)
+                            .background(Color.green.opacity(elementOpacity))
                             .clipShape(Capsule())
                     }.padding(.top, 500)
                         .buttonStyle(.plain)
@@ -432,17 +445,23 @@ struct ContentView: View {
                     ScrollView {
                         VStack {
                             ForEach(0..<spamLogValues.count, id: \.self) { index in
-                                HStack {
-                                    Text("Attempt: \(index + 1)")
-                                        .font(.title2)
-                                        .padding(.leading, 40)
-                                    Spacer()
-                                    Text("\(spamLogValues[index]) cps. (\(spamLogDurations[index]) s.)")
-                                        .font(.title2)
-                                    Spacer()
-                                    Text("\(spamLogDates[index])")
-                                        .font(.title2)
-                                        .padding(.trailing, 40)
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
+                                        .padding(.horizontal, 35)
+                                    
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        Text("\(spamLogValues[index]) cps. (\(spamLogDurations[index]) s.)")
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(spamLogDates[index])")
+                                            .font(.title2)
+                                            .padding(.trailing, 40)
+                                    }
                                 }
                             }
                         }.frame(maxWidth: .infinity)
@@ -464,8 +483,9 @@ struct ContentView: View {
                         .bold()
                         .font(.largeTitle)
                         .frame(width: 200, height: 50)
-                        .background(Color.blue)
+                        .background(Color.blue.opacity(elementOpacity))
                         .clipShape(Capsule())
+                        .foregroundColor(.white)
                 }.padding(.top, 510)
                     .buttonStyle(.plain)
                     .keyboardShortcut(.space, modifiers: [.shift])
@@ -476,8 +496,9 @@ struct ContentView: View {
                         .bold()
                         .font(.largeTitle)
                         .frame(width: 100, height: 50)
-                        .background(Color.red)
+                        .background(Color.red.opacity(elementOpacity))
                         .clipShape(Capsule())
+                        .foregroundColor(.white)
                         .padding(.trailing, 550)
                 }.padding(.top, 510)
                     .buttonStyle(.plain)
@@ -491,12 +512,13 @@ struct ContentView: View {
                         .bold()
                         .font(.largeTitle)
                         .frame(width: 100, height: 50)
-                        .background(Color.red)
+                        .background(Color.red.opacity(elementOpacity))
                         .clipShape(Capsule())
+                        .foregroundColor(.white)
                         .padding(.leading, 550)
                 }.padding(.top, 510)
                     .buttonStyle(.plain)
-                    .keyboardShortcut("m", modifiers: [])
+                    .keyboardShortcut("x", modifiers: [])
                 
             }
         }
@@ -541,7 +563,7 @@ struct ContentView: View {
                             .padding(.horizontal, 50)
                             .padding(.vertical, 50)
                             .frame(minWidth: 700, minHeight: 600)
-                            .background(Color.green)
+                            .background(Color.green.opacity(bgOpacity))
                             .font(.largeTitle)
                         
                     }.foregroundColor(.white)
@@ -563,7 +585,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 200, height: 50)
-                            .background(Color.black)
+                            .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.top, 500)
                     }.foregroundColor(.white)
@@ -579,7 +601,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 100, height: 50)
-                            .background(Color.black)
+                            .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.top, 500)
                             .padding(.trailing, 500)
@@ -595,7 +617,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 100, height: 50)
-                            .background(Color.black)
+                            .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.top, 500)
                             .padding(.leading, 550)
@@ -689,6 +711,7 @@ struct ContentView: View {
                         Task {
                             try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
                             state = "results R"
+                            testCount = 0
                             reactLogDates.append(Date().formatted(date: .omitted, time: .standard));
                             reactLogAvaV.append(Int(avaTime))
                             reactLogBestV.append(Int(clickTimes.min() ?? 0))
@@ -702,7 +725,7 @@ struct ContentView: View {
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
-                        .background(Color.blue)
+                        .background(Color.blue.opacity(elementOpacity))
                         .font(.largeTitle)
                     
                 }.foregroundColor(.white)
@@ -742,7 +765,7 @@ struct ContentView: View {
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
-                        .background(Color.red)
+                        .background(Color.red.opacity(elementOpacity))
                         .font(.largeTitle)
                     
                 }.foregroundColor(.white)
@@ -763,15 +786,20 @@ struct ContentView: View {
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
-                        .background(Color.black)
+                        .background(Color.black.opacity(0.1))
                         .font(.largeTitle)
                     
                 }.foregroundColor(.white)
                     .buttonStyle(.plain)
-                    .keyboardShortcut(.space, modifiers: [])
                 
-                Text("Click to see results.")
+                Text("Test ended.")
                     .padding(.top, 35)
+                
+                RoundedRectangle(cornerRadius: 18)
+                    .size(width: dynamicEndBarWidth, height: 18)
+                    .padding(.trailing, 350)
+                    .padding(.top, 586)
+                    .foregroundColor(Color.black.opacity(elementOpacity))
             }
             
             if state == "results R" {
@@ -790,7 +818,7 @@ struct ContentView: View {
                                 .bold()
                                 .font(.largeTitle)
                                 .frame(width: 200, height: 50)
-                                .background(Color.blue)
+                                .background(Color.blue.opacity(elementOpacity))
                                 .clipShape(Capsule())
                         }.foregroundColor(.white)
                             .buttonStyle(.plain)
@@ -803,7 +831,7 @@ struct ContentView: View {
                                 .bold()
                                 .font(.largeTitle)
                                 .frame(width: 100, height: 50)
-                                .background(Color.red)
+                                .background(Color.red.opacity(elementOpacity))
                                 .clipShape(Capsule())
                                 .padding(.trailing, 550)
                         }.foregroundColor(.white)
@@ -817,7 +845,7 @@ struct ContentView: View {
                                 .bold()
                                 .font(.largeTitle)
                                 .frame(width: 100, height: 50)
-                                .background(Color.green)
+                                .background(Color.green.opacity(elementOpacity))
                                 .clipShape(Capsule())
                                 .padding(.leading, 550)
                         }.foregroundColor(.white)
@@ -826,6 +854,7 @@ struct ContentView: View {
                     }//.padding(.vertical, 10)
                     .padding(.top, 510)
                     .navigationTitle("Skilltester - Reaction time, Results")
+                    
                 }
                 
                 ZStack(alignment: .topLeading) {
@@ -900,7 +929,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 200, height: 50)
-                            .background(Color.green)
+                            .background(Color.green.opacity(elementOpacity))
                             .clipShape(Capsule())
                     }.padding(.top, 500)
                         .buttonStyle(.plain)
@@ -984,17 +1013,23 @@ struct ContentView: View {
                     ScrollView {
                         VStack {
                             ForEach(0..<reactLogAvaV.count, id: \.self) { index in
-                                HStack {
-                                    Text("Attempt: \(index + 1)")
-                                        .font(.title2)
-                                        .padding(.leading, 40)
-                                    Spacer()
-                                    Text("Best: \(reactLogBestV[index]) ms. Avarge: \(reactLogAvaV[index]) ms. Worst: \(reactLogWorstV[index]) ms.")
-                                        .font(.title2)
-                                    Spacer()
-                                    Text("\(reactLogDates[index])")
-                                        .font(.title2)
-                                        .padding(.trailing, 40)
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
+                                        .padding(.horizontal, 35)
+                                    
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        Text("Best: \(reactLogBestV[index]) ms. Avarge: \(reactLogAvaV[index]) ms. Worst: \(reactLogWorstV[index]) ms.")
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(reactLogDates[index])")
+                                            .font(.title2)
+                                            .padding(.trailing, 40)
+                                    }
                                 }
                             }
                         }.frame(maxWidth: .infinity)
@@ -1016,7 +1051,7 @@ struct ContentView: View {
                         .bold()
                         .font(.largeTitle)
                         .frame(width: 200, height: 50)
-                        .background(Color.blue)
+                        .background(Color.blue.opacity(elementOpacity))
                         .clipShape(Capsule())
                 }.padding(.top, 510)
                     .buttonStyle(.plain)
@@ -1028,7 +1063,7 @@ struct ContentView: View {
                         .bold()
                         .font(.largeTitle)
                         .frame(width: 100, height: 50)
-                        .background(Color.red)
+                        .background(Color.red.opacity(elementOpacity))
                         .clipShape(Capsule())
                         .padding(.trailing, 550)
                 }.padding(.top, 510)
@@ -1044,12 +1079,12 @@ struct ContentView: View {
                         .bold()
                         .font(.largeTitle)
                         .frame(width: 100, height: 50)
-                        .background(Color.red)
+                        .background(Color.red.opacity(elementOpacity))
                         .clipShape(Capsule())
                         .padding(.leading, 550)
                 }.padding(.top, 510)
                     .buttonStyle(.plain)
-                    .keyboardShortcut("m", modifiers: [])
+                    .keyboardShortcut("x", modifiers: [])
                 
             }
         }
@@ -1073,7 +1108,7 @@ struct ContentView: View {
                             .padding(.horizontal, 50)
                             .padding(.vertical, 50)
                             .frame(minWidth: 700, minHeight: 600)
-                            .background(Color.green)
+                            .background(Color.green.opacity(bgOpacity))
                             .font(.largeTitle)
                     }.buttonStyle(.plain)
                         .keyboardShortcut(.space, modifiers: [])
@@ -1087,7 +1122,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 200, height: 50)
-                            .background(Color.black)
+                            .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.top, 500)
                     }.foregroundColor(.white)
@@ -1103,7 +1138,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 100, height: 50)
-                            .background(Color.black)
+                            .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.top, 500)
                             .padding(.trailing, 500)
@@ -1119,7 +1154,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 100, height: 50)
-                            .background(Color.black)
+                            .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                             .padding(.top, 500)
                             .padding(.leading, 550)
@@ -1136,7 +1171,7 @@ struct ContentView: View {
                         state = "count T"
                         timeElapsed = 0
                         Task {
-                            try? await Task.sleep(nanoseconds: UInt64((Float(minTime) / 2) * 1_000_000_000))
+                            try? await Task.sleep(nanoseconds: UInt64((Float(minTime) / 2) * 1_000_000))
                             isViewBlocked = true
                         }
                     }) {
@@ -1144,7 +1179,7 @@ struct ContentView: View {
                             .padding(.horizontal, 50)
                             .padding(.vertical, 50)
                             .frame(minWidth: 700, minHeight: 600)
-                            .background(Color.blue)
+                            .background(Color.blue.opacity(bgOpacity))
                             .font(.system(size: 80, weight: .bold, design: .default))
                     }.buttonStyle(.plain)
                         .keyboardShortcut(.space, modifiers: [])
@@ -1165,7 +1200,7 @@ struct ContentView: View {
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
-                        .background(Color.red)
+                        .background(Color.red.opacity(bgOpacity))
                         .font(.largeTitle)
                 }.buttonStyle(.plain)
                     .keyboardShortcut(.space, modifiers: [])
@@ -1180,11 +1215,11 @@ struct ContentView: View {
                 Button(action: {
                     state = "results T"
                 }) {
-                    Text("\(Int(timeStopped)) s.")
+                    Text("\(timeStoppedText) s.")
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
-                        .background(Color.blue)
+                        .background(Color.blue.opacity(bgOpacity))
                         .font(.system(size: 80, weight: .bold, design: .default))
                 }.buttonStyle(.plain)
                     .keyboardShortcut(.space, modifiers: [])
@@ -1209,7 +1244,7 @@ struct ContentView: View {
                                 .bold()
                                 .font(.largeTitle)
                                 .frame(width: 200, height: 50)
-                                .background(Color.blue)
+                                .background(Color.blue.opacity(elementOpacity))
                                 .clipShape(Capsule())
                         }.foregroundColor(.white)
                             .buttonStyle(.plain)
@@ -1222,7 +1257,7 @@ struct ContentView: View {
                                 .bold()
                                 .font(.largeTitle)
                                 .frame(width: 100, height: 50)
-                                .background(Color.red)
+                                .background(Color.red.opacity(elementOpacity))
                                 .clipShape(Capsule())
                                 .padding(.trailing, 550)
                         }.foregroundColor(.white)
@@ -1236,7 +1271,7 @@ struct ContentView: View {
                                 .bold()
                                 .font(.largeTitle)
                                 .frame(width: 100, height: 50)
-                                .background(Color.green)
+                                .background(Color.green.opacity(elementOpacity))
                                 .clipShape(Capsule())
                                 .padding(.leading, 550)
                         }.foregroundColor(.white)
@@ -1281,7 +1316,7 @@ struct ContentView: View {
                             .bold()
                             .font(.largeTitle)
                             .frame(width: 200, height: 50)
-                            .background(Color.green)
+                            .background(Color.green.opacity(elementOpacity))
                             .clipShape(Capsule())
                     }.padding(.top, 500)
                         .buttonStyle(.plain)
@@ -1307,17 +1342,22 @@ struct ContentView: View {
                     ScrollView {
                         VStack {
                             ForEach(0..<timeLogValues.count, id: \.self) { index in
-                                HStack {
-                                    Text("Attempt: \(index + 1)")
-                                        .font(.title2)
-                                        .padding(.leading, 40)
-                                    Spacer()
-                                    Text("\(timeLogValues[index]) second difference. ")
-                                        .font(.title2)
-                                    Spacer()
-                                    Text("\(timeLogDates[index])")
-                                        .font(.title2)
-                                        .padding(.trailing, 40)
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
+                                        .padding(.horizontal, 35)
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        Text("\(timeLogValues[index]) second difference. ")
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(timeLogDates[index])")
+                                            .font(.title2)
+                                            .padding(.trailing, 40)
+                                    }
                                 }
                             }
                         }.frame(maxWidth: .infinity)
@@ -1339,8 +1379,9 @@ struct ContentView: View {
                         .bold()
                         .font(.largeTitle)
                         .frame(width: 200, height: 50)
-                        .background(Color.blue)
+                        .background(Color.blue.opacity(elementOpacity))
                         .clipShape(Capsule())
+                        .foregroundColor(.white)
                 }.padding(.top, 510)
                     .buttonStyle(.plain)
                     .keyboardShortcut(.space, modifiers: [.shift])
@@ -1351,9 +1392,10 @@ struct ContentView: View {
                         .bold()
                         .font(.largeTitle)
                         .frame(width: 100, height: 50)
-                        .background(Color.red)
+                        .background(Color.red.opacity(elementOpacity))
                         .clipShape(Capsule())
                         .padding(.trailing, 550)
+                        .foregroundColor(.white)
                 }.padding(.top, 510)
                     .buttonStyle(.plain)
                     .keyboardShortcut("m", modifiers: [])
@@ -1366,12 +1408,13 @@ struct ContentView: View {
                         .bold()
                         .font(.largeTitle)
                         .frame(width: 100, height: 50)
-                        .background(Color.red)
+                        .background(Color.red.opacity(elementOpacity))
                         .clipShape(Capsule())
                         .padding(.leading, 550)
+                        .foregroundColor(.white)
                 }.padding(.top, 510)
                     .buttonStyle(.plain)
-                    .keyboardShortcut("m", modifiers: [])
+                    .keyboardShortcut("x", modifiers: [])
             }
         }
     }
