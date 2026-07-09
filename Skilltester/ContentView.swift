@@ -216,7 +216,7 @@ struct ContentView: View {
         }
     }
     var spamView: some View {
-        //MARK: Spam
+        //MARK: Spam - start
         ZStack {
             if state == "start S" {
                 ZStack {
@@ -302,6 +302,7 @@ struct ContentView: View {
                 
             }
             
+            //MARK: Spam - spamming
             if state == "spamming S" {
                 Button(action: {
                     spamCount += 1
@@ -322,6 +323,7 @@ struct ContentView: View {
                     .padding(.top, 35)
             }
             
+            //MARK: Spam - spam end
             if state == "spammed S" {
                 
                 Button(action: {
@@ -350,6 +352,7 @@ struct ContentView: View {
                     .foregroundColor(Color.black.opacity(elementOpacity))
             }
             
+            //MARK: Spam - results
             if state == "results S" {
                 VStack {
                     Text("You spammed at an avarage rate of")
@@ -405,6 +408,7 @@ struct ContentView: View {
                 }.padding(.top, 510)
             }
             
+            //MARK: Spam - settings
             if state == "settings S" {
                 ZStack {
                     Text("Settings")
@@ -440,6 +444,8 @@ struct ContentView: View {
                     
                 }
             }
+            
+            //MARK: Spam - log
             if state == "log S" {
                 if 0 < spamLogValues.count && 0 < spamLogDates.count {
                     ScrollView {
@@ -523,8 +529,9 @@ struct ContentView: View {
             }
         }
     }
-    //MARK: Reaction
+    
     var reactView: some View {
+        //MARK: Reaction - start
         ZStack {
             if state == "start R" {
                 ZStack {
@@ -628,6 +635,7 @@ struct ContentView: View {
                 }.navigationTitle("Skilltester - Reaction time")
             }
             
+            //MARK: Reaction - waiting
             if state == "wait R" {
                 Button(action: {
                     state = "prefired R"
@@ -646,6 +654,7 @@ struct ContentView: View {
                     .keyboardShortcut(.space, modifiers: [])
             }
             
+            //MARK: Reaction - click
             if state == "click R" {
                 Button(action: {
                     result = Int(Date().timeIntervalSince(startTimer) * 1000)
@@ -673,6 +682,7 @@ struct ContentView: View {
                 }
             }
             
+            //MARK: Reaction - click end
             if state == "clicked R" {
                 Button(action: {
                     randomWait = Float.random(in: minWaitTime...maxWaitTime)
@@ -741,6 +751,7 @@ struct ContentView: View {
                 }
             }
             
+            //MARK: Reaction prefire
             if state == "prefired R" {
                 Button(action: {
                     print("starting game..")
@@ -776,6 +787,7 @@ struct ContentView: View {
                     .padding(.top, 35)
             }
             
+            //MARK: Reaction end
             if state == "end R" {
                 Button(action: {
                     state = "results R"
@@ -802,6 +814,7 @@ struct ContentView: View {
                     .foregroundColor(Color.black.opacity(elementOpacity))
             }
             
+            //MARK: Reaction results
             if state == "results R" {
                 ZStack {
                     Text("Results")
@@ -911,6 +924,7 @@ struct ContentView: View {
                 
             }
             
+            //MARK: Reaction settings
             if state == "settings R" {
                 ZStack {
                     
@@ -1006,8 +1020,9 @@ struct ContentView: View {
                 }.padding(.vertical, 10)
                     .navigationTitle("Skilltester - Reaction time, Settings")
                 
-                
             }
+            
+            //MARK: Reaction log
             if state == "log R" {
                 if 0 < reactLogBestV.count && 0 < reactLogWorstV.count && 0 < reactLogAvaV.count && 0 < reactLogDates.count {
                     ScrollView {
@@ -1091,7 +1106,7 @@ struct ContentView: View {
     }
     
     var timeView: some View {
-        //MARK: Time
+        //MARK: Time - start
         ZStack {
             if state == "start T" {
                 ZStack {
@@ -1165,6 +1180,7 @@ struct ContentView: View {
                 }
             }
             
+            //MARK: Time - target time
             if state == "make time T" {
                 ZStack {
                     Button(action: {
@@ -1188,6 +1204,7 @@ struct ContentView: View {
                 }
             }
             
+            //MARK: Time - timer screen
             if state == "count T" {
                 Button(action: {
                     state = "stopped T"
@@ -1228,6 +1245,7 @@ struct ContentView: View {
                     .padding(.bottom, 75)
             }
             
+            //MARK: Time - results
             if state == "results T" {
                 ZStack {
                     Text("Results")
@@ -1291,6 +1309,7 @@ struct ContentView: View {
                 }
             }
             
+            //MARK: Time - settings
             if state == "settings T" {
                 ZStack {
                     Text("Settings")
@@ -1337,6 +1356,7 @@ struct ContentView: View {
                 }
             }
             
+            //MARK: Time - log
             if state == "log T" {
                 if 0 < timeLogValues.count && 0 < timeLogDates.count {
                     ScrollView {
