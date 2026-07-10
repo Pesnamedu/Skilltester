@@ -9,7 +9,28 @@ import SwiftUI
 
 struct ContentView: View {
     //MARK: SETUP variables
-    @State private var state: String = "startup" // nezapomen zmenit na start
+    @State private var state: String = "startup" // nezapomen zmenit na startup
+    @AppStorage("users") private var users: [String] = []
+    @State private var passwordInput: String = ""
+    @State private var passwordState: String = "none"
+    @State private var nameInput: String = ""
+    @State private var passwordRepeat: String = ""
+    func getProfilePicture(index: Int) -> String {
+        if index < userNames.count + 1 {
+            return String(String(userNames[index]).prefix(1))
+        } else {
+            return "%"
+        }
+    }
+    @State private var usersState: String = "none"
+    var howManyButtons: Int {
+        Int(userNames.count) + 2
+    }
+    @State private var userOnLogin: Int = 0
+    
+    @AppStorage("userNames") private var userNames: [String] = []
+    @AppStorage("userPass") private var userPass: [String] = []
+    
     
     //MARK: DESIGN variables
     var dynamicEndBarWidth: CGFloat {
@@ -17,6 +38,7 @@ struct ContentView: View {
     }
     @State private var bgOpacity: Double = 0.6
     @State private var elementOpacity: Double = 0.45
+    let scrollSpace = "myScrollSpace"
     
     //MARK: REACTION variables
     @State private var randomWait: Float = 0.0
@@ -1467,6 +1489,7 @@ struct ContentView: View {
         }
     }
     
+    //MARK: STARTUP
     var StartupView: some View {
         ZStack {
             VStack(spacing: -20) {
@@ -1477,19 +1500,229 @@ struct ContentView: View {
                     .font(.system(size: 81, weight: .bold, design: .default))
                     .foregroundColor(Color.white.opacity(0.7))
             }.padding(.bottom, 500)
-            Button(action: {
-                state = "menu"
-            }) {
-                Text("Continue")
-                    .font(.system(size: 51, weight: .bold, design: .default))
-                    .foregroundColor(Color.white.opacity(0.8))
-                    .frame(width: 250, height: 70)
-                    .background(Color.blue.opacity(elementOpacity - 0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 40))
-                
-                
-            }.buttonStyle(.plain)
-                .padding(.top, 475)
+            
+            //MARK: Chosing users
+            if usersState == "choosing" {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack {
+                        ForEach(0..<howManyButtons, id: \.self) { index in
+                            if index == 0 {
+                                Text("FIRST")
+                                    .foregroundColor(.clear)
+                                    .padding(.leading, 180)
+                            } else if index == userNames.count + 1 {
+                                Text("LAST")
+                                    .foregroundColor(.clear)
+                            } else {
+                                Button(action: {
+                                    usersState = "login"
+                                    userOnLogin = Int(index - 1)
+                                }) {
+                                    Text(getProfilePicture(index: Int(index - 1)))
+                                        .font(.system(size: 110, weight: .thin, design: .default))
+                                        .frame(width: 250, height: 250)
+                                        .background(Color.blue.opacity(0.45))
+                                        .clipShape(Circle())
+                                        .padding(.bottom, 110)
+                                }.buttonStyle(.plain)
+                            }
+                        }
+                        
+                    }
+                }
+            }
+            //MARK: Creating user
+            if usersState == "creating" {
+                Button(action: {
+                    print("ADD USER")
+                }) {
+                    Text("+")
+                        .font(.system(size: 110, weight: .thin, design: .default))
+                        .baselineOffset(13)
+                        .frame(width: 250, height: 250)
+                        .background(Color.blue.opacity(0.45))
+                        .clipShape(Circle())
+                }.buttonStyle(.plain)
+                    .padding(.bottom, 110)
+                    .disabled(passwordState != "none")
+            }
+            //MARK: Login user
+            if usersState == "login" {
+                Text(getProfilePicture(index: userOnLogin))
+                    .font(.system(size: 110, weight: .thin, design: .default))
+                    .baselineOffset(13)
+                    .frame(width: 250, height: 250)
+                    .background(Color.blue.opacity(0.45))
+                    .clipShape(Circle())
+                    .padding(.bottom, 100)
+                Text(userNames[userOnLogin])
+                    .font(.largeTitle)
+                    .padding(.top, 190)
+                HStack(spacing: -35) {
+                    SecureField("Password...", text: $passwordInput)
+                        .font(.largeTitle)
+                        .padding(.leading, 10)
+                        .textFieldStyle(.plain)
+                        .frame(width: 190, height: 40)
+                        .background(Color.gray.opacity(0.3))
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                    Button(action: {
+                        if passwordInput == userPass[userOnLogin] {
+                            print("USER NAME: \(userNames[userOnLogin]) SIGNED IN")
+                            usersState = "loggedin"
+                        } else {
+                            print("INCORRECT PASSWORD ON LOGIN")
+                        }
+                    }) {
+                        Image(systemName: "arrow.right")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray)
+                            .frame(width: 30, height: 30)
+                            .background(Color.gray.opacity(0.2))
+                            .clipShape(Circle())
+                    }.buttonStyle(.plain)
+                        .keyboardShortcut(.return, modifiers: [])
+                }.padding(.top, 280)
+            }
+            //MARK: Brand new screen
+            ZStack {
+                if usersState == "none" {
+                    Text("Add User")
+                        .font(.largeTitle)
+                        .foregroundColor(Color.white.opacity(0.8))
+                    Button(action: {
+                        print("Pressed add user.")
+                        usersState = "creating"
+                        passwordState = "name"
+                    }) {
+                        Text("+")
+                            .font(.system(size: 110, weight: .thin, design: .default))
+                            .baselineOffset(13)
+                            .frame(width: 250, height: 250)
+                            .background(Color.blue.opacity(0.45))
+                            .clipShape(Circle())
+                    }.buttonStyle(.plain)
+                        .padding(.bottom, 310)
+                        .disabled(passwordState != "none")
+                } else if passwordState == "name" {
+                    HStack(spacing: -35) {
+                        TextField("Name...", text: $nameInput)
+                            .font(.largeTitle)
+                            .padding(.leading, 10)
+                            .textFieldStyle(.plain)
+                            .frame(width: 190, height: 40)
+                            .background(Color.gray.opacity(0.3))
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                        Button(action: {
+                            if nameInput.count >= 4 {
+                                print("USER NAME: \(nameInput)")
+                                passwordState = "input"
+                            } else {
+                                print("USER NAME NOT LONG ENOUGH")
+                            }
+                        }) {
+                            Image(systemName: "arrow.right")
+                                .font(.largeTitle)
+                                .foregroundColor(.gray)
+                                .frame(width: 30, height: 30)
+                                .background(Color.gray.opacity(0.2))
+                                .clipShape(Circle())
+                        }.buttonStyle(.plain)
+                            .keyboardShortcut(.return, modifiers: [])
+                    }.padding(.top, 1)
+                } else {
+                    Text(nameInput)
+                        .font(.largeTitle)
+                        .foregroundColor(Color.white.opacity(0.8))
+                        .padding(.top, -8)
+                }
+            
+            //MARK: + Name & Password
+                if passwordState == "input" || passwordState == "repeat"{
+                    HStack(spacing: -35) {
+                        SecureField("Password...", text: $passwordInput)
+                            .font(.largeTitle)
+                            .padding(.leading, 10)
+                            .textFieldStyle(.plain)
+                            .frame(width: 190, height: 40)
+                            .background(Color.gray.opacity(0.3))
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                        Button(action: {
+                            if nameInput.count > 0 {
+                                print("USER PASSWORD: \(passwordInput)")
+                                passwordState = "repeat"
+                            } else {
+                                print("PASSWORD NOT LONG ENOUGH")
+                            }
+                        }) {
+                            Image(systemName: "arrow.right")
+                                .font(.largeTitle)
+                                .foregroundColor(.gray)
+                                .frame(width: 30, height: 30)
+                                .background(Color.gray.opacity(0.2))
+                                .clipShape(Circle())
+                        }.buttonStyle(.plain)
+                            .keyboardShortcut(.return, modifiers: [])
+                    }.padding(.top, 65)
+                    if passwordState == "repeat" {
+                        HStack(spacing: -35) {
+                            SecureField("Repeat...", text: $passwordRepeat)
+                                .font(.largeTitle)
+                                .padding(.leading, 10)
+                                .textFieldStyle(.plain)
+                                .frame(width: 190, height: 40)
+                                .background(Color.gray.opacity(0.3))
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
+                            Button(action: {
+                                if passwordInput == passwordRepeat {
+                                    print("USER PASSWORD (final): \(passwordRepeat)")
+                                    print("USER PROFILE CREATED")
+                                    
+                                    userNames.append(nameInput)
+                                    userPass.append(passwordInput)
+                                    passwordState = "done"
+                                    usersState = "choosing"
+                                } else {
+                                    print("PASSWORDS ARE NOT MATCHING")
+                                }
+                            }) {
+                                Image(systemName: "arrow.right")
+                                    .font(.largeTitle)
+                                    .foregroundColor(.gray)
+                                    .frame(width: 30, height: 30)
+                                    .background(Color.gray.opacity(0.2))
+                                    .clipShape(Circle())
+                            }.buttonStyle(.plain)
+                                .keyboardShortcut(.return, modifiers: [])
+                        }.padding(.top, 150)
+                    }
+                }
+            }.padding(.top, 200)
+            //MARK: User Logged in
+            if usersState == "loggedin" {
+                Button(action: {
+                    state = "menu"
+                }) {
+                    Text("Continue")
+                        .font(.system(size: 51, weight: .bold, design: .default))
+                        .foregroundColor(Color.white.opacity(0.8))
+                        .frame(width: 250, height: 70)
+                        .background(Color.blue.opacity(elementOpacity - 0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 40))
+                }.buttonStyle(.plain)
+                    .padding(.top, 490)
+                    .padding(.leading, 410)
+            }
+        }.onAppear {
+            print("\(howManyButtons) buttons")
+            print("\(userNames.count) users")
+            if userNames.count > 0 {
+                passwordState = "done"
+                usersState = "choosing"
+            } else {
+                passwordState = "none"
+                usersState = "none"
+            }
         }
     }
     
