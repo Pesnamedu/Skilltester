@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     //MARK: SETUP variables
-    @State private var state: String = "menu" // nezapomen zmenit na start
+    @State private var state: String = "startup" // nezapomen zmenit na start
     
     //MARK: DESIGN variables
     var dynamicEndBarWidth: CGFloat {
@@ -138,18 +138,18 @@ struct ContentView: View {
     }
     
     //MARK: LOG variables
-    @State private var spamLogDates: [String] = []
-    @State private var spamLogValues: [Int] = []
-    @State private var spamLogDurations: [Int] = []
+    @AppStorage("spamLogDates") private var spamLogDates: [String] = []
+    @AppStorage("spamLogValues") private var spamLogValues: [Int] = []
+    @AppStorage("spamLogDurations") private var spamLogDurations: [Int] = []
     
-    @State private var reactLogDates: [String] = []
-    @State private var reactLogBestV: [Int] = []
-    @State private var reactLogAvaV: [Int] = []
-    @State private var reactLogWorstV: [Int] = []
+    @AppStorage("reactLogDates") private var reactLogDates: [String] = []
+    @AppStorage("reactLogBestV") private var reactLogBestV: [Int] = []
+    @AppStorage("reactLogAvaV") private var reactLogAvaV: [Int] = []
+    @AppStorage("reactLogWorstV") private var reactLogWorstV: [Int] = []
     
-    @State private var timeLogDates: [String] = []
-    @State private var timeLogValues: [String] = []
-    @State private var timeLogDurations: [String] = []
+    @AppStorage("timeLogDates") private var timeLogDates: [String] = []
+    @AppStorage("timeLogValues") private var timeLogValues: [String] = []
+    @AppStorage("timeLogDurations") private var timeLogDurations: [String] = []
     
     //TIMER BELOW
     @State private var timeElapsed = 0
@@ -209,8 +209,24 @@ struct ContentView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 50))
                             
                         }.buttonStyle(.plain)
-                        
-                    }.padding(.bottom, 350)
+                    }.padding(.bottom, 300)
+                    Text("Menu")
+                        .bold()
+                        .foregroundColor(Color.blue.opacity(0.69))
+                        .font(.system(size: 61, weight: .bold, design: .default))
+                        .padding(.bottom, 581)
+                    Button(action: {
+                        state = "tutor"
+                    }) {
+                        Text("?")
+                            .font(.largeTitle)
+                            .foregroundColor(.white)
+                            .frame(width: 30, height: 30)
+                            .background(Color.blue.opacity(elementOpacity - 0.2))
+                            .clipShape(Circle())
+                            .padding(.top, 550)
+                            .padding(.leading, 650)
+                    }.buttonStyle(.plain)
                 }.navigationTitle("Menu")
             }
         }
@@ -1439,6 +1455,45 @@ struct ContentView: View {
         }
     }
     
+    var tutorView: some View {
+        ZStack {
+            Text("ts is tutorial")
+            Button(action: {
+                state = "menu"
+            }) {
+                Text("Back")
+                
+            }.padding(.top, 500)
+        }
+    }
+    
+    var StartupView: some View {
+        ZStack {
+            VStack(spacing: -20) {
+                Text("Welcome to")
+                    .font(.largeTitle)
+                    .foregroundColor(Color.white.opacity(0.6))
+                Text("Skill tester.")
+                    .font(.system(size: 81, weight: .bold, design: .default))
+                    .foregroundColor(Color.white.opacity(0.7))
+            }.padding(.bottom, 500)
+            Button(action: {
+                state = "menu"
+            }) {
+                Text("Continue")
+                    .font(.system(size: 51, weight: .bold, design: .default))
+                    .foregroundColor(Color.white.opacity(0.8))
+                    .frame(width: 250, height: 70)
+                    .background(Color.blue.opacity(elementOpacity - 0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 40))
+                
+                
+            }.buttonStyle(.plain)
+                .padding(.top, 475)
+        }
+    }
+    
+    //MARK: BODY
     var body: some View {
         ZStack {
             if state == "menu" {
@@ -1449,6 +1504,10 @@ struct ContentView: View {
                 reactView
             } else if state.hasSuffix("T") {
                 timeView
+            } else if state == "tutor" {
+                tutorView
+            } else if state == "startup" {
+                StartupView
             }
         }
         .frame(minWidth: 700, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
@@ -1462,5 +1521,22 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+import Foundation
+
+extension Array: RawRepresentable where Element: Codable {
+    public init?(rawValue: String) {
+        guard let data = rawValue.data(using: .utf8),
+              let result = try? JSONDecoder().decode([Element].self, from: data)
+        else { return nil }
+        self = result
+    }
+    public var rawValue: String {
+        guard let data = try? JSONEncoder().encode(self),
+              let result = String(data: data, encoding: .utf8)
+        else { return "[]" }
+        return result
     }
 }
