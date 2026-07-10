@@ -27,6 +27,7 @@ struct ContentView: View {
         Int(userNames.count) + 2
     }
     @State private var userOnLogin: Int = 0
+    @State private var userLoggedIn: Int = 0
     
     @AppStorage("userNames") private var userNames: [String] = []
     @AppStorage("userPass") private var userPass: [String] = []
@@ -1570,6 +1571,7 @@ struct ContentView: View {
                         if passwordInput == userPass[userOnLogin] {
                             print("USER NAME: \(userNames[userOnLogin]) SIGNED IN")
                             usersState = "loggedin"
+                            userLoggedIn = userOnLogin
                         } else {
                             print("INCORRECT PASSWORD ON LOGIN")
                         }
@@ -1712,6 +1714,19 @@ struct ContentView: View {
                 }.buttonStyle(.plain)
                     .padding(.top, 490)
                     .padding(.leading, 410)
+                
+                Button(action: {
+                    usersState = "userSettings"
+                }) {
+                    Text(getProfilePicture(index: userLoggedIn))
+                        .font(.system(size: 51, weight: .thin, design: .default))
+                        .foregroundColor(Color.white.opacity(0.8))
+                        .frame(width: 70, height: 70)
+                        .background(Color.blue.opacity(elementOpacity - 0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 40))
+                }.buttonStyle(.plain)
+                    .padding(.top, 490)
+                    .padding(.trailing, 590)
             }
         }.onAppear {
             print("\(howManyButtons) buttons")
