@@ -47,3 +47,22 @@ struct WindowAccesor: NSViewRepresentable {
     }
     func updateNSView(_ nsView: NSViewType, context: Context) {}
 }
+
+struct SmoothBlur: NSViewRepresentable {
+    //typealias NSViewType = NSVisualEffectView
+    
+    var material: NSVisualEffectView.Material = .hudWindow
+    var blendMode: NSVisualEffectView.BlendingMode = .behindWindow
+    
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = blendMode
+        view.state = .active
+        return view
+    }
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.material = material
+        nsView.blendingMode = blendMode
+    }
+}
