@@ -22,12 +22,27 @@ struct ContentView: View {
             return "%"
         }
     }
+    func getProfileName(index: Int) -> String {
+        if index < userNames.count + 1 {
+            return String(userNames[index])
+        } else {
+            return "%"
+        }
+    }
+    func adminStatus(index: Int) -> String {
+        if isAdmin.contains(index) {
+            return "Admin"
+        } else {
+            return "User"
+        }
+    }
     @State private var usersState: String = "none"
     var howManyButtons: Int {
         Int(userNames.count) + 2
     }
     @State private var userOnLogin: Int = 0
     @State private var userLoggedIn: Int = 0
+    @AppStorage("isAdmin") private var isAdmin: [Int] = [0]
     
     @AppStorage("userNames") private var userNames: [String] = []
     @AppStorage("userPass") private var userPass: [String] = []
@@ -1490,6 +1505,25 @@ struct ContentView: View {
         }
     }
     
+    func userCard(at index: Int) -> some View {
+        ZStack {
+            Button(action: {
+                usersState = "login"
+                userOnLogin = Int(index - 1)
+            }) {
+                Text(getProfilePicture(index: Int(index - 1)))
+                    .font(.system(size: 110, weight: .thin, design: .default))
+                    .frame(width: 250, height: 250)
+                    .background(Color.blue.opacity(0.45))
+                    .clipShape(Circle())
+                    .padding(.bottom, 110)
+            }.buttonStyle(.plain)
+            Text(userNames[index - 1])
+                .padding(.top, 200)
+                .font(.largeTitle)
+        }
+    }
+    
     //MARK: STARTUP
     var StartupView: some View {
         ZStack {
@@ -1514,23 +1548,33 @@ struct ContentView: View {
                             } else if index == userNames.count + 1 {
                                 Text("LAST")
                                     .foregroundColor(.clear)
+                                    .padding(.trailing, 180)
                             } else {
-                                Button(action: {
-                                    usersState = "login"
-                                    userOnLogin = Int(index - 1)
-                                }) {
-                                    Text(getProfilePicture(index: Int(index - 1)))
-                                        .font(.system(size: 110, weight: .thin, design: .default))
-                                        .frame(width: 250, height: 250)
-                                        .background(Color.blue.opacity(0.45))
-                                        .clipShape(Circle())
-                                        .padding(.bottom, 110)
-                                }.buttonStyle(.plain)
+                                userCard(at: index)
                             }
                         }
                         
                     }
                 }
+                
+//                Text("or")
+//                    .font(.system(size: 50, design: .default))
+//                    .baselineOffset(0.5)
+//                    .padding(.top, 300)
+
+                Button(action: {
+                    usersState = "creating"
+                    passwordState = "name"
+                }) {
+                    Text("Add User")
+                        .font(.system(size: 50, weight: .thin, design: .default))
+                        .baselineOffset(0.5)
+                        .frame(width: 220, height: 60)
+                        .background(Color.blue.opacity(0.45))
+                        .clipShape(RoundedRectangle(cornerRadius: 40))
+                }.buttonStyle(.plain)
+                    .padding(.top, 485)
+                    .padding(.trailing, 1)
             }
             //MARK: Creating user
             if usersState == "creating" {
@@ -1567,13 +1611,17 @@ struct ContentView: View {
                         .frame(width: 190, height: 40)
                         .background(Color.gray.opacity(0.3))
                         .clipShape(RoundedRectangle(cornerRadius: 20))
+                    
                     Button(action: {
                         if passwordInput == userPass[userOnLogin] {
                             print("USER NAME: \(userNames[userOnLogin]) SIGNED IN")
                             usersState = "loggedin"
+                            state = "loggedin"
                             userLoggedIn = userOnLogin
+                            passwordInput = ""
                         } else {
                             print("INCORRECT PASSWORD ON LOGIN")
+                            passwordInput = ""
                         }
                     }) {
                         Image(systemName: "arrow.right")
@@ -1585,6 +1633,22 @@ struct ContentView: View {
                     }.buttonStyle(.plain)
                         .keyboardShortcut(.return, modifiers: [])
                 }.padding(.top, 280)
+                
+                Button(action: {
+                    usersState = "choosing"
+                    passwordState = "done"
+                    passwordInput = ""
+                }) {
+                    Image(systemName: "arrow.left")
+                        .font(.largeTitle)
+                        .foregroundColor(.gray)
+                        .frame(width: 40, height: 40)
+                        .background(Color.gray.opacity(0.2))
+                        .clipShape(Circle())
+                }.buttonStyle(.plain)
+                    .keyboardShortcut(.return, modifiers: [])
+                    .padding(.top, 280)
+                    .padding(.trailing, 230)
             }
             //MARK: Brand new screen
             ZStack {
@@ -1633,10 +1697,12 @@ struct ContentView: View {
                             .keyboardShortcut(.return, modifiers: [])
                     }.padding(.top, 1)
                 } else {
-                    Text(nameInput)
-                        .font(.largeTitle)
-                        .foregroundColor(Color.white.opacity(0.8))
-                        .padding(.top, -8)
+                    if usersState == "creating" {
+                        Text(nameInput)
+                            .font(.largeTitle)
+                            .foregroundColor(Color.white.opacity(0.8))
+                            .padding(.top, -8)
+                    }
                 }
             
             //MARK: + Name & Password
@@ -1684,6 +1750,7 @@ struct ContentView: View {
                                     userPass.append(passwordInput)
                                     passwordState = "done"
                                     usersState = "choosing"
+                                    passwordInput = ""
                                 } else {
                                     print("PASSWORDS ARE NOT MATCHING")
                                 }
@@ -1700,34 +1767,8 @@ struct ContentView: View {
                     }
                 }
             }.padding(.top, 200)
-            //MARK: User Logged in
-            if usersState == "loggedin" {
-                Button(action: {
-                    state = "menu"
-                }) {
-                    Text("Continue")
-                        .font(.system(size: 51, weight: .bold, design: .default))
-                        .foregroundColor(Color.white.opacity(0.8))
-                        .frame(width: 250, height: 70)
-                        .background(Color.blue.opacity(elementOpacity - 0.15))
-                        .clipShape(RoundedRectangle(cornerRadius: 40))
-                }.buttonStyle(.plain)
-                    .padding(.top, 490)
-                    .padding(.leading, 410)
-                
-                Button(action: {
-                    usersState = "userSettings"
-                }) {
-                    Text(getProfilePicture(index: userLoggedIn))
-                        .font(.system(size: 51, weight: .thin, design: .default))
-                        .foregroundColor(Color.white.opacity(0.8))
-                        .frame(width: 70, height: 70)
-                        .background(Color.blue.opacity(elementOpacity - 0.15))
-                        .clipShape(RoundedRectangle(cornerRadius: 40))
-                }.buttonStyle(.plain)
-                    .padding(.top, 490)
-                    .padding(.trailing, 590)
-            }
+            
+        //MARK: User Logged in
         }.onAppear {
             print("\(howManyButtons) buttons")
             print("\(userNames.count) users")
@@ -1738,6 +1779,106 @@ struct ContentView: View {
                 passwordState = "none"
                 usersState = "none"
             }
+        }
+    }
+    
+    var userView: some View {
+        ZStack {
+            VStack(spacing: -20) {
+                Text("Welcome back,")
+                    .font(.largeTitle)
+                    .foregroundColor(Color.white.opacity(0.6))
+                Text(getProfileName(index:userLoggedIn))
+                    .font(.system(size: 81, weight: .bold, design: .default))
+                    .foregroundColor(Color.white.opacity(0.7))
+            }.padding(.bottom, 500)
+            
+            Button(action: {
+                state = "menu"
+            }) {
+                Text("Continue")
+                    .font(.system(size: 51, weight: .bold, design: .default))
+                    .foregroundColor(Color.white.opacity(0.8))
+                    .frame(width: 250, height: 70)
+                    .background(Color.blue.opacity(elementOpacity - 0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 40))
+            }.buttonStyle(.plain)
+                .padding(.top, 490)
+                .padding(.leading, 410)
+            
+            Button(action: {
+                usersState = "userSettings"
+            }) {
+                Text(getProfilePicture(index: userLoggedIn))
+                    .font(.system(size: 51, weight: .thin, design: .default))
+                    .foregroundColor(Color.white.opacity(0.8))
+                    .frame(width: 70, height: 70)
+                    .background(Color.blue.opacity(elementOpacity - 0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 40))
+            }.buttonStyle(.plain)
+                .padding(.top, 490)
+                .padding(.trailing, 590)
+            
+            if usersState == "userSettings" {
+                VStack {
+                    Button(action: {
+                        state = "userSettings"
+                    }) {
+                        Text("Manage")
+                            .font(.largeTitle)
+                            .frame(width: 160, height: 50)
+                            .background(Color.gray.opacity(0.2))
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                    }.buttonStyle(.plain)
+                    
+                    Button(action: {
+                        usersState = "choosing"
+                        state = "startup"
+                    }) {
+                        Text("Log out")
+                            .font(.largeTitle)
+                            .foregroundColor(.red)
+                            .frame(width: 160, height: 50)
+                            .background(Color.gray.opacity(0.2))
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                    }.buttonStyle(.plain)
+                        
+                }.frame(width: 200, height: 300)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 260)
+                .padding(.trailing, 461)
+            }
+        }
+    }
+    
+    var userSettingsView: some View {
+        ZStack {
+            VStack(spacing: -20) {
+                Text("Settings for")
+                    .font(.largeTitle)
+                    .foregroundColor(Color.white.opacity(0.6))
+                HStack(spacing: 20) {
+                    Text(adminStatus(index:userLoggedIn))
+                        .font(.system(size: 81, weight: .thin, design: .default))
+                        .foregroundColor(Color.white.opacity(0.7))
+                    Text(getProfileName(index:userLoggedIn))
+                        .font(.system(size: 81, weight: .bold, design: .default))
+                        .foregroundColor(Color.white.opacity(0.7))
+                }
+            }.padding(.bottom, 500)
+            
+            Button(action: {
+                print("Back to userView")
+                state = "loggedin"
+            }) {
+                Text("Back")
+                    .frame(width: 120, height: 50)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 30))
+            }.buttonStyle(.plain)
+                .padding(.top, 260)
+                .padding(.trailing, 461)
         }
     }
     
@@ -1756,6 +1897,10 @@ struct ContentView: View {
                 tutorView
             } else if state == "startup" {
                 StartupView
+            } else if state == "loggedin" {
+                userView
+            } else if state == "userSettings" {
+                userSettingsView
             }
         }
         .frame(minWidth: 700, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
