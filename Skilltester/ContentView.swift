@@ -100,7 +100,8 @@ struct ContentView: View {
     @State private var adminEditState: String = "none"
     @State private var accountUnderEdit: Int = 101
     @State private var isPasswordVisible: Bool = false
-    @State private var saveUserDetailsMessage: String = "none"
+    @State private var saveUserError: String = "none"
+    @State private var saveUserMessage: String = "none"
     
     @AppStorage("keepLoggedIn") private var keepLoggedIn: [Int] = []
     @State private var keepLoggedInSwitch: Bool = false
@@ -2163,6 +2164,7 @@ struct ContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 30))
                 .padding(.bottom, 270)
                 .onAppear {
+                    saveUserError = "none"
                     if keepLoggedIn.contains(userLoggedIn) {
                         keepLoggedInSwitch = true
                     } else {
@@ -2215,6 +2217,8 @@ struct ContentView: View {
                                 print("Chosing users to edit")
                                 adminEditState = "none"
                                 isPasswordVisible = false
+                                saveUserMessage = "none"
+                                saveUserError = "none"
                                 
                                 nameInput = ""
                                 passwordInput = ""
@@ -2230,7 +2234,11 @@ struct ContentView: View {
                             
                             Button(action: {
                                 print("Chosing users to edit")
-                                adminEditState = "none"
+                                if !isAdmin.contains(userLoggedIn) {
+                                    
+                                } else {
+                                    saveUserError = "Can not delete an admin accout!"
+                                }
                             }) {
                                 Text("Delete user")
                                     .font(.largeTitle)
@@ -2243,8 +2251,17 @@ struct ContentView: View {
                             
                             Button(action: {
                                 print("Saved users name & password.")
-                                userNames[accountUnderEdit] = nameInput
-                                userPass[accountUnderEdit] = passwordInput
+                                if nameInput.count >= 4 {
+                                    userNames[accountUnderEdit] = nameInput
+                                    saveUserError = "none"
+                                    saveUserMessage = "Updated \(getProfileName(index: accountUnderEdit))'s details."
+                                } else { saveUserError = "Name has to be atleast 4 characters long!" }
+                                
+                                if passwordInput.count > 0 {
+                                    userPass[accountUnderEdit] = passwordInput
+                                    saveUserError = "none"
+                                    saveUserMessage = "Updated \(getProfileName(index: accountUnderEdit))'s details."
+                                } else { saveUserError = "Password has to be atleast 1 character." }
                                 
                                 isPasswordVisible = false
                             }) {
@@ -2271,6 +2288,9 @@ struct ContentView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 20))
                                 .padding(.bottom, 50)
                                 .padding(.trailing, 330)
+                                .onChange(of: nameInput) { NewName in
+                                    saveUserMessage = "none"
+                                }
                             
                             Text("Password")
                                 .font(.largeTitle)
@@ -2287,6 +2307,9 @@ struct ContentView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 20))
                                     .padding(.bottom, 50)
                                     .padding(.leading, 330)
+                                    .onChange(of: passwordInput) { NewPassword in
+                                        saveUserMessage = "none"
+                                    }
                                 
                                 Button(action: {
                                     isPasswordVisible = false
@@ -2308,6 +2331,9 @@ struct ContentView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 20))
                                     .padding(.bottom, 50)
                                     .padding(.leading, 330)
+                                    .onChange(of: passwordInput) { NewPassword in
+                                        saveUserMessage = "none"
+                                    }
                                 Button(action: {
                                     isPasswordVisible = true
                                 }) {
@@ -2317,7 +2343,24 @@ struct ContentView: View {
                                         .clipShape(Circle())
                                         .padding(.bottom, 50)
                                 }.buttonStyle(.plain)
+                            }
+                            
+                            if saveUserError != "none" {
+                                Text(saveUserError)
+                                    .font(.title2)
+                                    .frame(width: 586, height: 50)
+                                    .background(Color.red.opacity(0.3))
+                                    .clipShape(RoundedRectangle(cornerRadius: 31))
+                                    .padding(.top, 71)
                                 
+                            }
+                            if saveUserMessage != "none" && saveUserError == "none" {
+                                Text(saveUserMessage)
+                                    .font(.title2)
+                                    .frame(width: 586, height: 50)
+                                    .background(Color.green.opacity(0.3))
+                                    .clipShape(RoundedRectangle(cornerRadius: 31))
+                                    .padding(.top, 71)
                             }
                         }
                     }
