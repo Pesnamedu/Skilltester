@@ -248,13 +248,13 @@ struct ContentView: View {
     
     //MARK: LOG variables
     @AppStorage("spamLogDates") private var spamLogDates: [String] = []
-    @AppStorage("spamLogValues") private var spamLogValues: [Int] = []
-    @AppStorage("spamLogDurations") private var spamLogDurations: [Int] = []
+    @AppStorage("spamLogValues") private var spamLogValues: [String] = []
+    @AppStorage("spamLogDurations") private var spamLogDurations: [String] = []
     
     @AppStorage("reactLogDates") private var reactLogDates: [String] = []
-    @AppStorage("reactLogBestV") private var reactLogBestV: [Int] = []
-    @AppStorage("reactLogAvaV") private var reactLogAvaV: [Int] = []
-    @AppStorage("reactLogWorstV") private var reactLogWorstV: [Int] = []
+    @AppStorage("reactLogBestV") private var reactLogBestV: [String] = []
+    @AppStorage("reactLogAvaV") private var reactLogAvaV: [String] = []
+    @AppStorage("reactLogWorstV") private var reactLogWorstV: [String] = []
     
     @AppStorage("timeLogDates") private var timeLogDates: [String] = []
     @AppStorage("timeLogValues") private var timeLogValues: [String] = []
@@ -271,6 +271,13 @@ struct ContentView: View {
     func startTest(name: String) -> String {
         
         return "0"
+    }
+    
+    func userInLog(pos: Int) -> Int {
+        return (pos + 1) * 2 - 1
+    }
+    func valueInLog(pos: Int) -> Int {
+        return (pos + 1) * 2 - 2
     }
     
     
@@ -368,9 +375,14 @@ struct ContentView: View {
                             state = "spammed S"
                             timeElapsed = 0
                             cps = spamCount / spamWaitTime
-                            spamLogValues.append(cps);
+                            spamLogValues.append(String(cps));
                             spamLogDates.append(Date().formatted(date: .omitted, time: .standard));
-                            spamLogDurations.append(spamWaitTime)
+                            spamLogDurations.append(String(spamWaitTime));
+                            
+                            spamLogValues.append(String(userLoggedIn));
+                            spamLogDates.append(String(userLoggedIn));
+                            spamLogDurations.append(String(userLoggedIn))
+                            
                             Task {
                                 try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
                                 state = "results S"
@@ -588,24 +600,30 @@ struct ContentView: View {
                 if 0 < spamLogValues.count && 0 < spamLogDates.count {
                     ScrollView {
                         VStack {
-                            ForEach(0..<spamLogValues.count, id: \.self) { index in
+                            ForEach(0..<spamLogValues.count/2, id: \.self) { index in
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 18)
                                         .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
                                         .padding(.horizontal, 35)
                                     
-                                    HStack {
-                                        Text("Attempt: \(index + 1)")
-                                            .font(.title2)
-                                            .padding(.leading, 40)
-                                        Spacer()
-                                        Text("\(spamLogValues[index]) cps. (\(spamLogDurations[index]) s.)")
-                                            .font(.title2)
-                                        Spacer()
-                                        Text("\(spamLogDates[index])")
-                                            .font(.title2)
-                                            .padding(.trailing, 40)
+                                    if spamLogValues[userInLog(pos: index)] == String(userLoggedIn) {
+                                        HStack {
+                                            Text("Attempt: \(index + 1)")
+                                                .font(.title2)
+                                                .padding(.leading, 40)
+                                            Spacer()
+                                            Text("\(spamLogValues[valueInLog(pos: index)]) cps. (\(spamLogDurations[valueInLog(pos: index)]) s.)")
+                                                .font(.title2)
+                                            Spacer()
+                                            Text("\(spamLogDates[valueInLog(pos: index)])")
+                                                .font(.title2)
+                                                .padding(.trailing, 40)
+                                        }.onAppear() {
+                                            print("Im line number \(index) and tried to get a value on position \(valueInLog(pos: index))")
+                                        }
                                     }
+                                }.onAppear() {
+                                    print("Im line number \(index), returned: \(userInLog(pos: index)) ")
                                 }
                             }
                         }.frame(maxWidth: .infinity)
@@ -861,9 +879,14 @@ struct ContentView: View {
                             state = "results R"
                             testCount = 0
                             reactLogDates.append(Date().formatted(date: .omitted, time: .standard));
-                            reactLogAvaV.append(Int(avaTime))
-                            reactLogBestV.append(Int(clickTimes.min() ?? 0))
-                            reactLogWorstV.append(Int(clickTimes.max() ?? 0))
+                            reactLogAvaV.append(String(avaTime))
+                            reactLogBestV.append(String(clickTimes.min() ?? 0))
+                            reactLogWorstV.append(String(clickTimes.max() ?? 0))
+                            
+                            reactLogAvaV.append(String(userLoggedIn));
+                            spamLogDates.append(String(userLoggedIn));
+                            reactLogBestV.append(String(userLoggedIn));
+                            reactLogWorstV.append(String(userLoggedIn))
                         }
                     }
                     
@@ -1171,17 +1194,19 @@ struct ContentView: View {
                                         .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
                                         .padding(.horizontal, 35)
                                     
-                                    HStack {
-                                        Text("Attempt: \(index + 1)")
-                                            .font(.title2)
-                                            .padding(.leading, 40)
-                                        Spacer()
-                                        Text("Best: \(reactLogBestV[index]) ms. Avarge: \(reactLogAvaV[index]) ms. Worst: \(reactLogWorstV[index]) ms.")
-                                            .font(.title2)
-                                        Spacer()
-                                        Text("\(reactLogDates[index])")
-                                            .font(.title2)
-                                            .padding(.trailing, 40)
+                                    if spamLogValues[userInLog(pos: index)] == String(userLoggedIn) {
+                                        HStack {
+                                            Text("Attempt: \(index + 1)")
+                                                .font(.title2)
+                                                .padding(.leading, 40)
+                                            Spacer()
+                                            Text("Best: \(reactLogBestV[valueInLog(pos: index)]) ms. Avarge: \(reactLogAvaV[valueInLog(pos: index)]) ms. Worst: \(reactLogWorstV[valueInLog(pos: index)]) ms.")
+                                                .font(.title2)
+                                            Spacer()
+                                            Text("\(reactLogDates[valueInLog(pos: index)])")
+                                                .font(.title2)
+                                                .padding(.trailing, 40)
+                                        }
                                     }
                                 }
                             }
@@ -1349,6 +1374,9 @@ struct ContentView: View {
                     timeStopped = timeElapsed
                     timeLogDates.append(Date().formatted(date: .omitted, time: .standard));
                     timeLogValues.append(timeDifferenceText)
+                    
+                    timeLogDates.append(String(userLoggedIn))
+                    timeLogValues.append(String(userLoggedIn))
                 }) {
                     Text("")
                         .bold()
@@ -1499,22 +1527,24 @@ struct ContentView: View {
                 if 0 < timeLogValues.count && 0 < timeLogDates.count {
                     ScrollView {
                         VStack {
-                            ForEach(0..<timeLogValues.count, id: \.self) { index in
+                            ForEach(0..<timeLogValues.count/2, id: \.self) { index in
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 18)
                                         .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
                                         .padding(.horizontal, 35)
-                                    HStack {
-                                        Text("Attempt: \(index + 1)")
-                                            .font(.title2)
-                                            .padding(.leading, 40)
-                                        Spacer()
-                                        Text("\(timeLogValues[index]) second difference. ")
-                                            .font(.title2)
-                                        Spacer()
-                                        Text("\(timeLogDates[index])")
-                                            .font(.title2)
-                                            .padding(.trailing, 40)
+                                    if spamLogValues[userInLog(pos: index)] == String(userLoggedIn) {
+                                        HStack {
+                                            Text("Attempt: \(index + 1)")
+                                                .font(.title2)
+                                                .padding(.leading, 40)
+                                            Spacer()
+                                            Text("\(timeLogValues[valueInLog(pos: index)]) second difference. ")
+                                                .font(.title2)
+                                            Spacer()
+                                            Text("\(timeLogDates[valueInLog(pos: index)])")
+                                                .font(.title2)
+                                                .padding(.trailing, 40)
+                                        }
                                     }
                                 }
                             }
@@ -1613,7 +1643,7 @@ struct ContentView: View {
                     .padding(.bottom, 1)
             }.buttonStyle(.plain)
             Text(userNames[index - 1])
-                .padding(.top, size + 25)
+                .padding(.top, size * 1.195)
                 .font(.largeTitle)
         }
     }
@@ -1648,7 +1678,7 @@ struct ContentView: View {
                             }
                         }
                         
-                    }
+                    }.padding(.bottom, 109)
                 }
                 
 //                Text("or")
@@ -1688,7 +1718,7 @@ struct ContentView: View {
             //MARK: Login user
             if usersState == "login" {
                 Text(getProfilePicture(index: userOnLogin))
-                    .font(.system(size: 110, weight: .thin, design: .default))
+                    .font(.system(size: 125, weight: .thin, design: .default))
                     .frame(width: 250, height: 250)
                     .background(getProfileColor(index: userOnLogin))
                     .clipShape(Circle())
@@ -2210,8 +2240,14 @@ struct ContentView: View {
                     } else {
                         keepLoggedInSwitch = false
                     }
+                    if !isAdmin.contains(userLoggedIn) {
+                        adminEditState = "editing"
+                        accountUnderEdit = userLoggedIn
+                        nameInput = userNames[userLoggedIn]
+                        passwordInput = userPass[userLoggedIn]
+                    }
                 }
-            if isAdmin.contains(userLoggedIn) {
+            // if isAdmin.contains(userLoggedIn) {
                 ZStack {
                     if adminEditState == "editing" && accountUnderEdit < 101 {
                         Text(getProfilePicture(index: accountUnderEdit))
@@ -2234,7 +2270,7 @@ struct ContentView: View {
                                 .font(.largeTitle)
                                 .padding(.bottom, 215)
                         }
-                        if adminEditState == "none" {
+                        if adminEditState == "none" && isAdmin.contains(userLoggedIn) {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack {
                                     ForEach(0..<howManyButtons, id: \.self) { index in
@@ -2253,27 +2289,29 @@ struct ContentView: View {
                                 }
                             }
                         } else if adminEditState == "editing" {
-                            Button(action: {
-                                print("Chosing users to edit")
-                                adminEditState = "none"
-                                isPasswordVisible = false
-                                saveUserMessage = "none"
-                                saveUserError = "none"
-                                
-                                nameInput = ""
-                                passwordInput = ""
-                            }) {
-                                Text("Back")
-                                    .font(.largeTitle)
-                                    .frame(width: 120, height: 50)
-                                    .background(Color.black.opacity(0.2))
-                                    .clipShape(RoundedRectangle(cornerRadius: 30))
-                            }.buttonStyle(.plain)
-                                .padding(.top, 205)
-                                .padding(.trailing, 466)
+                            if isAdmin.contains(userLoggedIn) {
+                                Button(action: {
+                                    print("Chosing users to edit")
+                                    adminEditState = "none"
+                                    isPasswordVisible = false
+                                    saveUserMessage = "none"
+                                    saveUserError = "none"
+                                    
+                                    nameInput = ""
+                                    passwordInput = ""
+                                }) {
+                                    Text("Back")
+                                        .font(.largeTitle)
+                                        .frame(width: 120, height: 50)
+                                        .background(Color.black.opacity(0.2))
+                                        .clipShape(RoundedRectangle(cornerRadius: 30))
+                                }.buttonStyle(.plain)
+                                    .padding(.top, 205)
+                                    .padding(.trailing, 466)
+                            }
                             
                             Button(action: {
-                                print("Chosing users to edit")
+                                print("Delete user pressed.")
                                 if !isAdmin.contains(userLoggedIn) {
                                     
                                 } else {
@@ -2407,7 +2445,7 @@ struct ContentView: View {
                 }.frame(width: 600, height: 270)
                     .clipShape(RoundedRectangle(cornerRadius: 30))
                     .padding(.bottom, -140)
-            }
+            
         }
     }
     
@@ -2415,7 +2453,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             Rectangle()
-                .fill(Color.black.opacity(bgLowOpacity))
+                .fill(Color(white: 0.15).opacity(bgLowOpacity))
                 .frame(width: 700, height: 630)
                 .ignoresSafeArea()
                 
@@ -2443,6 +2481,12 @@ struct ContentView: View {
         .navigationTitle("Skilltester")
         .onReceive(timer) { _ in
             timeElapsed += 1
+        }
+        .onAppear() {
+            print("Spam logs:")
+            print(spamLogDates)
+            print(spamLogValues)
+            print(spamLogDurations)
         }
     }
 }
