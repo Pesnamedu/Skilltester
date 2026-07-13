@@ -119,6 +119,9 @@ struct ContentView: View {
     }
     @State private var bgOpacity: Double = 0.6
     @State private var elementOpacity: Double = 0.45
+    @AppStorage("UserPreferencesBgOpacity") private var UserPreferencesBgOpacity: [Double] = []
+    @AppStorage("UserPreferencesElementOpacity") private var UserPreferencesElementOpacity: [Double] = []
+    
     let scrollSpace = "myScrollSpace"
     var bgLowOpacity: Double {
         Double(max(0, (2.5 * bgOpacity - 1.5)))
@@ -1592,6 +1595,8 @@ struct ContentView: View {
                 if usersState == "choosing" {
                     usersState = "login"
                     userOnLogin = Int(index - 1)
+                    bgOpacity = UserPreferencesBgOpacity[userOnLogin]
+                    elementOpacity = UserPreferencesElementOpacity[userOnLogin]
                 } else if state == "userSettings" {
                     print("clicked me inside of user settings")
                     adminEditState = "editing"
@@ -1707,6 +1712,11 @@ struct ContentView: View {
                             state = "loggedin"
                             userLoggedIn = userOnLogin
                             lastLoggedIn = userLoggedIn
+                            print("User \(userLoggedIn) will get their appearance from \(UserPreferencesBgOpacity) BG and \(UserPreferencesElementOpacity) EL")
+                            bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
+                            elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
+                            print("BG: \(bgOpacity)")
+                            print("EL: \(elementOpacity)")
                             passwordInput = ""
                             print("Last logged in: \(lastLoggedIn)")
                         } else {
@@ -1728,6 +1738,9 @@ struct ContentView: View {
                     usersState = "choosing"
                     passwordState = "done"
                     passwordInput = ""
+                    
+                    bgOpacity = 0.6
+                    elementOpacity = 0.45
                 }) {
                     Image(systemName: "arrow.left")
                         .font(.largeTitle)
@@ -1833,12 +1846,14 @@ struct ContentView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 20))
                             Button(action: {
                                 if passwordInput == passwordRepeat {
+                                    //MARK: User created
                                     print("USER PASSWORD (final): \(passwordRepeat)")
                                     print("USER PROFILE CREATED")
-                                    
                                     userNames.append(nameInput)
                                     userPass.append(passwordInput)
                                     userColor.append("blue")
+                                    UserPreferencesBgOpacity.append(0.6)
+                                    UserPreferencesElementOpacity.append(0.45)
                                     passwordState = "done"
                                     usersState = "choosing"
                                     passwordInput = ""
@@ -1859,7 +1874,7 @@ struct ContentView: View {
                 }
             }.padding(.top, 200)
             
-        //MARK: User Logged in
+        //MARK: User Logged in (auto)
         }.onAppear {
             if isOnFresh {
                 //userNames.removeAll()
@@ -1879,6 +1894,8 @@ struct ContentView: View {
                         if lastLoggedIn < 100 {
                             //print("Trying to get \(lastLoggedIn) from \(keepLoggedIn)")
                             userLoggedIn = lastLoggedIn
+                            bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
+                            elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
                             usersState = "loggedin"
                             state = "loggedin"
                             //passwordState = "done"
@@ -1931,6 +1948,18 @@ struct ContentView: View {
                 .padding(.top, 490)
                 .padding(.trailing, 590)
             
+            Button(action: {
+                state = "designSettings"
+            }) {
+                Image(systemName: "gear")
+                    .font(.system(size: 41, design: .default))
+                    .frame(width: 70, height: 70)
+                    .background(Color.gray.opacity(0.3))
+                    .clipShape(RoundedRectangle(cornerRadius: 35))
+            }.buttonStyle(.plain)
+                .padding(.top, 490)
+                .padding(.trailing, 400)
+            
             if usersState == "userSettings" {
                 ZStack {
                     SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
@@ -1945,6 +1974,8 @@ struct ContentView: View {
                             nameInput = ""
                             passwordInput = ""
                             lastLoggedIn = 101
+                            bgOpacity = 0.6
+                            elementOpacity = 0.45
                         }) {
                             Text("Log out")
                                 .font(.largeTitle)
@@ -1985,7 +2016,7 @@ struct ContentView: View {
         }
     }
     
-    //MARK: User Settings
+    //MARK: Appearance Settings
     var designSettingsView: some View {
         ZStack {
             Text("")
@@ -2057,6 +2088,10 @@ struct ContentView: View {
                         Slider(value: $elementOpacity, in: 0.3...1)
                             .frame(width: 250)
                             .tint(getProfileColor(index: userLoggedIn))
+                            .onChange(of: elementOpacity) { newElValue in
+                                UserPreferencesElementOpacity[userLoggedIn] = elementOpacity
+                                print("Element opacity changed!")
+                            }
                         Text("More opaque")
                             .font(.title3)
                     }.padding(.top, 20)
@@ -2072,6 +2107,10 @@ struct ContentView: View {
                         Slider(value: $bgOpacity, in: 0.3...1)
                             .frame(width: 250)
                             .tint(getProfileColor(index: userLoggedIn))
+                            .onChange(of: bgOpacity) { newBgValue in
+                                UserPreferencesBgOpacity[userLoggedIn] = bgOpacity
+                                print("Background opacity changed!")
+                            }
                         Text("More opaque")
                             .font(.title3)
                     }.padding(.top, 20)
@@ -2111,6 +2150,7 @@ struct ContentView: View {
         }
     }
     
+    //MARK: User settings
     var userSettingsView: some View {
         ZStack {
             VStack(spacing: -20) {
