@@ -17,34 +17,46 @@ struct ContentView: View {
     @State private var passwordRepeat: String = ""
     func getProfilePicture(index: Int) -> String {
         if index < userNames.count + 1 {
-            return String(String(userNames[index]).prefix(1))
+            print(userNames)
+            print("Im getting item number \(index) from that list")
+            if index < userNames.count {
+                return String(String(userNames[index]).prefix(1))
+            } else {
+                print("index out of range")
+                return "%"
+            }
+            
         } else {
             return "%"
         }
     }
     func getProfileName(index: Int) -> String {
-        if index < userNames.count + 1 {
+        if index < userNames.count {
             return String(userNames[index])
         } else {
             return "%"
         }
     }
     func getProfileColor(index: Int) -> Color {
-        switch userColor[index] {
-        case "yellow": return Color.yellow.opacity(elementOpacity + 0.1)
-        case "orange": return Color.orange.opacity(elementOpacity + 0.1)
-        case "red": return Color.red.opacity(elementOpacity + 0.1)
-        case "pink": return Color.pink.opacity(elementOpacity + 0.1)
-        case "purple": return Color.purple.opacity(elementOpacity + 0.1)
-        case "indigo": return Color.indigo.opacity(elementOpacity + 0.1)
-        case "blue": return Color.blue.opacity(elementOpacity + 0.1)
-        case "teal": return Color.teal.opacity(elementOpacity + 0.1)
-        case "cyan": return Color.cyan.opacity(elementOpacity + 0.1)
-        case "green": return Color.green.opacity(elementOpacity + 0.1)
-        case "white": return Color.white.opacity(elementOpacity + 0.1)
-        case "gray": return Color.gray.opacity(elementOpacity + 0.1)
-        case "black": return Color.blue.opacity(elementOpacity + 0.1)
-        default: return Color.blue.opacity(elementOpacity + 0.1)
+        if index < userColor.count {
+            switch userColor[index] {
+            case "yellow": return Color.yellow.opacity(elementOpacity + 0.1)
+            case "orange": return Color.orange.opacity(elementOpacity + 0.1)
+            case "red": return Color.red.opacity(elementOpacity + 0.1)
+            case "pink": return Color.pink.opacity(elementOpacity + 0.1)
+            case "purple": return Color.purple.opacity(elementOpacity + 0.1)
+            case "indigo": return Color.indigo.opacity(elementOpacity + 0.1)
+            case "blue": return Color.blue.opacity(elementOpacity + 0.1)
+            case "teal": return Color.teal.opacity(elementOpacity + 0.1)
+            case "cyan": return Color.cyan.opacity(elementOpacity + 0.1)
+            case "green": return Color.green.opacity(elementOpacity + 0.1)
+            case "white": return Color.white.opacity(elementOpacity + 0.1)
+            case "gray": return Color.gray.opacity(elementOpacity + 0.1)
+            case "black": return Color.blue.opacity(elementOpacity + 0.1)
+            default: return Color.blue.opacity(elementOpacity + 0.1)
+            }
+        } else {
+            return Color.brown
         }
     }
     func getButtonColor(index: Int) -> Color {
@@ -112,6 +124,7 @@ struct ContentView: View {
     @AppStorage("userColor") private var userColor: [String] = []
     @State private var isOnFresh: Bool = true
     
+    @State private var resetOnLaunch: Bool = false
     
     //MARK: DESIGN variables
     var dynamicEndBarWidth: CGFloat {
@@ -278,6 +291,30 @@ struct ContentView: View {
     }
     func valueInLog(pos: Int) -> Int {
         return (pos + 1) * 2 - 2
+    }
+    func deleteUser(user: Int) {
+        print("Before delete (deleting user number \(user))")
+        print(userNames)
+        print(userPass)
+        print(userColor)
+        print(keepLoggedIn)
+        print(UserPreferencesBgOpacity)
+        print(UserPreferencesElementOpacity)
+        userNames.remove(at: user)
+        userPass.remove(at: user)
+        userColor.remove(at: user)
+        if keepLoggedIn.contains(user) {
+            keepLoggedIn.remove(at: keepLoggedIn.firstIndex(of: user)!)
+        }
+        UserPreferencesBgOpacity.remove(at: user)
+        UserPreferencesElementOpacity.remove(at: user)
+        print("After delete (deleting user number \(user))")
+        print(userNames)
+        print(userPass)
+        print(userColor)
+        print(keepLoggedIn)
+        print(UserPreferencesBgOpacity)
+        print(UserPreferencesElementOpacity)
     }
     
     
@@ -1619,32 +1656,37 @@ struct ContentView: View {
         }
     }
     
+    @ViewBuilder
     func userCard(at index: Int, size: CGFloat) -> some View {
         ZStack {
-            Button(action: {
-                if usersState == "choosing" {
-                    usersState = "login"
-                    userOnLogin = Int(index - 1)
-                    bgOpacity = UserPreferencesBgOpacity[userOnLogin]
-                    elementOpacity = UserPreferencesElementOpacity[userOnLogin]
-                } else if state == "userSettings" {
-                    print("clicked me inside of user settings")
-                    adminEditState = "editing"
-                    accountUnderEdit = Int(index - 1)
-                    nameInput = getProfileName(index: accountUnderEdit)
-                    passwordInput = userPass[accountUnderEdit]
-                }
-            }) {
-                Text(getProfilePicture(index: Int(index - 1)))
-                    .font(.system(size: CGFloat(size / 2), weight: .thin, design: .default))
-                    .frame(width: size, height: size)
-                    .background(getProfileColor(index: index - 1))
-                    .clipShape(Circle())
-                    .padding(.bottom, 1)
-            }.buttonStyle(.plain)
-            Text(userNames[index - 1])
-                .padding(.top, size * 1.195)
-                .font(.largeTitle)
+            if userNames.count > index - 1 {
+                Button(action: {
+                    if usersState == "choosing" {
+                        usersState = "login"
+                        userOnLogin = Int(index - 1)
+                        bgOpacity = UserPreferencesBgOpacity[userOnLogin]
+                        elementOpacity = UserPreferencesElementOpacity[userOnLogin]
+                    } else if state == "userSettings" {
+                        print("clicked me inside of user settings")
+                        adminEditState = "editing"
+                        accountUnderEdit = Int(index - 1)
+                        nameInput = getProfileName(index: accountUnderEdit)
+                        passwordInput = userPass[accountUnderEdit]
+                    }
+                }) {
+                    Text(getProfilePicture(index: Int(index - 1)))
+                        .font(.system(size: CGFloat(size / 2), weight: .thin, design: .default))
+                        .frame(width: size, height: size)
+                        .background(getProfileColor(index: index - 1))
+                        .clipShape(Circle())
+                        .padding(.bottom, 1)
+                }.buttonStyle(.plain)
+                Text(userNames[index - 1])
+                    .padding(.top, size * 1.195)
+                    .font(.largeTitle)
+            } else {
+                EmptyView()
+            }
         }
     }
     
@@ -1907,14 +1949,19 @@ struct ContentView: View {
         //MARK: User Logged in (auto)
         }.onAppear {
             if isOnFresh {
-                //userNames.removeAll()
-                //userPass.removeAll()
-                //userColor.removeAll()
-                //keepLoggedIn = []
+                if resetOnLaunch {
+                    userNames.removeAll()
+                    userPass.removeAll()
+                    userColor.removeAll()
+                    keepLoggedIn = []
+                    UserPreferencesBgOpacity = []
+                    UserPreferencesElementOpacity = []
+                }
                 
                 print("\(howManyButtons) buttons")
                 print("\(userNames.count) users")
-                print(keepLoggedIn)
+                
+                print("Keep logged in: \(keepLoggedIn)")
                 print(lastLoggedIn)
                 if userNames.count > 0 {
                     if keepLoggedIn.isEmpty || !keepLoggedIn.contains(lastLoggedIn){
@@ -2244,6 +2291,7 @@ struct ContentView: View {
                                 }
                             }
                         } else if adminEditState == "editing" {
+
                             if isAdmin.contains(userLoggedIn) {
                                 Button(action: {
                                     print("Chosing users to edit")
@@ -2269,17 +2317,15 @@ struct ContentView: View {
                                 print("Delete user pressed.")
                                 if !isAdmin.contains(accountUnderEdit) {
                                     if isAdmin.contains(userLoggedIn) {
-                                        print("Before delete (deleting user number \(accountUnderEdit))")
-                                        print(userNames)
-                                        print(userPass)
-                                        print(userColor)
-                                        userNames.remove(at: accountUnderEdit)
-                                        userPass.remove(at: accountUnderEdit)
-                                        userColor.remove(at: accountUnderEdit)
+                                        //resetOnLaunch = false
+                                        adminEditState = "none"
+                                        
+                                        deleteUser(user: accountUnderEdit)
                                         print("After delete (deleting user number \(accountUnderEdit))")
                                         print(userNames)
                                         print(userPass)
                                         print(userColor)
+                                        
                                     } else {
                                         usersState = "choosing"
                                         state = "startup"
@@ -2289,9 +2335,7 @@ struct ContentView: View {
                                         bgOpacity = 0.6
                                         elementOpacity = 0.45
                                         
-                                        userNames.remove(at: accountUnderEdit)
-                                        userPass.remove(at: accountUnderEdit)
-                                        userColor.remove(at: accountUnderEdit)
+                                        deleteUser(user: accountUnderEdit)
                                     }
                                 } else {
                                     saveUserError = "Can not delete an admin accout!"
@@ -2455,6 +2499,7 @@ struct ContentView: View {
                 .padding(.bottom, 270)
                 .onAppear {
                     saveUserError = "none"
+                    adminEditState = "none"
                     if keepLoggedIn.contains(userLoggedIn) {
                         keepLoggedInSwitch = true
                     } else {
@@ -2518,6 +2563,9 @@ struct ContentView: View {
             timeElapsed += 1
         }
         .onAppear() {
+            print(userNames)
+            print(userPass)
+            
             print("Spam logs:")
             print(spamLogDates)
             print(spamLogValues)
