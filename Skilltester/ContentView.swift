@@ -17,8 +17,6 @@ struct ContentView: View {
     @State private var passwordRepeat: String = ""
     func getProfilePicture(index: Int) -> String {
         if index < userNames.count + 1 {
-            print(userNames)
-            print("Im getting item number \(index) from that list")
             if index < userNames.count {
                 return String(String(userNames[index]).prefix(1))
             } else {
@@ -273,6 +271,8 @@ struct ContentView: View {
     @AppStorage("timeLogValues") private var timeLogValues: [String] = []
     @AppStorage("timeLogDurations") private var timeLogDurations: [String] = []
     
+    @State private var realIdx: Int = 0
+    
     //TIMER BELOW
     @State private var timeElapsed = 0
     let timer = Timer.publish(every: 0.001, on: .main, in: .common).autoconnect()
@@ -316,11 +316,171 @@ struct ContentView: View {
         print(UserPreferencesBgOpacity)
         print(UserPreferencesElementOpacity)
     }
+    @State private var idx: Int = 0
+    func deleteUserLog(log: String, user: Int) {
+        idx = 0
+        if log == "spam" {
+            while idx != spamLogDates.count/2 {
+                if spamLogValues[userInLog(pos: idx)] != String(user) {
+                    idx += 1
+                } else {
+                    spamLogValues.remove(at: valueInLog(pos: idx)) //delete value
+                    spamLogValues.remove(at: valueInLog(pos: idx)) //delete user
+                    spamLogDates.remove(at: valueInLog(pos: idx))
+                    spamLogDates.remove(at: valueInLog(pos: idx))
+                    spamLogDurations.remove(at: valueInLog(pos: idx))
+                    spamLogDurations.remove(at: valueInLog(pos: idx))
+                }
+            }
+        } else if log == "react" {
+            while idx != reactLogDates.count/2 {
+                if reactLogDates[userInLog(pos: idx)] != String(user) {
+                    idx += 1
+                } else {
+                    reactLogBestV.remove(at: valueInLog(pos: idx))
+                    reactLogBestV.remove(at: valueInLog(pos: idx))
+                    reactLogWorstV.remove(at: valueInLog(pos: idx))
+                    reactLogWorstV.remove(at: valueInLog(pos: idx))
+                    reactLogAvaV.remove(at: valueInLog(pos: idx))
+                    reactLogAvaV.remove(at: valueInLog(pos: idx))
+                    reactLogDates.remove(at: valueInLog(pos: idx))
+                    reactLogDates.remove(at: valueInLog(pos: idx))
+                }
+            }
+        } else if log == "time" {
+            while idx != timeLogDates.count/2 {
+                if timeLogDates[userInLog(pos: idx)] != String(user) {
+                    idx += 1
+                } else {
+                    timeLogDates.remove(at: valueInLog(pos: idx))
+                    timeLogDates.remove(at: valueInLog(pos: idx))
+                    timeLogValues.remove(at: valueInLog(pos: idx))
+                    timeLogValues.remove(at: valueInLog(pos: idx))
+                }
+            }
+        }
+    }
+    @State private var logLen: Int = 1
+    func getUserLogLength(log: String, user: Int) -> Int {
+        idx = 0
+        if log == "spam" {
+            while idx != spamLogDates.count/2 {
+                if spamLogDates[userInLog(pos: idx)] == String(user) {
+                    logLen += 1
+                }
+                idx += 1
+            }
+        } else if log == "react" {
+            while idx != reactLogDates.count/2 {
+                if reactLogDates[userInLog(pos: idx)] == String(user) {
+                    logLen += 1
+                }
+                idx += 1
+            }
+        } else if log == "time" {
+            while idx != reactLogDates.count/2 {
+                if reactLogDates[userInLog(pos: idx)] == String(user) {
+                    logLen += 1
+                }
+                idx += 1
+            }
+        }
+        return logLen
+    }
+    @State private var currentLogDates: [String] = []
+    @State private var currentLogVal1: [String] = []
+    @State private var currentLogVal2: [String] = []
+    @State private var currentLogVal3: [String] = []
+    
+    func makeCurrentUserLog(log: String, user: Int) {
+        idx = 0
+        currentLogDates.removeAll()
+        currentLogVal1.removeAll()
+        currentLogVal2.removeAll()
+        currentLogVal3.removeAll()
+        if log == "spam" {
+            while idx != spamLogDates.count/2 {
+                if spamLogDates[userInLog(pos: idx)] == String(user) {
+                    currentLogDates.append(spamLogDates[valueInLog(pos: idx)])
+                    currentLogVal1.append(spamLogValues[valueInLog(pos: idx)])
+                    currentLogVal2.append(spamLogDurations[valueInLog(pos: idx)])
+                }
+                idx += 1
+            }
+        } else if log == "react" {
+            while idx != reactLogDates.count/2 {
+                if reactLogDates[userInLog(pos: idx)] == String(user) {
+                    currentLogDates.append(reactLogDates[valueInLog(pos: idx)])
+                    currentLogVal1.append(reactLogBestV[valueInLog(pos: idx)])
+                    currentLogVal2.append(reactLogWorstV[valueInLog(pos: idx)])
+                    currentLogVal3.append(reactLogAvaV[valueInLog(pos: idx)])
+                }
+                idx += 1
+            }
+        } else if log == "time" {
+            while idx != timeLogDates.count/2 {
+                if timeLogDates[userInLog(pos: idx)] == String(user) {
+                    currentLogDates.append(timeLogDates[valueInLog(pos: idx)])
+                    currentLogVal1.append(timeLogValues[valueInLog(pos: idx)])
+                }
+                idx += 1
+            }
+        }
+    }
+    func clearAllLogs() {
+        spamLogDates.removeAll()
+        spamLogValues.removeAll()
+        spamLogDurations.removeAll()
+        
+        reactLogDates.removeAll()
+        reactLogBestV.removeAll()
+        reactLogWorstV.removeAll()
+        reactLogAvaV.removeAll()
+        
+        timeLogDates.removeAll()
+        timeLogValues.removeAll()
+    }
+    
+    @State private var allValues: [Int] = []
+    @State private var lowValues: [Int] = []
+    func getBestUser(mode: String) -> Int {
+        if mode == "spam" {
+            print(userNames)
+            print(userNames.count)
+            print(spamLogValues)
+            lowValues.removeAll()
+            for usrCount in 0...userNames.count - 1 {
+                allValues.removeAll()
+                makeCurrentUserLog(log: "spam", user: usrCount)
+                if currentLogVal1.count > 0 {
+                    for i in 0...currentLogVal1.count - 1 {
+                        allValues.append(Int(currentLogVal1[i])!)
+                    }
+                    lowValues.append(allValues.max()!)
+                } else {
+                    lowValues.append(0)
+                }
+                print(allValues)
+                print(usrCount)
+            }
+            
+            print(lowValues)
+            return Int(lowValues.firstIndex(of: lowValues.max()!)!)
+            
+        } else if mode == "react" {
+            return 0
+        } else if mode == "time" {
+            return 0
+        } else {
+            return 0
+        }
+    }
+    
+    //MARK: Menu
     
     
     var menuView: some View {
         ZStack {
-            //MARK: Menu
             if state == "menu" {
                 ZStack {
                     HStack (alignment: .top, spacing: 25) {
@@ -375,7 +535,7 @@ struct ContentView: View {
                             .font(.largeTitle)
                             .foregroundColor(.white)
                             .frame(width: 30, height: 30)
-                            .background(Color.blue.opacity(elementOpacity - 0.2))
+                            .background(getProfileColor(index: userLoggedIn))
                             .clipShape(Circle())
                             .padding(.top, 550)
                             .padding(.leading, 650)
@@ -394,11 +554,20 @@ struct ContentView: View {
                         .padding(.top, 490)
                         .padding(.trailing, 590)
                 }.navigationTitle("Menu")
+                    .onAppear() {
+                        print("In Menu.")
+                        //clearAllLogs()
+                        print(getBestUser(mode: "spam"))
+                    }
             }
         }
     }
+    
+    //MARK: Spam - start
+    
+    
+    @State private var logIdx: Int = 0
     var spamView: some View {
-        //MARK: Spam - start
         ZStack {
             if state == "start S" {
                 ZStack {
@@ -412,12 +581,12 @@ struct ContentView: View {
                             state = "spammed S"
                             timeElapsed = 0
                             cps = spamCount / spamWaitTime
-                            spamLogValues.append(String(cps));
-                            spamLogDates.append(Date().formatted(date: .omitted, time: .standard));
-                            spamLogDurations.append(String(spamWaitTime));
-                            
-                            spamLogValues.append(String(userLoggedIn));
-                            spamLogDates.append(String(userLoggedIn));
+                            print("saving spam data to log")
+                            spamLogValues.append(String(cps))
+                            spamLogValues.append(String(userLoggedIn))
+                            spamLogDates.append(Date().formatted(date: .omitted, time: .standard))
+                            spamLogDates.append(String(userLoggedIn))
+                            spamLogDurations.append(String(spamWaitTime))
                             spamLogDurations.append(String(userLoggedIn))
                             
                             Task {
@@ -493,7 +662,7 @@ struct ContentView: View {
             if state == "spamming S" {
                 Button(action: {
                     spamCount += 1
-                    print(spamCount / timeElapsed)
+                    //print(spamCount / (timeElapsed + 0.00001))
                 }) {
                     Text("Spam!")
                         .bold()
@@ -637,34 +806,36 @@ struct ContentView: View {
                 if 0 < spamLogValues.count && 0 < spamLogDates.count {
                     ScrollView {
                         VStack {
-                            ForEach(0..<spamLogValues.count/2, id: \.self) { index in
+                            ForEach(0..<currentLogDates.count, id: \.self) { index in
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 18)
                                         .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
                                         .padding(.horizontal, 35)
                                     
-                                    if spamLogValues[userInLog(pos: index)] == String(userLoggedIn) {
-                                        HStack {
-                                            Text("Attempt: \(index + 1)")
-                                                .font(.title2)
-                                                .padding(.leading, 40)
-                                            Spacer()
-                                            Text("\(spamLogValues[valueInLog(pos: index)]) cps. (\(spamLogDurations[valueInLog(pos: index)]) s.)")
-                                                .font(.title2)
-                                            Spacer()
-                                            Text("\(spamLogDates[valueInLog(pos: index)])")
-                                                .font(.title2)
-                                                .padding(.trailing, 40)
-                                        }.onAppear() {
-                                            print("Im line number \(index) and tried to get a value on position \(valueInLog(pos: index))")
-                                        }
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        Text("\(currentLogVal1[index]) cps. (\(currentLogVal2[index])) s.)")
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(currentLogDates[index])")
+                                            .font(.title2)
+                                            .padding(.trailing, 40)
+                                    }.onAppear() {
+                                        
                                     }
+                                
                                 }.onAppear() {
                                     print("Im line number \(index), returned: \(userInLog(pos: index)) ")
                                 }
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
+                        .onAppear() {
+                            makeCurrentUserLog(log: "spam", user: userLoggedIn)
+                        }
                 } else {
                     Text("No log stored.")
                         .font(.title2)
@@ -703,9 +874,7 @@ struct ContentView: View {
                     .buttonStyle(.plain)
                     .keyboardShortcut("m", modifiers: [])
                 Button(action: {
-                    spamLogDates.removeAll()
-                    spamLogValues.removeAll()
-                    spamLogDurations.removeAll()
+                    deleteUserLog(log: "spam", user: userLoggedIn)
                 }) {
                     Text("Clear")
                         .bold()
@@ -723,8 +892,10 @@ struct ContentView: View {
         }
     }
     
+    //MARK: Reaction - start
+    
+    
     var reactView: some View {
-        //MARK: Reaction - start
         ZStack {
             if state == "start R" {
                 ZStack {
@@ -916,12 +1087,12 @@ struct ContentView: View {
                             state = "results R"
                             testCount = 0
                             reactLogDates.append(Date().formatted(date: .omitted, time: .standard));
-                            reactLogAvaV.append(String(avaTime))
+                            reactLogAvaV.append(String(round(avaTime)))
                             reactLogBestV.append(String(clickTimes.min() ?? 0))
                             reactLogWorstV.append(String(clickTimes.max() ?? 0))
                             
                             reactLogAvaV.append(String(userLoggedIn));
-                            spamLogDates.append(String(userLoggedIn));
+                            reactLogDates.append(String(userLoggedIn));
                             reactLogBestV.append(String(userLoggedIn));
                             reactLogWorstV.append(String(userLoggedIn))
                         }
@@ -1222,33 +1393,37 @@ struct ContentView: View {
             
             //MARK: Reaction log
             if state == "log R" {
-                if 0 < reactLogBestV.count && 0 < reactLogWorstV.count && 0 < reactLogAvaV.count && 0 < reactLogDates.count {
+                if 0 < reactLogDates.count {
                     ScrollView {
                         VStack {
-                            ForEach(0..<reactLogAvaV.count, id: \.self) { index in
+                            ForEach(0..<currentLogDates.count, id: \.self) { index in
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 18)
                                         .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
                                         .padding(.horizontal, 35)
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        Text("Best: \(currentLogVal1[index]) ms. Avarge: \(currentLogVal3[index]) ms. Worst: \(currentLogVal2[index]) ms.")
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(currentLogDates[index])")
+                                            .font(.title2)
+                                            .padding(.trailing, 40)
                                     
-                                    if spamLogValues[userInLog(pos: index)] == String(userLoggedIn) {
-                                        HStack {
-                                            Text("Attempt: \(index + 1)")
-                                                .font(.title2)
-                                                .padding(.leading, 40)
-                                            Spacer()
-                                            Text("Best: \(reactLogBestV[valueInLog(pos: index)]) ms. Avarge: \(reactLogAvaV[valueInLog(pos: index)]) ms. Worst: \(reactLogWorstV[valueInLog(pos: index)]) ms.")
-                                                .font(.title2)
-                                            Spacer()
-                                            Text("\(reactLogDates[valueInLog(pos: index)])")
-                                                .font(.title2)
-                                                .padding(.trailing, 40)
-                                        }
                                     }
                                 }
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
+                        .onAppear() {
+                            print("vvv  Logs below  vvv")
+                            makeCurrentUserLog(log: "react", user: userLoggedIn)
+                            print(reactLogDates)
+                            print(currentLogDates)
+                        }
                 } else {
                     Text("No log stored.")
                         .font(.title2)
@@ -1285,10 +1460,7 @@ struct ContentView: View {
                     .buttonStyle(.plain)
                     .keyboardShortcut("m", modifiers: [])
                 Button(action: {
-                    reactLogDates.removeAll();
-                    reactLogAvaV.removeAll();
-                    reactLogBestV.removeAll();
-                    reactLogWorstV.removeAll()
+                    deleteUserLog(log: "react", user: userLoggedIn)
                 }) {
                     Text("Clear")
                         .bold()
@@ -1564,29 +1736,30 @@ struct ContentView: View {
                 if 0 < timeLogValues.count && 0 < timeLogDates.count {
                     ScrollView {
                         VStack {
-                            ForEach(0..<timeLogValues.count/2, id: \.self) { index in
+                            ForEach(0..<currentLogDates.count, id: \.self) { index in
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 18)
                                         .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
                                         .padding(.horizontal, 35)
-                                    if spamLogValues[userInLog(pos: index)] == String(userLoggedIn) {
-                                        HStack {
-                                            Text("Attempt: \(index + 1)")
-                                                .font(.title2)
-                                                .padding(.leading, 40)
-                                            Spacer()
-                                            Text("\(timeLogValues[valueInLog(pos: index)]) second difference. ")
-                                                .font(.title2)
-                                            Spacer()
-                                            Text("\(timeLogDates[valueInLog(pos: index)])")
-                                                .font(.title2)
-                                                .padding(.trailing, 40)
-                                        }
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        Text("\(currentLogVal1[index]) second difference. ")
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(currentLogDates[index])")
+                                            .font(.title2)
+                                            .padding(.trailing, 40)
                                     }
                                 }
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
+                        .onAppear() {
+                            makeCurrentUserLog(log: "time", user: userLoggedIn)
+                        }
                 } else {
                     Text("No log stored.")
                         .font(.title2)
@@ -1625,9 +1798,7 @@ struct ContentView: View {
                     .buttonStyle(.plain)
                     .keyboardShortcut("m", modifiers: [])
                 Button(action: {
-                    timeLogDates.removeAll()
-                    timeLogValues.removeAll()
-                    //timeLogDurations.removeAll()
+                    deleteUserLog(log: "time", user: userLoggedIn)
                 }) {
                     Text("Clear")
                         .bold()
@@ -1946,7 +2117,7 @@ struct ContentView: View {
                 }
             }.padding(.top, 200)
             
-        //MARK: User Logged in (auto)
+        //MARK: Auto login
         }.onAppear {
             if isOnFresh {
                 if resetOnLaunch {
@@ -1956,6 +2127,8 @@ struct ContentView: View {
                     keepLoggedIn = []
                     UserPreferencesBgOpacity = []
                     UserPreferencesElementOpacity = []
+                    
+                    clearAllLogs()
                 }
                 
                 print("\(howManyButtons) buttons")
@@ -2038,6 +2211,19 @@ struct ContentView: View {
             }.buttonStyle(.plain)
                 .padding(.top, 490)
                 .padding(.trailing, 400)
+            
+            Button(action: {
+                state = "user results"
+            }) {
+                Image(systemName: "chart.bar")
+                    .font(.system(size: 33, design: .default))
+                    .frame(width: 70, height: 70)
+                    .background(Color.gray.opacity(0.3))
+                    .clipShape(RoundedRectangle(cornerRadius: 35))
+            }.buttonStyle(.plain)
+                .padding(.top, 490)
+                .padding(.trailing, 210)
+            
             //MARK: Expand profile settings
             
             
@@ -2317,14 +2503,12 @@ struct ContentView: View {
                                 print("Delete user pressed.")
                                 if !isAdmin.contains(accountUnderEdit) {
                                     if isAdmin.contains(userLoggedIn) {
-                                        //resetOnLaunch = false
                                         adminEditState = "none"
                                         
+                                        deleteUserLog(log: "spam", user: accountUnderEdit)
+                                        deleteUserLog(log: "react", user: accountUnderEdit)
+                                        deleteUserLog(log: "time", user: accountUnderEdit)
                                         deleteUser(user: accountUnderEdit)
-                                        print("After delete (deleting user number \(accountUnderEdit))")
-                                        print(userNames)
-                                        print(userPass)
-                                        print(userColor)
                                         
                                     } else {
                                         usersState = "choosing"
@@ -2335,6 +2519,9 @@ struct ContentView: View {
                                         bgOpacity = 0.6
                                         elementOpacity = 0.45
                                         
+                                        deleteUserLog(log: "spam", user: accountUnderEdit)
+                                        deleteUserLog(log: "react", user: accountUnderEdit)
+                                        deleteUserLog(log: "time", user: accountUnderEdit)
                                         deleteUser(user: accountUnderEdit)
                                     }
                                 } else {
@@ -2528,6 +2715,46 @@ struct ContentView: View {
                 .padding(.top, 500)
         }
     }
+    //MARK: User results
+    
+    
+    var userResults: some View {
+        ZStack {
+            VStack(spacing: -20) {
+                Text("Your results,")
+                    .font(.largeTitle)
+                    .foregroundColor(Color.white.opacity(0.6))
+                HStack(spacing: 20) {
+                    Text(adminStatus(index:userLoggedIn))
+                        .font(.system(size: 81, weight: .thin, design: .default))
+                        .foregroundColor(Color.white.opacity(0.7))
+                    Text(getProfileName(index:userLoggedIn))
+                        .font(.system(size: 81, weight: .bold, design: .default))
+                        .foregroundColor(Color.white.opacity(0.7))
+                }
+            }.padding(.bottom, 500)
+            
+            //if getBestUser(mode: "spam") == userLoggedIn {
+            //    Text("Ranked #1 in spam")
+            //} else {
+            //    Text("You are not #1 in spam.")
+            //}
+            
+            Button(action: {
+                print("Back to userView")
+                state = "loggedin"
+                usersState = "loggedin"
+                adminEditState = "none"
+            }) {
+                Text("Back")
+                    .font(.largeTitle)
+                    .frame(width: 120, height: 50)
+                    .background(Color.black.opacity(elementOpacity))
+                    .clipShape(RoundedRectangle(cornerRadius: 30))
+            }.buttonStyle(.plain)
+                .padding(.top, 500)
+        }
+    }
     
     //MARK: BODY
     var body: some View {
@@ -2555,6 +2782,8 @@ struct ContentView: View {
                 designSettingsView
             } else if state == "userSettings" {
                 userSettingsView
+            } else if state == "user results" {
+                userResults
             }
         }
         .frame(minWidth: 700, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
