@@ -256,6 +256,11 @@ struct ContentView: View {
             return "error"
         }
     }
+    //MARK: AIM variables
+    @State private var targetCount: Int = 10
+    @State private var targetRandomX: Int = 0
+    @State private var targetRandomY: Int = 0
+    
     
     //MARK: LOG variables
     @AppStorage("spamLogDates") private var spamLogDates: [String] = []
@@ -478,87 +483,135 @@ struct ContentView: View {
     
     //MARK: Menu
     
-    
+    let menuButtonSpacing: CGFloat = 18
     var menuView: some View {
         ZStack {
             if state == "menu" {
-                ZStack {
-                    HStack (alignment: .top, spacing: 25) {
-                        Button(action: {
-                            print("clicked button 1 (Reflex)")
-                            state = "start R"
-                        }) {
-                            Text("Reflex")
-                                .bold()
-                                .font(.title2)
-                                .frame(width: 200, height: 200)
+                Text("Menu")
+                    .bold()
+                    .foregroundColor(getProfileColor(index: userLoggedIn))
+                    .font(.system(size: 61, weight: .bold, design: .default))
+                    .padding(.bottom, 581)
+                ScrollView {
+                    VStack (spacing: menuButtonSpacing) {
+                        HStack (alignment: .top, spacing: menuButtonSpacing) {
+                            Button(action: {
+                                print("clicked button 1 (Reflex)")
+                                state = "start R"
+                            }) {
+                                Text("Reflex")
+                                    .bold()
+                                    .font(.title2)
+                                    .frame(width: 200, height: 200)
                                 //.background(.ultraThinMaterial)
-                                .background(getProfileColor(index: userLoggedIn))
-                                .clipShape(RoundedRectangle(cornerRadius: 50))
+                                    .background(getProfileColor(index: userLoggedIn))
+                                    .clipShape(RoundedRectangle(cornerRadius: 50))
+                                
+                            }.buttonStyle(.plain)
                             
-                        }.buttonStyle(.plain)
-                        
-                        Button(action: {
-                            print("clicked button 2")
-                            state = "start S"
-                        }) {
-                            Text("Spam")
-                                .bold()
-                                .font(.title2)
-                                .frame(width: 200, height: 200)
-                                .background(getProfileColor(index: userLoggedIn))
-                                .clipShape(RoundedRectangle(cornerRadius: 50))
-                        }.buttonStyle(.plain)
-                        
-                        Button(action: {
-                            print("clicked button 3")
-                            state = "start T"
-                        }) {
-                            Text("Time")
-                                .bold()
-                                .font(.title2)
-                                .frame(width: 200, height: 200)
-                                .background(getProfileColor(index: userLoggedIn))
-                                .clipShape(RoundedRectangle(cornerRadius: 50))
+                            Button(action: {
+                                print("clicked button 2")
+                                state = "start S"
+                            }) {
+                                Text("Spam")
+                                    .bold()
+                                    .font(.title2)
+                                    .frame(width: 200, height: 200)
+                                    .background(getProfileColor(index: userLoggedIn))
+                                    .clipShape(RoundedRectangle(cornerRadius: 50))
+                            }.buttonStyle(.plain)
                             
-                        }.buttonStyle(.plain)
-                    }.padding(.bottom, 300)
-                    Text("Menu")
-                        .bold()
-                        .foregroundColor(getProfileColor(index: userLoggedIn))
-                        .font(.system(size: 61, weight: .bold, design: .default))
-                        .padding(.bottom, 581)
-                    Button(action: {
-                        state = "tutor"
-                    }) {
-                        Text("?")
-                            .font(.largeTitle)
-                            .foregroundColor(.white)
-                            .frame(width: 30, height: 30)
-                            .background(getProfileColor(index: userLoggedIn))
-                            .clipShape(Circle())
-                            .padding(.top, 550)
-                            .padding(.leading, 650)
-                    }.buttonStyle(.plain)
-                    Button(action: {
-                        state = "loggedin"
-                        usersState = "loggedin"
-                    }) {
-                        Text(getProfilePicture(index: userLoggedIn))
-                            .font(.system(size: 51, weight: .thin, design: .default))
-                            .foregroundColor(Color.white.opacity(0.8))
-                            .frame(width: 70, height: 70)
-                            .background(getProfileColor(index: userLoggedIn))
-                            .clipShape(RoundedRectangle(cornerRadius: 40))
-                    }.buttonStyle(.plain)
-                        .padding(.top, 490)
-                        .padding(.trailing, 590)
-                }.navigationTitle("Menu")
-                    .onAppear() {
-                        print("In Menu.")
-                        //clearAllLogs()
-                        print(getBestUser(mode: "spam"))
-                    }
+                            Button(action: {
+                                print("clicked button 3")
+                                state = "start T"
+                            }) {
+                                Text("Time")
+                                    .bold()
+                                    .font(.title2)
+                                    .frame(width: 200, height: 200)
+                                    .background(getProfileColor(index: userLoggedIn))
+                                    .clipShape(RoundedRectangle(cornerRadius: 50))
+                                
+                            }.buttonStyle(.plain)
+                        }.padding(.top, 20)
+                        
+                        HStack (alignment: .top, spacing: menuButtonSpacing) {
+                            Button(action: {
+                                print("clicked button 4")
+                                state = "start A"
+                            }) {
+                                Text("Aim test")
+                                    .bold()
+                                    .font(.title2)
+                                    .frame(width: 200, height: 200)
+                                    .background(getProfileColor(index: userLoggedIn))
+                                    .clipShape(RoundedRectangle(cornerRadius: 50))
+                                
+                            }.buttonStyle(.plain)
+                            
+                            Button(action: {
+                                print("clicked button 5")
+                                //state = "start A"
+                            }) {
+                                Text("Unused button")
+                                    .bold()
+                                    .font(.title2)
+                                    .frame(width: 200, height: 200)
+                                    .background(getProfileColor(index: userLoggedIn))
+                                    .clipShape(RoundedRectangle(cornerRadius: 50))
+                                
+                            }.buttonStyle(.plain)
+                            
+                            Button(action: {
+                                print("clicked button 6")
+                                //state = "start A"
+                            }) {
+                                Text("Unused button")
+                                    .bold()
+                                    .font(.title2)
+                                    .frame(width: 200, height: 200)
+                                    .background(getProfileColor(index: userLoggedIn))
+                                    .clipShape(RoundedRectangle(cornerRadius: 50))
+                                
+                            }.buttonStyle(.plain)
+                        }
+                        
+                        
+                    }.navigationTitle("Menu")
+                        .onAppear() {
+                            print("In Menu.")
+                            //clearAllLogs()
+                            print(getBestUser(mode: "spam"))
+                        }
+                    
+                }.frame(width: 600, height: 600)
+                    .padding(.top, 81)
+                
+                Button(action: {
+                    state = "tutor"
+                }) {
+                    Text("?")
+                        .font(.largeTitle)
+                        .foregroundColor(.white)
+                        .frame(width: 30, height: 30)
+                        .background(getProfileColor(index: userLoggedIn))
+                        .clipShape(Circle())
+                        .padding(.top, 550)
+                        .padding(.leading, 650)
+                }.buttonStyle(.plain)
+                Button(action: {
+                    state = "loggedin"
+                    usersState = "loggedin"
+                }) {
+                    Text(getProfilePicture(index: userLoggedIn))
+                        .font(.system(size: 51, weight: .thin, design: .default))
+                        .foregroundColor(Color.white.opacity(0.8))
+                        .frame(width: 70, height: 70)
+                        .background(getProfileColor(index: userLoggedIn))
+                        .clipShape(RoundedRectangle(cornerRadius: 40))
+                }.buttonStyle(.plain)
+                    .padding(.top, 490)
+                    .padding(.trailing, 590)
             }
         }
     }
@@ -1477,8 +1530,10 @@ struct ContentView: View {
         }
     }
     
+    //MARK: Time - start
+    
+    
     var timeView: some View {
-        //MARK: Time - start
         ZStack {
             if state == "start T" {
                 ZStack {
@@ -1815,6 +1870,111 @@ struct ContentView: View {
         }
     }
     
+    //MARK: Aim
+    
+    @State private var showingTarget: Int = 0
+    @State private var missedTargets: Int = 0
+    @State private var timeToHit: [Int] = []
+    @State private var targetSpawnDate: Date = Date()
+    var aimView: some View {
+        ZStack {
+            if state == "start A" {
+                Button(action: {
+                    showingTarget = 0
+                    missedTargets = 0
+                    state = "shooting A"
+                    
+                }) {
+                    Text("start")
+                        .bold()
+                        .padding(.horizontal, 50)
+                        .padding(.vertical, 50)
+                        .frame(minWidth: 700, minHeight: 600)
+                        .background(Color.green.opacity(bgOpacity))
+                        .font(.largeTitle)
+                }.buttonStyle(.plain)
+            }
+            
+            if state == "shooting A" {
+                Button(action: {
+                    missedTargets += 1
+                    print("Missed!")
+                }) {
+                    Rectangle()
+                        .frame(width: 700, height: 800)
+                        .foregroundColor(Color.blue.opacity(bgOpacity))
+                }.buttonStyle(.plain)
+                ZStack {
+                    ForEach(0...targetCount, id: \.self) { index in
+                        if index == showingTarget {
+                            Button(action: {
+                                print("shot target")
+                                if showingTarget < targetCount {
+                                    showingTarget += 1
+                                    timeToHit.append(Int(Date().timeIntervalSince(targetSpawnDate) * 1000))
+                                } else {
+                                    state = "end A"
+                                    Task {
+                                        try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
+                                        state = "results A"
+                                        print(timeToHit)
+                                    }
+                                }
+                            }) {
+                                Image(systemName: "target")
+                                    .frame(width: 50, height: 50)
+                                    .font(.system(size: 50, weight: .thin, design: .default))
+                                    .clipShape(Circle())
+                            }.buttonStyle(.plain)
+                                .onAppear() {
+                                    targetRandomX = Int.random(in: 20...680)
+                                    targetRandomY = Int.random(in: 20...580)
+                                    targetSpawnDate = Date()
+                                }
+                                .padding(.top, CGFloat(targetRandomY))
+                                .padding(.leading, CGFloat(targetRandomX))
+                        }
+                    }
+                }.padding(.bottom, 300)
+                    .padding(.trailing, 350)
+            }
+            
+            if state == "end A" {
+                Rectangle()
+                    .frame(width: 700, height: 650)
+                    .foregroundColor(Color.black.opacity(bgOpacity))
+                    .ignoresSafeArea()
+                Text("End")
+                    .font(.largeTitle)
+                    .bold()
+            }
+            
+            if state == "results A" {
+                ZStack {
+                    Text("Results")
+                        .font(.largeTitle)
+                        .bold()
+                        .padding(.bottom, 580)
+                    VStack(alignment: .leading) {
+                        ForEach(0..<timeToHit.count, id: \.self) { index in
+                            ZStack {
+                                Text("\(index + 1). Target:")
+                                    .font(.title2)
+                                    .padding(.trailing, 500)
+                                Text("\(timeToHit[index]) ms.")
+                                    .font(.title2)
+                                    .padding(.trailing, 300)
+                                RoundedRectangle(cornerRadius: 8)
+                                    .frame(width: 200, height: 15)
+                            }
+                        }
+                    }
+                }
+            }
+            
+        }
+    }
+    
     var tutorView: some View {
         ZStack {
             Text("ts is tutorial")
@@ -1827,6 +1987,8 @@ struct ContentView: View {
         }
     }
     
+    
+    //MARK: usercard
     @ViewBuilder
     func userCard(at index: Int, size: CGFloat) -> some View {
         ZStack {
@@ -2772,6 +2934,8 @@ struct ContentView: View {
                 reactView
             } else if state.hasSuffix("T") {
                 timeView
+            } else if state.hasSuffix("A") {
+                aimView
             } else if state == "tutor" {
                 tutorView
             } else if state == "startup" {
