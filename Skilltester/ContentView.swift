@@ -1876,6 +1876,32 @@ struct ContentView: View {
     @State private var missedTargets: Int = 0
     @State private var timeToHit: [Int] = []
     @State private var targetSpawnDate: Date = Date()
+    func getTargetPadding(index: Int) -> CGFloat {
+        return CGFloat(index * 50)
+    }
+    func getTargetBarWidth(index: Int) -> CGFloat {
+        print("Index: \(index) line length: \(CGFloat((Float(timeToHit[index]) / Float(timeToHit.max()!)) * 420))")
+        return CGFloat((Float(timeToHit[index]) / Float(timeToHit.max()!)) * 420)
+    }
+    func getTargetColor(index: Int) -> Color {
+        if timeToHit[index] ==  timeToHit.min() {
+            return .green
+        } else if timeToHit[index] == timeToHit.max() {
+            return .red
+        } else {
+            return .white
+        }
+    }
+    var avaTimeToHit: Float {
+        Float(Float(timeToHit.reduce(0, +)) / Float(timeToHit.count))
+    }
+    func getTargetAvaLinePos() -> CGFloat {
+        print("avarage time to hit")
+        print(avaTimeToHit)
+        print("therefore ofset is \(CGFloat(avaTimeToHit / Float(timeToHit.max()!)) * 420)")
+        return -116 + CGFloat(avaTimeToHit / Float(timeToHit.max()!)) * 725
+        
+    }
     var aimView: some View {
         ZStack {
             if state == "start A" {
@@ -1955,20 +1981,35 @@ struct ContentView: View {
                         .font(.largeTitle)
                         .bold()
                         .padding(.bottom, 580)
-                    VStack(alignment: .leading) {
+                    ZStack {
                         ForEach(0..<timeToHit.count, id: \.self) { index in
-                            ZStack {
-                                Text("\(index + 1). Target:")
-                                    .font(.title2)
-                                    .padding(.trailing, 500)
-                                Text("\(timeToHit[index]) ms.")
-                                    .font(.title2)
-                                    .padding(.trailing, 300)
-                                RoundedRectangle(cornerRadius: 8)
-                                    .frame(width: 200, height: 15)
-                            }
+                            Text("\(index + 1). Target:")
+                                .foregroundColor(getTargetColor(index: index))
+                                .font(.title2)
+                                .padding(.trailing, 500)
+                                .padding(.top, getTargetPadding(index: index))
+                            Text("\(timeToHit[index]) ms.")
+                                .foregroundColor(getTargetColor(index: index))
+                                .font(.title2)
+                                .padding(.trailing, 300)
+                                .padding(.top, getTargetPadding(index: index))
+                            RoundedRectangle(cornerRadius: 8)
+                                .foregroundColor(getTargetColor(index: index))
+                                .frame(width: getTargetBarWidth(index: index), height: 15)
+                                .padding(.top, getTargetPadding(index: index))
+                                .padding(.leading, getTargetBarWidth(index: index) - 180)
                         }
-                    }
+                    }.padding(.bottom, 450)
+                        .padding(.trailing, 50)
+                    RoundedRectangle(cornerRadius: 8)
+                        .frame(width: 2, height: CGFloat(27 * timeToHit.count))
+                        .foregroundColor(.blue)
+                        .padding(.leading, getTargetAvaLinePos())
+                        .padding(.bottom, 210)
+                    Text("avarage")
+                        .foregroundColor(.blue)
+                        .padding(.top, 65)
+                        .padding(.leading, getTargetAvaLinePos())
                 }
             }
             
