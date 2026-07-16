@@ -368,6 +368,21 @@ struct ContentView: View {
                     timeLogValues.remove(at: valueInLog(pos: idx))
                 }
             }
+        } else if log == "aim" {
+            while idx != aimLogDates.count/2 {
+                if aimLogDates[userInLog(pos: idx)] != String(user) {
+                    idx += 1
+                } else {
+                    aimLogBestV.remove(at: valueInLog(pos: idx))
+                    aimLogBestV.remove(at: valueInLog(pos: idx))
+                    aimLogWorstV.remove(at: valueInLog(pos: idx))
+                    aimLogWorstV.remove(at: valueInLog(pos: idx))
+                    aimLogAvaV.remove(at: valueInLog(pos: idx))
+                    aimLogAvaV.remove(at: valueInLog(pos: idx))
+                    aimLogDates.remove(at: valueInLog(pos: idx))
+                    aimLogDates.remove(at: valueInLog(pos: idx))
+                }
+            }
         }
     }
     @State private var logLen: Int = 1
@@ -560,7 +575,7 @@ struct ContentView: View {
                                 print("clicked button 4")
                                 state = "start A"
                             }) {
-                                Text("Aim test")
+                                Text("Aim")
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
@@ -1900,6 +1915,7 @@ struct ContentView: View {
     @State private var missedTargets: Int = 0
     @State private var timeToHit: [Int] = []
     @State private var targetSpawnDate: Date = Date()
+    @State private var slider6Value: Double = 0
     func getTargetPadding(index: Int) -> CGFloat {
         return CGFloat(index * 50)
     }
@@ -1917,9 +1933,11 @@ struct ContentView: View {
         }
     }
     var avaTimeToHit: Int {
-        Int(Float(timeToHit.reduce(0, +)) / Float(timeToHit.count))
+        guard !timeToHit.isEmpty else {return 0}
+        return Int(Float(timeToHit.reduce(0, +)) / Float(timeToHit.count))
     }
     func getTargetAvaLinePos() -> CGFloat {
+        guard !timeToHit.isEmpty else {return 0}
         print("avarage time to hit")
         print(avaTimeToHit)
         print("therefore ofset is \(CGFloat(Float(avaTimeToHit) / Float(timeToHit.max()!)) * 420)")
@@ -1943,6 +1961,8 @@ struct ContentView: View {
             print(aimLogAvaV)
         }
     }
+    //MARK: Start Aim
+    
     
     var aimView: some View {
         ZStack {
@@ -1951,7 +1971,6 @@ struct ContentView: View {
                     showingTarget = 0
                     missedTargets = 0
                     state = "shooting A"
-                    
                 }) {
                     Text("start")
                         .bold()
@@ -1962,19 +1981,85 @@ struct ContentView: View {
                         .font(.largeTitle)
                 }.buttonStyle(.plain)
                 
+                
+                ZStack {
+                    //SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                    Button(action: {
+                        state = "menu"
+                    }) {
+                        Text("Back")
+                            .font(.largeTitle)
+                            .bold()
+                            .frame(width: 100, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        //.padding(.top, 500)
+                        .padding(.trailing, 500)
+                    Button(action: {
+                        state = "settings A"
+                    }) {
+                        Text("Settings")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            //.padding(.top, 500)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        makeCurrentUserLog(log: "aim", user: userLoggedIn)
+                        sentFrom = state
+                        state = "log A"
+                    }) {
+                        Text("Log")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            //.padding(.top, 500)
+                            .padding(.leading, 500)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("l", modifiers: [])
+                }.frame(width: 620, height: 70)
+                    .background(Color.black.opacity(0.15))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
+            }
+            //MARK: Aim - settings
+            if state == "settings A" {
+                ZStack {
+                    Slider(value: $slider6Value, in: 3...15, step: 1)
+                        .frame(width: 250)
+                        .onChange(of: slider6Value) { newValue in
+                            targetCount = Int(slider6Value)
+                        }
+                    Text("\(targetCount) targets")
+                        .padding(.leading, 325)
+                }
                 Button(action: {
-                    state = "menu"
+                    state = "start A"
+                    
                 }) {
                     Text("Back")
-                        .font(.largeTitle)
                         .bold()
-                        .frame(width: 100, height: 50)
-                        .background(Color.black.opacity(elementOpacity))
+                        .font(.largeTitle)
+                        .frame(width: 200, height: 50)
+                        .background(Color.green.opacity(elementOpacity))
                         .clipShape(Capsule())
-                }.buttonStyle(.plain)
-                    .padding(.top, 500)
-                    .padding(.trailing, 500)
+                }.padding(.top, 500)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [.shift])
+                
             }
+            
+            
+            //MARK: Aim - shooting
+            
             
             if state == "shooting A" {
                 Button(action: {
@@ -2024,6 +2109,8 @@ struct ContentView: View {
                 }.padding(.bottom, 300)
                     .padding(.trailing, 350)
             }
+            //MARK: Aim - end
+            
             
             if state == "end A" {
                 Rectangle()
@@ -2034,6 +2121,8 @@ struct ContentView: View {
                     .font(.largeTitle)
                     .bold()
             }
+            //MARK: Aim - results
+            
             
             if state == "results A" {
                 ZStack {
@@ -2062,13 +2151,13 @@ struct ContentView: View {
                     }.padding(.bottom, 450)
                         .padding(.trailing, 50)
                     RoundedRectangle(cornerRadius: 8)
-                        .frame(width: 2, height: CGFloat(27 * timeToHit.count))
+                        .frame(width: 2, height: CGFloat(26 * timeToHit.count))
                         .foregroundColor(.blue)
                         .padding(.leading, getTargetAvaLinePos())
-                        .padding(.bottom, 210)
-                    Text("avarage")
+                        .padding(.bottom, CGFloat(460 - 24 * targetCount))
+                    Text("Avarage")
                         .foregroundColor(.blue)
-                        .padding(.top, 65)
+                        .padding(.top, CGFloat(-270 + 40*targetCount))
                         .padding(.leading, getTargetAvaLinePos())
                     
                     Button(action: {
@@ -2100,7 +2189,9 @@ struct ContentView: View {
                         .padding(.trailing, 1)
                     
                     Button(action: {
+                        sentFrom = state
                         state = "log A"
+                        
                     }) {
                         Text("Log")
                             .font(.largeTitle)
@@ -2111,11 +2202,26 @@ struct ContentView: View {
                     }.buttonStyle(.plain)
                         .padding(.top, 500)
                         .padding(.leading, 500)
+                    HStack(spacing: 21) {
+                        Text("Best: \(timeToHit.min()!)ms")
+                            .font(.title2)
+                            .bold()
+                            .foregroundColor(.green)
+                        Text("Avarage: \(avaTimeToHit)ms")
+                            .font(.title2)
+                            .bold()
+                            .foregroundColor(.blue)
+                        Text("Worst \(timeToHit.max()!)ms")
+                            .font(.title2)
+                            .bold()
+                            .foregroundColor(.red)
+                    }.padding(.top, 400)
                 }
             }
+            //MARK: Aim - log
+            
             
             if state == "log A" {
-                
                 ScrollView {
                     VStack {
                         if currentLogDates.count > 0 {
@@ -2145,10 +2251,55 @@ struct ContentView: View {
                         }
                     }.frame(maxWidth: .infinity)
                 }.frame(height: 400)
-                    .onAppear() {
-                        print("vvv  Logs below  vvv")
-                        
+                
+                Button(action: {
+                    print(sentFrom)
+                    if sentFrom == "results A" {
+                        state = "results A"
+                    } else if sentFrom == "start A" {
+                        state = "start A"
                     }
+                }) {
+                    Text("Back")
+                        .bold()
+                        .font(.largeTitle)
+                        .frame(width: 200, height: 50)
+                        .background(Color.blue.opacity(elementOpacity))
+                        .clipShape(Capsule())
+                        .foregroundColor(.white)
+                }.padding(.top, 500)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.space, modifiers: [.shift])
+                Button(action: {
+                    state = "menu"
+                    timeToHit.removeAll()
+                }) {
+                    Text("Menu")
+                        .bold()
+                        .font(.largeTitle)
+                        .frame(width: 100, height: 50)
+                        .background(Color.red.opacity(elementOpacity))
+                        .clipShape(Capsule())
+                        .padding(.trailing, 500)
+                        .foregroundColor(.white)
+                }.padding(.top, 500)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut("m", modifiers: [])
+                Button(action: {
+                    deleteUserLog(log: "aim", user: userLoggedIn)
+                    makeCurrentUserLog(log: "aim", user: userLoggedIn)
+                }) {
+                    Text("Clear")
+                        .bold()
+                        .font(.largeTitle)
+                        .frame(width: 100, height: 50)
+                        .background(Color.red.opacity(elementOpacity))
+                        .clipShape(Capsule())
+                        .padding(.leading, 500)
+                        .foregroundColor(.white)
+                }.padding(.top, 500)
+                    .buttonStyle(.plain)
+                    .keyboardShortcut("x", modifiers: [])
             }
             
         }
