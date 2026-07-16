@@ -276,6 +276,11 @@ struct ContentView: View {
     @AppStorage("timeLogValues") private var timeLogValues: [String] = []
     @AppStorage("timeLogDurations") private var timeLogDurations: [String] = []
     
+    @AppStorage("aimLogDates") private var aimLogDates: [String] = []
+    @AppStorage("aimLogBestV") private var aimLogBestV: [String] = []
+    @AppStorage("aimLogWorstV") private var aimLogWorstV: [String] = []
+    @AppStorage("aimLogAvaV") private var aimLogAvaV: [String] = []
+    
     @State private var realIdx: Int = 0
     
     //TIMER BELOW
@@ -430,6 +435,16 @@ struct ContentView: View {
                 }
                 idx += 1
             }
+        } else if log == "aim" {
+            while idx != aimLogDates.count/2 {
+                if aimLogDates[userInLog(pos: idx)] == String(user) {
+                    currentLogDates.append(aimLogDates[valueInLog(pos: idx)])
+                    currentLogVal1.append(aimLogBestV[valueInLog(pos: idx)])
+                    currentLogVal2.append(aimLogWorstV[valueInLog(pos: idx)])
+                    currentLogVal3.append(aimLogAvaV[valueInLog(pos: idx)])
+                }
+                idx += 1
+            }
         }
     }
     func clearAllLogs() {
@@ -444,6 +459,11 @@ struct ContentView: View {
         
         timeLogDates.removeAll()
         timeLogValues.removeAll()
+        
+        aimLogDates.removeAll()
+        aimLogBestV.removeAll()
+        aimLogWorstV.removeAll()
+        aimLogAvaV.removeAll()
     }
     
     @State private var allValues: [Int] = []
@@ -582,6 +602,10 @@ struct ContentView: View {
                             print("In Menu.")
                             //clearAllLogs()
                             print(getBestUser(mode: "spam"))
+                            aimLogDates.removeAll()
+                            aimLogBestV.removeAll()
+                            aimLogWorstV.removeAll()
+                            aimLogAvaV.removeAll()
                         }
                     
                 }.frame(width: 600, height: 600)
@@ -1892,16 +1916,34 @@ struct ContentView: View {
             return .white
         }
     }
-    var avaTimeToHit: Float {
-        Float(Float(timeToHit.reduce(0, +)) / Float(timeToHit.count))
+    var avaTimeToHit: Int {
+        Int(Float(timeToHit.reduce(0, +)) / Float(timeToHit.count))
     }
     func getTargetAvaLinePos() -> CGFloat {
         print("avarage time to hit")
         print(avaTimeToHit)
-        print("therefore ofset is \(CGFloat(avaTimeToHit / Float(timeToHit.max()!)) * 420)")
-        return -116 + CGFloat(avaTimeToHit / Float(timeToHit.max()!)) * 725
+        print("therefore ofset is \(CGFloat(Float(avaTimeToHit) / Float(timeToHit.max()!)) * 420)")
+        return -116 + CGFloat(Float(avaTimeToHit) / Float(timeToHit.max()!)) * 725
         
     }
+    func writeToLog(log: String) {
+        if log == "aim" {
+            aimLogDates.append(Date().formatted(date: .omitted, time: .standard))
+            aimLogDates.append(String(userLoggedIn))
+            aimLogBestV.append(String(timeToHit.min()!))
+            aimLogBestV.append(String(userLoggedIn))
+            aimLogWorstV.append(String(timeToHit.max()!))
+            aimLogWorstV.append(String(userLoggedIn))
+            aimLogAvaV.append(String(avaTimeToHit))
+            aimLogAvaV.append(String(userLoggedIn))
+            print("Added everything into aim logs")
+            print(aimLogDates)
+            print(aimLogBestV)
+            print(aimLogWorstV)
+            print(aimLogAvaV)
+        }
+    }
+    
     var aimView: some View {
         ZStack {
             if state == "start A" {
@@ -1919,6 +1961,19 @@ struct ContentView: View {
                         .background(Color.green.opacity(bgOpacity))
                         .font(.largeTitle)
                 }.buttonStyle(.plain)
+                
+                Button(action: {
+                    state = "menu"
+                }) {
+                    Text("Back")
+                        .font(.largeTitle)
+                        .bold()
+                        .frame(width: 100, height: 50)
+                        .background(Color.black.opacity(elementOpacity))
+                        .clipShape(Capsule())
+                }.buttonStyle(.plain)
+                    .padding(.top, 500)
+                    .padding(.trailing, 500)
             }
             
             if state == "shooting A" {
@@ -1943,7 +1998,12 @@ struct ContentView: View {
                                     Task {
                                         try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
                                         state = "results A"
-                                        print(timeToHit)
+                                        writeToLog(log: "aim")
+                                        makeCurrentUserLog(log: "aim", user: userLoggedIn)
+                                        print(currentLogVal1)
+                                        print(currentLogVal2)
+                                        print(currentLogVal3)
+                                        print(currentLogDates)
                                     }
                                 }
                             }) {
@@ -2010,7 +2070,85 @@ struct ContentView: View {
                         .foregroundColor(.blue)
                         .padding(.top, 65)
                         .padding(.leading, getTargetAvaLinePos())
+                    
+                    Button(action: {
+                        state = "menu"
+                        timeToHit.removeAll()
+                    }) {
+                        Text("Menu")
+                            .font(.largeTitle)
+                            .bold()
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        .padding(.top, 500)
+                        .padding(.trailing, 500)
+                    
+                    Button(action: {
+                        state = "start A"
+                        timeToHit.removeAll()
+                    }) {
+                        Text("Start again")
+                            .font(.largeTitle)
+                            .bold()
+                            .frame(width: 180, height: 50)
+                            .background(Color.blue.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        .padding(.top, 500)
+                        .padding(.trailing, 1)
+                    
+                    Button(action: {
+                        state = "log A"
+                    }) {
+                        Text("Log")
+                            .font(.largeTitle)
+                            .bold()
+                            .frame(width: 100, height: 50)
+                            .background(Color.green.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        .padding(.top, 500)
+                        .padding(.leading, 500)
                 }
+            }
+            
+            if state == "log A" {
+                
+                ScrollView {
+                    VStack {
+                        if currentLogDates.count > 0 {
+                            ForEach(0..<currentLogDates.count, id: \.self) { index in
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
+                                        .padding(.horizontal, 35)
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        
+                                        Text("Best: \(currentLogVal1[index]), Worst: \(currentLogVal2[index]), Avarage:  \(currentLogVal3[index])")
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(currentLogDates[index])")
+                                            .font(.title2)
+                                            .padding(.trailing, 40)
+                                        
+                                    }
+                                }
+                            }
+                        } else {
+                            Text("No log stored")
+                        }
+                    }.frame(maxWidth: .infinity)
+                }.frame(height: 400)
+                    .onAppear() {
+                        print("vvv  Logs below  vvv")
+                        
+                    }
             }
             
         }
