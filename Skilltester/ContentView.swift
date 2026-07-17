@@ -482,37 +482,58 @@ struct ContentView: View {
     }
     
     @State private var allValues: [Int] = []
-    @State private var lowValues: [Int] = []
+    @State private var bestValues: [Int] = []
     func getBestUser(mode: String) -> Int {
         if mode == "spam" {
             print(userNames)
             print(userNames.count)
             print(spamLogValues)
-            lowValues.removeAll()
+            bestValues.removeAll()
             for usrCount in 0...userNames.count - 1 {
                 allValues.removeAll()
                 makeCurrentUserLog(log: "spam", user: usrCount)
                 if currentLogVal1.count > 0 {
-                    for i in 0...currentLogVal1.count - 1 {
-                        allValues.append(Int(currentLogVal1[i])!)
-                    }
-                    lowValues.append(allValues.max()!)
+                    bestValues.append(currentLogVal1.max()!)
                 } else {
-                    lowValues.append(0)
+                    bestValues.append(0)
                 }
                 print(allValues)
                 print(usrCount)
             }
             
-            print(lowValues)
-            return Int(lowValues.firstIndex(of: lowValues.max()!)!)
+            print(bestValues)
+            return Int(bestValues.firstIndex(of: bestValues.max()!)!)
             
         } else if mode == "react" {
-            return 0
+            bestValues.removeAll()
+            for usrCount in 0...userNames.count - 1 {
+                allValues.removeAll()
+                makeCurrentUserLog(log: "react", user: usrCount)
+                if currentLogVal1.count > 0 {
+                    bestValues.append(Int(currentLogVal3.min()!)!)
+                } else {
+                    bestValues.append(3001)
+                }
+            }
+            return Int(bestValues.firstIndex(of: bestValues.min()!)!)
+            
         } else if mode == "time" {
+            bestValues.removeAll()
+            for usrCount in 0...userNames.count - 1{
+                allValues.removeAll()
+                makeCurrentUserLog(log: "time", user: usrCount)
+                if currentLogVal1.count > 0 {
+                    bestValues.append(Int(currentLogVal1.min()!)!)
+                } else {
+                    bestValues.append(99999)
+                }
+            }
+            return Int(bestValues.firstIndex(of: bestValues.min()!)!)
+            
+        } else if mode == "aim" {
             return 0
         } else {
-            return 0
+            return 67
         }
     }
     
@@ -701,51 +722,53 @@ struct ContentView: View {
                     Text("Spam duration is set to \(spamWaitTime) s.")
                         .padding(.top, 45)
                     
-                    Button(action: {
-                        state = "settings S"
-                    }) {
-                        Text("Settings")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.top, 500)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    
-                    Button(action: {
-                        state = "menu"
-                        clickTimes.removeAll()
-                        print("Pressed back; sending to \(state)")
-                    }) {
-                        Text("Back")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.top, 500)
-                            .padding(.trailing, 500)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("b", modifiers: [])
-                    Button(action: {
-                        sentFrom = state
-                        state = "log S"
-                    }) {
-                        Text("Log")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.leading, 550)
-                            .padding(.top, 500)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("l", modifiers: [])
+                    ZStack {
+                        Button(action: {
+                            state = "settings S"
+                        }) {
+                            Text("Settings")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 200, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut(.space, modifiers: [.shift])
+                        
+                        Button(action: {
+                            state = "menu"
+                            clickTimes.removeAll()
+                            print("Pressed back; sending to \(state)")
+                        }) {
+                            Text("Back")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 100, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                                .padding(.trailing, 550)
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut("b", modifiers: [])
+                        Button(action: {
+                            sentFrom = state
+                            state = "log S"
+                        }) {
+                            Text("Log")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 100, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                                .padding(.leading, 550)
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut("l", modifiers: [])
+                    }.frame(width: 670, height: 70)
+                        .background(Color.black.opacity(0.12))
+                        .clipShape(Capsule())
+                        .padding(.top, 500)
                 }.navigationTitle("Skilltester - Spamming")
                 
             }
@@ -933,53 +956,57 @@ struct ContentView: View {
                         .font(.title2)
                 }
                 
-                Button(action: {
-                    print(sentFrom)
-                    if sentFrom == "results S" {
-                        state = "results S"
-                    } else if sentFrom == "start S" {
-                        state = "start S"
+                ZStack {
+                    Button(action: {
+                        print(sentFrom)
+                        if sentFrom == "results S" {
+                            state = "results S"
+                        } else if sentFrom == "start S" {
+                            state = "start S"
+                        }
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.blue.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .foregroundColor(.white)
                     }
-                }) {
-                    Text("Back")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 200, height: 50)
-                        .background(Color.blue.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .foregroundColor(.white)
-                }.padding(.top, 510)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.space, modifiers: [.shift])
-                Button(action: {
-                    state = "menu"
-                }) {
-                    Text("Menu")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 100, height: 50)
-                        .background(Color.red.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .foregroundColor(.white)
-                        .padding(.trailing, 550)
-                }.padding(.top, 510)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut("m", modifiers: [])
-                Button(action: {
-                    deleteUserLog(log: "spam", user: userLoggedIn)
-                }) {
-                    Text("Clear")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 100, height: 50)
-                        .background(Color.red.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .foregroundColor(.white)
-                        .padding(.leading, 550)
-                }.padding(.top, 510)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut("x", modifiers: [])
-                
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        state = "menu"
+                    }) {
+                        Text("Menu")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .foregroundColor(.white)
+                            .padding(.trailing, 550)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("m", modifiers: [])
+                    Button(action: {
+                        deleteUserLog(log: "spam", user: userLoggedIn)
+                    }) {
+                        Text("Clear")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .foregroundColor(.white)
+                            .padding(.leading, 550)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("x", modifiers: [])
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.2))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
             }
         }
     }
@@ -1036,57 +1063,61 @@ struct ContentView: View {
                     Text("You will do \(testCountGoal) rounds.")
                         .padding(.top, 45)
                     
-                    Button(action: {
-                        state = "settings R"
-                        clickTimes.removeAll()
-                        saveMessage = "No changes made."
-                        slider1Value = Double(minWaitTime)
-                        slider2Value = Double(maxWaitTime)
-                        slider3Value = Double(testCountGoal)
-                    }) {
-                        Text("Settings")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.top, 500)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    
-                    Button(action: {
-                        state = "menu"
-                        clickTimes.removeAll()
-                        print("Pressed back; sending to \(state)")
-                    }) {
-                        Text("Back")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.top, 500)
-                            .padding(.trailing, 500)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.control])
-                    
-                    Button(action: {
-                        sentFrom = state
-                        state = "log R"
-                    }) {
-                        Text("Log")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.top, 500)
-                            .padding(.leading, 550)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("l", modifiers: [])
+                    ZStack {
+                        Button(action: {
+                            state = "settings R"
+                            clickTimes.removeAll()
+                            saveMessage = "No changes made."
+                            slider1Value = Double(minWaitTime)
+                            slider2Value = Double(maxWaitTime)
+                            slider3Value = Double(testCountGoal)
+                        }) {
+                            Text("Settings")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 200, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                                
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut(.space, modifiers: [.shift])
+                        
+                        Button(action: {
+                            state = "menu"
+                            clickTimes.removeAll()
+                            print("Pressed back; sending to \(state)")
+                        }) {
+                            Text("Back")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 100, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                                .padding(.trailing, 550)
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut(.space, modifiers: [.control])
+                        
+                        Button(action: {
+                            makeCurrentUserLog(log: "react", user: userLoggedIn)
+                            sentFrom = state
+                            state = "log R"
+                        }) {
+                            Text("Log")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 100, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                                .padding(.leading, 550)
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut("l", modifiers: [])
+                    }.frame(width: 670, height: 70)
+                        .background(Color.black.opacity(0.12))
+                        .clipShape(Capsule())
+                        .padding(.top, 500)
                     
                 }.navigationTitle("Skilltester - Reaction time")
             }
@@ -1312,6 +1343,7 @@ struct ContentView: View {
                             .buttonStyle(.plain)
                             .keyboardShortcut("m", modifiers: [])
                         Button(action: {
+                            makeCurrentUserLog(log: "react", user: userLoggedIn)
                             sentFrom = state
                             state = "log R"
                         }) {
@@ -1325,8 +1357,10 @@ struct ContentView: View {
                         }.foregroundColor(.white)
                             .buttonStyle(.plain)
                             .keyboardShortcut("l", modifiers: [])
-                    }//.padding(.vertical, 10)
-                    .padding(.top, 510)
+                    }.frame(width: 670, height: 70)
+                        .background(Color.black.opacity(0.12))
+                        .clipShape(Capsule())
+                        .padding(.top, 500)
                     .navigationTitle("Skilltester - Reaction time, Results")
                     
                 }
@@ -1510,61 +1544,59 @@ struct ContentView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
-                        .onAppear() {
-                            print("vvv  Logs below  vvv")
-                            makeCurrentUserLog(log: "react", user: userLoggedIn)
-                            print(reactLogDates)
-                            print(currentLogDates)
-                        }
                 } else {
                     Text("No log stored.")
                         .font(.title2)
                 }
                 
-                Button(action: {
-                    print(sentFrom)
-                    if sentFrom == "results R" {
-                        state = "results R"
-                    } else if sentFrom == "start R" {
-                        state = "start R"
+                ZStack {
+                    Button(action: {
+                        print(sentFrom)
+                        if sentFrom == "results R" {
+                            state = "results R"
+                        } else if sentFrom == "start R" {
+                            state = "start R"
+                        }
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.blue.opacity(elementOpacity))
+                            .clipShape(Capsule())
                     }
-                }) {
-                    Text("Back")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 200, height: 50)
-                        .background(Color.blue.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                }.padding(.top, 510)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.space, modifiers: [.shift])
-                Button(action: {
-                    state = "menu"
-                }) {
-                    Text("Menu")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 100, height: 50)
-                        .background(Color.red.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .padding(.trailing, 550)
-                }.padding(.top, 510)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut("m", modifiers: [])
-                Button(action: {
-                    deleteUserLog(log: "react", user: userLoggedIn)
-                }) {
-                    Text("Clear")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 100, height: 50)
-                        .background(Color.red.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .padding(.leading, 550)
-                }.padding(.top, 510)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut("x", modifiers: [])
-                
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        state = "menu"
+                    }) {
+                        Text("Menu")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.trailing, 550)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("m", modifiers: [])
+                    Button(action: {
+                        deleteUserLog(log: "react", user: userLoggedIn)
+                    }) {
+                        Text("Clear")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.leading, 550)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("x", modifiers: [])
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.12))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
             }
         }
     }
@@ -1596,53 +1628,54 @@ struct ContentView: View {
                     Text("Timer duration is set to \(slider5Text).")
                         .padding(.top, 45)
                     
-                    Button(action: {
-                        state = "settings T"
-                    }) {
-                        Text("Settings")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.top, 500)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    
-                    Button(action: {
-                        state = "menu"
-                        clickTimes.removeAll()
-                        print("Pressed back; sending to \(state)")
-                    }) {
-                        Text("Back")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.top, 500)
-                            .padding(.trailing, 500)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("b", modifiers: [])
-                    
-                    Button(action: {
-                        sentFrom = state
-                        state = "log T"
-                    }) {
-                        Text("Log")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.top, 500)
-                            .padding(.leading, 550)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("l", modifiers: [])
-                    
+                    ZStack {
+                        Button(action: {
+                            state = "settings T"
+                        }) {
+                            Text("Settings")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 200, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut(.space, modifiers: [.shift])
+                        
+                        Button(action: {
+                            state = "menu"
+                            clickTimes.removeAll()
+                            print("Pressed back; sending to \(state)")
+                        }) {
+                            Text("Back")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 100, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                                .padding(.trailing, 550)
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut("b", modifiers: [])
+                        
+                        Button(action: {
+                            sentFrom = state
+                            state = "log T"
+                        }) {
+                            Text("Log")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 100, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                                .padding(.leading, 550)
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut("l", modifiers: [])
+                    }.frame(width: 670, height: 70)
+                        .background(Color.black.opacity(0.12))
+                        .clipShape(Capsule())
+                        .padding(.top, 500)
                 }
             }
             
@@ -1764,9 +1797,10 @@ struct ContentView: View {
                         }.foregroundColor(.white)
                             .buttonStyle(.plain)
                             .keyboardShortcut("l", modifiers: [])
-                    }
-                    .padding(.top, 510)
-                    .navigationTitle("Skilltester - Time, Results")
+                    }.frame(width: 670, height: 70)
+                        .background(Color.black.opacity(0.12))
+                        .clipShape(Capsule())
+                        .padding(.top, 500)
                     Text("You stopped at")
                         .padding(.bottom, 45)
                     Text("\(timeStoppedText) / \(randomTimeText) s.")
@@ -1859,52 +1893,57 @@ struct ContentView: View {
                         .font(.title2)
                 }
                 
-                Button(action: {
-                    print(sentFrom)
-                    if sentFrom == "results T" {
-                        state = "results T"
-                    } else if sentFrom == "start T" {
-                        state = "start T"
+                ZStack {
+                    Button(action: {
+                        print(sentFrom)
+                        if sentFrom == "results T" {
+                            state = "results T"
+                        } else if sentFrom == "start T" {
+                            state = "start T"
+                        }
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.blue.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .foregroundColor(.white)
                     }
-                }) {
-                    Text("Back")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 200, height: 50)
-                        .background(Color.blue.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .foregroundColor(.white)
-                }.padding(.top, 510)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.space, modifiers: [.shift])
-                Button(action: {
-                    state = "menu"
-                }) {
-                    Text("Menu")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 100, height: 50)
-                        .background(Color.red.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .padding(.trailing, 550)
-                        .foregroundColor(.white)
-                }.padding(.top, 510)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut("m", modifiers: [])
-                Button(action: {
-                    deleteUserLog(log: "time", user: userLoggedIn)
-                }) {
-                    Text("Clear")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 100, height: 50)
-                        .background(Color.red.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .padding(.leading, 550)
-                        .foregroundColor(.white)
-                }.padding(.top, 510)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut("x", modifiers: [])
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        state = "menu"
+                    }) {
+                        Text("Menu")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.trailing, 550)
+                            .foregroundColor(.white)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("m", modifiers: [])
+                    Button(action: {
+                        deleteUserLog(log: "time", user: userLoggedIn)
+                    }) {
+                        Text("Clear")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.leading, 550)
+                            .foregroundColor(.white)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("x", modifiers: [])
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.12))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
             }
         }
     }
@@ -1995,7 +2034,7 @@ struct ContentView: View {
                             .clipShape(Capsule())
                     }.buttonStyle(.plain)
                         //.padding(.top, 500)
-                        .padding(.trailing, 500)
+                        .padding(.trailing, 550)
                     Button(action: {
                         state = "settings A"
                     }) {
@@ -2021,12 +2060,12 @@ struct ContentView: View {
                             .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                             //.padding(.top, 500)
-                            .padding(.leading, 500)
+                            .padding(.leading, 550)
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
                         .keyboardShortcut("l", modifiers: [])
-                }.frame(width: 620, height: 70)
-                    .background(Color.black.opacity(0.15))
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.12))
                     .clipShape(Capsule())
                     .padding(.top, 500)
             }
@@ -2038,6 +2077,7 @@ struct ContentView: View {
                         .onChange(of: slider6Value) { newValue in
                             targetCount = Int(slider6Value)
                         }
+                        .onAppear() {slider6Value = Double(targetCount)}
                     Text("\(targetCount) targets")
                         .padding(.leading, 325)
                 }
@@ -2160,48 +2200,49 @@ struct ContentView: View {
                         .padding(.top, CGFloat(-270 + 40*targetCount))
                         .padding(.leading, getTargetAvaLinePos())
                     
-                    Button(action: {
-                        state = "menu"
-                        timeToHit.removeAll()
-                    }) {
-                        Text("Menu")
-                            .font(.largeTitle)
-                            .bold()
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                    }.buttonStyle(.plain)
-                        .padding(.top, 500)
-                        .padding(.trailing, 500)
-                    
-                    Button(action: {
-                        state = "start A"
-                        timeToHit.removeAll()
-                    }) {
-                        Text("Start again")
-                            .font(.largeTitle)
-                            .bold()
-                            .frame(width: 180, height: 50)
-                            .background(Color.blue.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                    }.buttonStyle(.plain)
-                        .padding(.top, 500)
-                        .padding(.trailing, 1)
-                    
-                    Button(action: {
-                        sentFrom = state
-                        state = "log A"
+                    ZStack {
+                        Button(action: {
+                            state = "menu"
+                            timeToHit.removeAll()
+                        }) {
+                            Text("Menu")
+                                .font(.largeTitle)
+                                .bold()
+                                .frame(width: 100, height: 50)
+                                .background(Color.red.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                        }.buttonStyle(.plain)
+                            .padding(.trailing, 550)
                         
-                    }) {
-                        Text("Log")
-                            .font(.largeTitle)
-                            .bold()
-                            .frame(width: 100, height: 50)
-                            .background(Color.green.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                    }.buttonStyle(.plain)
+                        Button(action: {
+                            state = "start A"
+                            timeToHit.removeAll()
+                        }) {
+                            Text("Start again")
+                                .font(.largeTitle)
+                                .bold()
+                                .frame(width: 180, height: 50)
+                                .background(Color.blue.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                        }.buttonStyle(.plain)
+                        
+                        Button(action: {
+                            sentFrom = state
+                            state = "log A"
+                            
+                        }) {
+                            Text("Log")
+                                .font(.largeTitle)
+                                .bold()
+                                .frame(width: 100, height: 50)
+                                .background(Color.green.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                        }.buttonStyle(.plain)
+                            .padding(.leading, 550)
+                    }.frame(width: 670, height: 70)
+                        .background(Color.black.opacity(0.12))
+                        .clipShape(Capsule())
                         .padding(.top, 500)
-                        .padding(.leading, 500)
                     HStack(spacing: 21) {
                         Text("Best: \(timeToHit.min()!)ms")
                             .font(.title2)
@@ -2252,54 +2293,59 @@ struct ContentView: View {
                     }.frame(maxWidth: .infinity)
                 }.frame(height: 400)
                 
-                Button(action: {
-                    print(sentFrom)
-                    if sentFrom == "results A" {
-                        state = "results A"
-                    } else if sentFrom == "start A" {
-                        state = "start A"
+                ZStack {
+                    Button(action: {
+                        print(sentFrom)
+                        if sentFrom == "results A" {
+                            state = "results A"
+                        } else if sentFrom == "start A" {
+                            state = "start A"
+                        }
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 180, height: 50)
+                            .background(Color.blue.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .foregroundColor(.white)
                     }
-                }) {
-                    Text("Back")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 200, height: 50)
-                        .background(Color.blue.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .foregroundColor(.white)
-                }.padding(.top, 500)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.space, modifiers: [.shift])
-                Button(action: {
-                    state = "menu"
-                    timeToHit.removeAll()
-                }) {
-                    Text("Menu")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 100, height: 50)
-                        .background(Color.red.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .padding(.trailing, 500)
-                        .foregroundColor(.white)
-                }.padding(.top, 500)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut("m", modifiers: [])
-                Button(action: {
-                    deleteUserLog(log: "aim", user: userLoggedIn)
-                    makeCurrentUserLog(log: "aim", user: userLoggedIn)
-                }) {
-                    Text("Clear")
-                        .bold()
-                        .font(.largeTitle)
-                        .frame(width: 100, height: 50)
-                        .background(Color.red.opacity(elementOpacity))
-                        .clipShape(Capsule())
-                        .padding(.leading, 500)
-                        .foregroundColor(.white)
-                }.padding(.top, 500)
-                    .buttonStyle(.plain)
-                    .keyboardShortcut("x", modifiers: [])
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        state = "menu"
+                        timeToHit.removeAll()
+                    }) {
+                        Text("Menu")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.trailing, 550)
+                            .foregroundColor(.white)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("m", modifiers: [])
+                    Button(action: {
+                        deleteUserLog(log: "aim", user: userLoggedIn)
+                        makeCurrentUserLog(log: "aim", user: userLoggedIn)
+                    }) {
+                        Text("Clear")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.leading, 550)
+                            .foregroundColor(.white)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("x", modifiers: [])
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.12))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
             }
             
         }
@@ -2666,55 +2712,56 @@ struct ContentView: View {
                     .foregroundColor(Color.white.opacity(0.7))
             }.padding(.bottom, 500)
             
-            Button(action: {
-                state = "menu"
-            }) {
-                Text("Continue")
-                    .font(.system(size: 51, weight: .bold, design: .default))
-                    .foregroundColor(Color.white.opacity(0.8))
-                    .frame(width: 250, height: 70)
-                    .background(getProfileColor(index: userLoggedIn))
-                    .clipShape(RoundedRectangle(cornerRadius: 40))
-            }.buttonStyle(.plain)
+            ZStack {
+                Button(action: {
+                    state = "menu"
+                }) {
+                    Text("Continue")
+                        .font(.system(size: 51, weight: .bold, design: .default))
+                        .foregroundColor(Color.white.opacity(0.8))
+                        .frame(width: 250, height: 70)
+                        .background(getProfileColor(index: userLoggedIn))
+                        .clipShape(RoundedRectangle(cornerRadius: 40))
+                }.buttonStyle(.plain)
+                    .padding(.leading, 410)
+                
+                Button(action: {
+                    usersState = "userSettings"
+                }) {
+                    Text(getProfilePicture(index: userLoggedIn))
+                        .font(.system(size: 51, weight: .thin, design: .default))
+                        .foregroundColor(Color.white.opacity(0.8))
+                        .frame(width: 70, height: 70)
+                        .background(getProfileColor(index: userLoggedIn))
+                        .clipShape(RoundedRectangle(cornerRadius: 40))
+                }.buttonStyle(.plain)
+                    .padding(.trailing, 590)
+                
+                Button(action: {
+                    state = "designSettings"
+                }) {
+                    Image(systemName: "gear")
+                        .font(.system(size: 41, design: .default))
+                        .frame(width: 70, height: 70)
+                        .background(Color.gray.opacity(0.3))
+                        .clipShape(RoundedRectangle(cornerRadius: 35))
+                }.buttonStyle(.plain)
+                    .padding(.trailing, 400)
+                
+                Button(action: {
+                    state = "user results"
+                }) {
+                    Image(systemName: "chart.bar")
+                        .font(.system(size: 33, design: .default))
+                        .frame(width: 70, height: 70)
+                        .background(Color.gray.opacity(0.3))
+                        .clipShape(RoundedRectangle(cornerRadius: 35))
+                }.buttonStyle(.plain)
+                    .padding(.trailing, 210)
+            }.frame(width: 680, height: 90)
+                .background(Color.black.opacity(0.12))
+                .clipShape(Capsule())
                 .padding(.top, 490)
-                .padding(.leading, 410)
-            
-            Button(action: {
-                usersState = "userSettings"
-            }) {
-                Text(getProfilePicture(index: userLoggedIn))
-                    .font(.system(size: 51, weight: .thin, design: .default))
-                    .foregroundColor(Color.white.opacity(0.8))
-                    .frame(width: 70, height: 70)
-                    .background(getProfileColor(index: userLoggedIn))
-                    .clipShape(RoundedRectangle(cornerRadius: 40))
-            }.buttonStyle(.plain)
-                .padding(.top, 490)
-                .padding(.trailing, 590)
-            
-            Button(action: {
-                state = "designSettings"
-            }) {
-                Image(systemName: "gear")
-                    .font(.system(size: 41, design: .default))
-                    .frame(width: 70, height: 70)
-                    .background(Color.gray.opacity(0.3))
-                    .clipShape(RoundedRectangle(cornerRadius: 35))
-            }.buttonStyle(.plain)
-                .padding(.top, 490)
-                .padding(.trailing, 400)
-            
-            Button(action: {
-                state = "user results"
-            }) {
-                Image(systemName: "chart.bar")
-                    .font(.system(size: 33, design: .default))
-                    .frame(width: 70, height: 70)
-                    .background(Color.gray.opacity(0.3))
-                    .clipShape(RoundedRectangle(cornerRadius: 35))
-            }.buttonStyle(.plain)
-                .padding(.top, 490)
-                .padding(.trailing, 210)
             
             //MARK: Expand profile settings
             
