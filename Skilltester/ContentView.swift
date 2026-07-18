@@ -132,6 +132,7 @@ struct ContentView: View {
     @State private var elementOpacity: Double = 0.45
     @AppStorage("UserPreferencesBgOpacity") private var UserPreferencesBgOpacity: [Double] = []
     @AppStorage("UserPreferencesElementOpacity") private var UserPreferencesElementOpacity: [Double] = []
+    @State private var textColor: Color = .white
     
     let scrollSpace = "myScrollSpace"
     var bgLowOpacity: Double {
@@ -481,59 +482,72 @@ struct ContentView: View {
         aimLogAvaV.removeAll()
     }
     
-    @State private var allValues: [Int] = []
-    @State private var bestValues: [Int] = []
-    func getBestUser(mode: String) -> Int {
+    @State private var bestSpamValues: [String] = []
+    @State private var bestReactValues: [String] = []
+    @State private var bestTimeValues: [String] = []
+    @State private var bestAimValues: [String] = []
+    
+    @State private var spamLeaderboard: [String] = []
+    @State private var reactLeaderboard: [String] = []
+    @State private var timeLeaderboard: [String] = []
+    @State private var aimLeaderboard: [String] = []
+    
+    func makeLogLeaderboard(mode: String) {
         if mode == "spam" {
-            print(userNames)
-            print(userNames.count)
-            print(spamLogValues)
-            bestValues.removeAll()
-            for usrCount in 0...userNames.count - 1 {
-                allValues.removeAll()
-                makeCurrentUserLog(log: "spam", user: usrCount)
-                if currentLogVal1.count > 0 {
-                    bestValues.append(currentLogVal1.max()!)
-                } else {
-                    bestValues.append(0)
-                }
-                print(allValues)
-                print(usrCount)
+            bestSpamValues.removeAll()
+            spamLeaderboard.removeAll()
+            for user in 0...userNames.count - 1 {
+                makeCurrentUserLog(log: "spam", user: user)
+                print("Curren log for user\(user): \(currentLogVal1)")
+                if !currentLogVal1.isEmpty {
+                    bestSpamValues.append(currentLogVal1.max()!)
+                } else { bestSpamValues.append("0") }
             }
-            
-            print(bestValues)
-            return Int(bestValues.firstIndex(of: bestValues.max()!)!)
+            spamLeaderboard = bestSpamValues.sorted(by: >)
+            print("Best values: \(bestSpamValues)")
+            print("Leaderboard: \(spamLeaderboard)")
             
         } else if mode == "react" {
-            bestValues.removeAll()
-            for usrCount in 0...userNames.count - 1 {
-                allValues.removeAll()
-                makeCurrentUserLog(log: "react", user: usrCount)
-                if currentLogVal1.count > 0 {
-                    bestValues.append(Int(currentLogVal3.min()!)!)
-                } else {
-                    bestValues.append(3001)
-                }
+            bestReactValues.removeAll()
+            reactLeaderboard.removeAll()
+            for user in 0...userNames.count - 1 {
+                makeCurrentUserLog(log: "react", user: user)
+                print("Curren log for user\(user): \(currentLogVal1)")
+                if !currentLogVal1.isEmpty {
+                    bestReactValues.append(currentLogVal1.min()!)
+                } else { bestReactValues.append("None\(user)") }
             }
-            return Int(bestValues.firstIndex(of: bestValues.min()!)!)
-            
+            reactLeaderboard = bestReactValues.sorted()
+            print("Best values: \(bestReactValues)")
+            print("Leaderboard: \(reactLeaderboard)")
         } else if mode == "time" {
-            bestValues.removeAll()
-            for usrCount in 0...userNames.count - 1{
-                allValues.removeAll()
-                makeCurrentUserLog(log: "time", user: usrCount)
-                if currentLogVal1.count > 0 {
-                    bestValues.append(Int(currentLogVal1.min()!)!)
-                } else {
-                    bestValues.append(99999)
-                }
+            bestTimeValues.removeAll()
+            timeLeaderboard.removeAll()
+            for user in 0...userNames.count - 1 {
+                makeCurrentUserLog(log: "time", user: user)
+                print("Curren log for user\(user): \(currentLogVal1)")
+                if !currentLogVal1.isEmpty {
+                    bestTimeValues.append(currentLogVal1.min()!)
+                } else { bestTimeValues.append("None\(user)") }
             }
-            return Int(bestValues.firstIndex(of: bestValues.min()!)!)
-            
+            timeLeaderboard = bestTimeValues.sorted()
+            print("Best values: \(bestTimeValues)")
+            print("Leaderboard: \(timeLeaderboard)")
         } else if mode == "aim" {
-            return 0
+            bestAimValues.removeAll()
+            aimLeaderboard.removeAll()
+            for user in 0...userNames.count - 1 {
+                makeCurrentUserLog(log: "react", user: user)
+                print("Curren log for user\(user): \(currentLogVal1)")
+                if !currentLogVal1.isEmpty {
+                    bestAimValues.append(currentLogVal1.min()!)
+                } else { bestAimValues.append("None\(user)") }
+            }
+            aimLeaderboard = bestAimValues.sorted()
+            print("Best values: \(bestAimValues)")
+            print("Leaderboard: \(aimLeaderboard)")
         } else {
-            return 67
+
         }
     }
     
@@ -559,6 +573,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
+                                    .foregroundColor(textColor.opacity(0.8))
                                 //.background(.ultraThinMaterial)
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
@@ -573,6 +588,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
+                                    .foregroundColor(textColor.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                             }.buttonStyle(.plain)
@@ -585,6 +601,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
+                                    .foregroundColor(textColor.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                                 
@@ -600,6 +617,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
+                                    .foregroundColor(textColor.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                                 
@@ -613,6 +631,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
+                                    .foregroundColor(textColor.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                                 
@@ -626,6 +645,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
+                                    .foregroundColor(textColor.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                                 
@@ -637,11 +657,15 @@ struct ContentView: View {
                         .onAppear() {
                             print("In Menu.")
                             //clearAllLogs()
-                            print(getBestUser(mode: "spam"))
-                            aimLogDates.removeAll()
-                            aimLogBestV.removeAll()
-                            aimLogWorstV.removeAll()
-                            aimLogAvaV.removeAll()
+                            print("SPAM")
+                            makeLogLeaderboard(mode: "spam")
+                            print("REACTION")
+                            makeLogLeaderboard(mode: "react")
+                            print("TIME")
+                            makeLogLeaderboard(mode: "time")
+                            print("AIM")
+                            makeLogLeaderboard(mode: "aim")
+                            
                         }
                     
                 }.frame(width: 600, height: 600)
@@ -652,7 +676,7 @@ struct ContentView: View {
                 }) {
                     Text("?")
                         .font(.largeTitle)
-                        .foregroundColor(.white)
+                        .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 30, height: 30)
                         .background(getProfileColor(index: userLoggedIn))
                         .clipShape(Circle())
@@ -665,7 +689,7 @@ struct ContentView: View {
                 }) {
                     Text(getProfilePicture(index: userLoggedIn))
                         .font(.system(size: 51, weight: .thin, design: .default))
-                        .foregroundColor(Color.white.opacity(0.8))
+                        .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
                         .background(getProfileColor(index: userLoggedIn))
                         .clipShape(RoundedRectangle(cornerRadius: 40))
@@ -679,7 +703,7 @@ struct ContentView: View {
     //MARK: Spam - start
     
     
-    @State private var logIdx: Int = 0
+    
     var spamView: some View {
         ZStack {
             if state == "start S" {
@@ -2375,6 +2399,11 @@ struct ContentView: View {
                         userOnLogin = Int(index - 1)
                         bgOpacity = UserPreferencesBgOpacity[userOnLogin]
                         elementOpacity = UserPreferencesElementOpacity[userOnLogin]
+                        if elementOpacity > 0.7 || userColor[userOnLogin] == "white" {
+                            textColor = .black
+                        } else {
+                            textColor = .white
+                        }
                     } else if state == "userSettings" {
                         print("clicked me inside of user settings")
                         adminEditState = "editing"
@@ -2470,6 +2499,7 @@ struct ContentView: View {
             if usersState == "login" {
                 Text(getProfilePicture(index: userOnLogin))
                     .font(.system(size: 125, weight: .thin, design: .default))
+                    .foregroundColor(textColor.opacity(0.8))
                     .frame(width: 250, height: 250)
                     .background(getProfileColor(index: userOnLogin))
                     .clipShape(Circle())
@@ -2678,6 +2708,8 @@ struct ContentView: View {
                     if keepLoggedIn.isEmpty || !keepLoggedIn.contains(lastLoggedIn){
                         passwordState = "done"
                         usersState = "choosing"
+                        print(elementOpacity)
+                        
                     } else {
                         if lastLoggedIn < 100 {
                             //print("Trying to get \(lastLoggedIn) from \(keepLoggedIn)")
@@ -2687,6 +2719,12 @@ struct ContentView: View {
                             usersState = "loggedin"
                             state = "loggedin"
                             //passwordState = "done"
+                            
+                            if elementOpacity > 0.7 || userColor[userLoggedIn] == "white" {
+                                textColor = .black
+                            } else {
+                                textColor = .white
+                            }
                         }
                         
                     }
@@ -2718,7 +2756,7 @@ struct ContentView: View {
                 }) {
                     Text("Continue")
                         .font(.system(size: 51, weight: .bold, design: .default))
-                        .foregroundColor(Color.white.opacity(0.8))
+                        .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 250, height: 70)
                         .background(getProfileColor(index: userLoggedIn))
                         .clipShape(RoundedRectangle(cornerRadius: 40))
@@ -2730,7 +2768,7 @@ struct ContentView: View {
                 }) {
                     Text(getProfilePicture(index: userLoggedIn))
                         .font(.system(size: 51, weight: .thin, design: .default))
-                        .foregroundColor(Color.white.opacity(0.8))
+                        .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
                         .background(getProfileColor(index: userLoggedIn))
                         .clipShape(RoundedRectangle(cornerRadius: 40))
@@ -2742,6 +2780,7 @@ struct ContentView: View {
                 }) {
                     Image(systemName: "gear")
                         .font(.system(size: 41, design: .default))
+                        .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
                         .background(Color.gray.opacity(0.3))
                         .clipShape(RoundedRectangle(cornerRadius: 35))
@@ -2749,10 +2788,16 @@ struct ContentView: View {
                     .padding(.trailing, 400)
                 
                 Button(action: {
+                    makeLogLeaderboard(mode: "spam")
+                    makeLogLeaderboard(mode: "react")
+                    makeLogLeaderboard(mode: "time")
+                    makeLogLeaderboard(mode: "aim")
+                    
                     state = "user results"
                 }) {
                     Image(systemName: "chart.bar")
                         .font(.system(size: 33, design: .default))
+                        .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
                         .background(Color.gray.opacity(0.3))
                         .clipShape(RoundedRectangle(cornerRadius: 35))
@@ -2763,7 +2808,7 @@ struct ContentView: View {
                 .clipShape(Capsule())
                 .padding(.top, 490)
             
-            //MARK: Expand profile settings
+            //MARK: Click profile menu
             
             
             if usersState == "userSettings" {
@@ -2858,6 +2903,7 @@ struct ContentView: View {
                         ForEach(0..<12, id: \.self) {index in
                             if userColor[userLoggedIn] == getButtonColorName(index: index) {
                                 Image(systemName: "checkmark")
+                                    .foregroundColor(textColor.opacity(0.8))
                                     .frame(width: 40, height: 40)
                                     .background(getButtonColor(index: index))
                                     .clipShape(Circle())
@@ -2896,7 +2942,11 @@ struct ContentView: View {
                             .tint(getProfileColor(index: userLoggedIn))
                             .onChange(of: elementOpacity) { newElValue in
                                 UserPreferencesElementOpacity[userLoggedIn] = elementOpacity
-                                print("Element opacity changed!")
+                                if elementOpacity > 0.7 || userColor[userLoggedIn] == "white" {
+                                    textColor = .black
+                                } else {
+                                    textColor = .white
+                                }
                             }
                         Text("More opaque")
                             .font(.title3)
@@ -2938,7 +2988,7 @@ struct ContentView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 30))
             }.buttonStyle(.plain)
                 .padding(.top, 500)
-                .padding(.trailing, 528)
+                .padding(.trailing, 1)
             Text("")
                 .frame(width: 40, height: 40)
                 .background(getProfileColor(index: userLoggedIn))
@@ -3256,42 +3306,198 @@ struct ContentView: View {
     }
     //MARK: User results
     
+    func getLeaderboardfont(index: Int) -> Font {
+        if index == 0 {
+            return .system(size: 60, weight: .bold, design: .default)
+        } else if index == 1 {
+            return .system(size: 50, weight: .bold, design: .default)
+        } else if index == 2 {
+            return .system(size: 50, weight: .bold, design: .default)
+        } else {
+            return .system(size: 50, design: .default)
+        }
+    }
+    func getLeaderboardColor(index: Int) -> Color {
+        if index == 0 {
+            return .yellow
+        } else if index == 1 {
+            return .orange
+        } else if index == 2 {
+            return .white
+        } else {
+            return .gray
+        }
+    }
     
+    @State private var leaderboardText: String = "Spam mode"
+    @State private var modePadding: Int = 0
     var userResults: some View {
         ZStack {
             VStack(spacing: -20) {
-                Text("Your results,")
+                Text("Leaderboard for")
                     .font(.largeTitle)
                     .foregroundColor(Color.white.opacity(0.6))
                 HStack(spacing: 20) {
-                    Text(adminStatus(index:userLoggedIn))
-                        .font(.system(size: 81, weight: .thin, design: .default))
-                        .foregroundColor(Color.white.opacity(0.7))
-                    Text(getProfileName(index:userLoggedIn))
+                    Text(leaderboardText)
                         .font(.system(size: 81, weight: .bold, design: .default))
                         .foregroundColor(Color.white.opacity(0.7))
+                        
                 }
             }.padding(.bottom, 500)
             
-            //if getBestUser(mode: "spam") == userLoggedIn {
-            //    Text("Ranked #1 in spam")
-            //} else {
-            //    Text("You are not #1 in spam.")
-            //}
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                // SPAM
+                VStack {
+                    ScrollView {
+                        ForEach(0...userNames.count - 1, id: \.self) {index in
+                            if spamLeaderboard[index].hasPrefix("0") {
+                                Text("#\(index+1). \(userNames[bestSpamValues.firstIndex(of: spamLeaderboard[index])!]) -cps.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            } else {
+                                Text("#\(index+1). \(userNames[bestSpamValues.firstIndex(of: spamLeaderboard[index])!]) \(spamLeaderboard[index])cps.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            }
+                        }
+                    }.padding(.top, 15)
+                }
+            }.frame(width: 600, height: 390)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 10)
+                .padding(.leading, CGFloat(0 - modePadding))
             
-            Button(action: {
-                print("Back to userView")
-                state = "loggedin"
-                usersState = "loggedin"
-                adminEditState = "none"
-            }) {
-                Text("Back")
-                    .font(.largeTitle)
-                    .frame(width: 120, height: 50)
-                    .background(Color.black.opacity(elementOpacity))
-                    .clipShape(RoundedRectangle(cornerRadius: 30))
-            }.buttonStyle(.plain)
-                .padding(.top, 500)
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                // REACTION
+                VStack {
+                    ScrollView {
+                        ForEach(0...userNames.count - 1, id: \.self) {index in
+                            if reactLeaderboard[index].hasPrefix("N") {
+                                Text("#\(index+1). \(userNames[bestReactValues.firstIndex(of: reactLeaderboard[index])!]) ---ms.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            } else {
+                                Text("#\(index+1). \(userNames[bestReactValues.firstIndex(of: reactLeaderboard[index])!]) \(reactLeaderboard[index])ms.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            }
+                        }
+                    }.padding(.top, 15)
+                }
+            }.frame(width: 600, height: 390)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 10)
+                .padding(.leading, CGFloat(1400 - modePadding))
+            
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                // TIME
+                VStack {
+                    ScrollView {
+                        ForEach(0...userNames.count - 1, id: \.self) {index in
+                            if timeLeaderboard[index].hasPrefix("N") {
+                                Text("#\(index+1). \(userNames[bestTimeValues.firstIndex(of: timeLeaderboard[index])!]) -.-s.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            } else {
+                                Text("#\(index+1). \(userNames[bestTimeValues.firstIndex(of: timeLeaderboard[index])!]) \(timeLeaderboard[index])s.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            }
+                        }
+                    }.padding(.top, 15)
+                }
+            }.frame(width: 600, height: 390)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 10)
+                .padding(.leading, CGFloat(2800 - modePadding))
+            
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                // AIM
+                VStack {
+                    ScrollView {
+                        ForEach(0...userNames.count - 1, id: \.self) {index in
+                            if aimLeaderboard[index].hasPrefix("N") {
+                                Text("#\(index+1). \(userNames[bestAimValues.firstIndex(of: aimLeaderboard[index])!]) \(aimLeaderboard[index])) ---ms.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            } else {
+                                Text("#\(index+1). \(userNames[bestAimValues.firstIndex(of: aimLeaderboard[index])!]) \(aimLeaderboard[index])ms.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            }
+                        }
+                    }.padding(.top, 5)
+                }
+            }.frame(width: 600, height: 390)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 10)
+                .padding(.leading, CGFloat(4200 - modePadding))
+            
+            ZStack {
+                Button(action: {
+                    print("Back to userView")
+                    state = "loggedin"
+                    usersState = "loggedin"
+                    adminEditState = "none"
+                }) {
+                    Text("Back")
+                        .font(.largeTitle)
+                        .frame(width: 120, height: 50)
+                        .background(Color.black.opacity(elementOpacity))
+                        .clipShape(RoundedRectangle(cornerRadius: 30))
+                }.buttonStyle(.plain)
+                    
+                Button(action: {
+                    if modePadding != 0 {
+                        if modePadding == 4200 {
+                            leaderboardText = "Time mode"
+                        } else if modePadding == 2800 {
+                            leaderboardText = "Reaction mode"
+                        } else if modePadding == 1400 {
+                            leaderboardText = "Spam mode"
+                        }
+                        withAnimation(.easeInOut(duration: 0.7)) {
+                            modePadding -= 1400
+                        }
+                    }
+                    print("Left arrow pressed; paddding: \(modePadding)")
+                }) {
+                    Image(systemName: "arrow.left")
+                        .font(.largeTitle)
+                        .frame(width: 80, height: 50)
+                        .background(Color.black.opacity(elementOpacity))
+                        .clipShape(RoundedRectangle(cornerRadius: 30))
+                }.buttonStyle(.plain)
+                    .padding(.trailing, 530)
+                
+                Button(action: {
+                    if modePadding != 4200 {
+                        if modePadding == 0 {
+                            leaderboardText = "Reaction mode"
+                        } else if modePadding == 1400 {
+                            leaderboardText = "Time mode"
+                        } else if modePadding == 2800 {
+                            leaderboardText = "Aim mode"
+                        }
+                        withAnimation(.easeInOut(duration: 0.7)) {
+                            modePadding += 1400
+                        }
+                    }
+                    print("Right arrow pressed; paddding: \(modePadding)")
+                }) {
+                    Image(systemName: "arrow.right")
+                        .font(.largeTitle)
+                        .frame(width: 80, height: 50)
+                        .background(Color.black.opacity(elementOpacity))
+                        .clipShape(RoundedRectangle(cornerRadius: 30))
+                }.buttonStyle(.plain)
+                    .padding(.leading, 530)
+
+            }.padding(.top, 500)
         }
     }
     
