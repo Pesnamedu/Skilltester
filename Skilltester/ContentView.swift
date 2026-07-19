@@ -636,9 +636,9 @@ struct ContentView: View {
                             
                             Button(action: {
                                 print("clicked button 5")
-                                //state = "start A"
+                                state = "start M"
                             }) {
-                                Text("Unused button")
+                                Text("Memory")
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
@@ -2395,6 +2395,226 @@ struct ContentView: View {
         }
     }
     
+    //MARK: Memory - start
+    
+    
+    @State private var squareCount: Int = 0
+    @State private var squareAnswers: [Int] = []
+    @State private var squareQuestions: [Int] = []
+    @State private var valsReplaced: [Int] = []
+    @State private var randInt: Int = 0
+    @State private var regenerate: Bool = false
+    func generateSquaresList(count: Int) {
+        squareAnswers.removeAll()
+        squareQuestions.removeAll()
+        valsReplaced.removeAll()
+        for _ in 0...35 {
+            squareAnswers.append(0)
+            squareQuestions.append(0)
+        }
+        for _ in 0...count - 1 {
+            randInt = Int.random(in: 0...35)
+            if valsReplaced.contains(randInt) {
+                print("ValsRelpaced contained randInt, searching for new RANDOM one.")
+                regenerate = true
+                while regenerate {
+                    print(randInt)
+                    print(valsReplaced)
+                    if !valsReplaced.contains(randInt) {
+                        print("Found and changed random position.")
+                        squareAnswers[randInt] = 1
+                        valsReplaced.append(randInt)
+                        regenerate = false
+                    } else {
+                        print("List contains randInt, regenerated it.")
+                        randInt = Int.random(in: 0...35)
+                    }
+                }
+            } else {
+                print("Changed random position")
+                squareAnswers[randInt] = 1
+                valsReplaced.append(randInt)
+            }
+        }
+    }
+    func checkValid(q: Int, a: Int) -> Color {
+        if q == a && q == 1{
+            return .green
+        } else if q != a && q == 1 {
+            return .red
+        } else if q != a && q == 0 {
+            return .white
+        } else {
+            return .gray.opacity(elementOpacity)
+        }
+    }
+    var memoryView: some View {
+        ZStack {
+            if state == "start M" {
+                Button(action: {
+                    squareCount = 1
+                    generateSquaresList(count: squareCount)
+                    state = "showing M"
+                }) {
+                    Text("start")
+                        .bold()
+                        .padding(.horizontal, 50)
+                        .padding(.vertical, 50)
+                        .frame(minWidth: 700, minHeight: 600)
+                        .background(Color.green.opacity(bgOpacity))
+                        .font(.largeTitle)
+                }.buttonStyle(.plain)
+            }
+            
+            if state == "showing M" {
+                ZStack {
+                    Rectangle()
+                        .foregroundColor(.blue.opacity(bgOpacity))
+                        .frame(width: 700, height: 650)
+                        .ignoresSafeArea()
+                    ZStack (alignment: .topLeading) {
+                        ForEach(0...35, id: \.self) {index in
+                            let column = index % 6
+                            let row = index / 6
+                            let isLit: Bool = squareAnswers[index] == 1
+                            
+                            Button(action: {
+                                
+                            }) {
+                                Text("")
+                                    .frame(width: 80, height: 80)
+                                    .font(.largeTitle)
+                                    .background(isLit ? Color.white : Color.gray.opacity(elementOpacity))
+                                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                            }.buttonStyle(.plain)
+                                .padding(.leading, CGFloat(column * 85))
+                                .padding(.top, CGFloat(row * 85))
+                        }
+                    }.padding(.bottom, 50)
+                        .padding(.leading, 0)
+                    Button(action: {
+                        state = "guessing M"
+                    }) {
+                        Text("Continue")
+                            .font(.largeTitle)
+                            .frame(width: 130, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        .padding(.top, 530)
+                }
+            }
+            
+            if state == "guessing M" {
+                ZStack {
+                    Rectangle()
+                        .frame(width: 700, height: 650)
+                        .foregroundColor(.blue.opacity(bgOpacity))
+                        .ignoresSafeArea()
+                    
+                    ZStack (alignment: .topLeading) {
+                        ForEach(0...35, id: \.self) {index in
+                            let column = index % 6
+                            let row = index / 6
+                            let isLit: Bool = squareQuestions[index] == 1
+                            
+                            Button(action: {
+                                if squareQuestions[index] == 0 {
+                                    squareQuestions[index] = 1
+                                } else {
+                                    squareQuestions[index] = 0
+                                }
+                            }) {
+                                Text("")
+                                    .frame(width: 80, height: 80)
+                                    .font(.largeTitle)
+                                    .background(isLit ? Color.white : Color.gray.opacity(elementOpacity))
+                                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                            }.buttonStyle(.plain)
+                                .padding(.leading, CGFloat(column * 85))
+                                .padding(.top, CGFloat(row * 85))
+                        }
+                    }.padding(.bottom, 50)
+                        .padding(.leading, 0)
+                    
+                    Button(action: {
+                        state = "guessed M"
+                    }) {
+                        Text("Continue")
+                            .font(.largeTitle)
+                            .frame(width: 130, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        .padding(.top, 530)
+                }
+            }
+            
+            if state == "guessed M" {
+                ZStack {
+                    Rectangle()
+                        .frame(width: 700, height: 650)
+                        .foregroundColor(.blue.opacity(bgOpacity))
+                        .ignoresSafeArea()
+                    
+                    ZStack (alignment: .topLeading) {
+                        ForEach(0...35, id: \.self) {index in
+                            let column = index % 6
+                            let row = index / 6
+                            
+                            Button(action: {
+                                
+                            }) {
+                                Text("")
+                                    .frame(width: 80, height: 80)
+                                    .font(.largeTitle)
+                                    .background(checkValid(q: squareQuestions[index], a: squareAnswers[index]))
+                                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                            }.buttonStyle(.plain)
+                                .padding(.leading, CGFloat(column * 85))
+                                .padding(.top, CGFloat(row * 85))
+                        }
+                    }.padding(.bottom, 50)
+                    
+                    Button(action: {
+                        if squareQuestions == squareAnswers {
+                            squareCount += 1
+                            generateSquaresList(count: squareCount)
+                            print("all good, starting new round with \(squareCount) squares")
+                            state = "showing M"
+                        } else {
+                            print("no good, sending to results")
+                            state = "results M"
+                        }
+                    }) {
+                        Text("Continue")
+                            .font(.largeTitle)
+                            .frame(width: 130, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        .padding(.top, 530)
+                }
+            }
+            
+            if state == "end M" {
+                
+            }
+            
+            if state == "results M" {
+                Text("You memorized \(squareCount) squares.")
+                    .font(.largeTitle)
+                    .bold
+            }
+            
+            if state == "log M" {
+                
+            }
+        }
+    }
+    
+    
+    
     var tutorView: some View {
         ZStack {
             Text("ts is tutorial")
@@ -3575,6 +3795,8 @@ struct ContentView: View {
                 timeView
             } else if state.hasSuffix("A") {
                 aimView
+            } else if state.hasSuffix("M") {
+                memoryView
             } else if state == "tutor" {
                 tutorView
             } else if state == "startup" {
