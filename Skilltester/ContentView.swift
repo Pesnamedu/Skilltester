@@ -125,6 +125,8 @@ struct ContentView: View {
     @State private var resetOnLaunch: Bool = false
     
     //MARK: DESIGN variables
+    @State private var darkMode: Bool = true
+    @AppStorage("userPreferencesDarkMode") private var userPreferencesDarkMode: [Bool] = []
     var dynamicEndBarWidth: CGFloat {
         CGFloat(700 * Double(timeElapsed) * 0.00121)
     }
@@ -140,11 +142,11 @@ struct ContentView: View {
     }
     
     //MARK: REACTION variables
-    @State private var randomWait: Float = 0.0
+    @State private var randomWait: Double = 0.0
     @State private var isMeasuring: Bool = false
     @State private var result = 0
-    @State private var clickTimes: [Float] = []//[203, 190, 187, 213, 233, 200, 240]// SMAZAT PRED RUNEM , 205, 149, 214
-    @State private var testCount = 0
+    @State private var clickTimes: [Float] = []
+    @AppStorage("testCount") private var testCount: Int = 0
     @State private var startTimer: Date = Date()
     
     //@State private var avaTime: Float = 0
@@ -186,8 +188,8 @@ struct ContentView: View {
         }
     }
     
-    @State private var minWaitTime: Float = 1.5
-    @State private var maxWaitTime: Float = 3.0
+    @AppStorage("minWaitTime") private var minWaitTime: Double = 1.5
+    @AppStorage("maxWaitTime") private var maxWaitTime: Double = 3.0
     @State private var slider1Value: Double = 1.5
     @State private var slider2Value: Double = 3.0
     @State private var slider3Value: Double = 5
@@ -212,7 +214,7 @@ struct ContentView: View {
     
     //MARK: SPAMMING variables
     @State private var spamCount: Int = 0
-    @State private var spamWaitTime: Int = 5
+    @AppStorage("spamWaitTime") private var spamWaitTime: Int = 5
     @State private var cps = 0
     @State private var sentFrom: String = ""
     
@@ -501,7 +503,7 @@ struct ContentView: View {
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
                     bestSpamValues.append(currentLogVal1.max()!)
-                } else { bestSpamValues.append("0") }
+                } else { bestSpamValues.append("0%\(user)") }
             }
             spamLeaderboard = bestSpamValues.sorted(by: >)
             print("Best values: \(bestSpamValues)")
@@ -556,12 +558,21 @@ struct ContentView: View {
     let menuButtonSpacing: CGFloat = 18
     var menuView: some View {
         ZStack {
+            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
             if state == "menu" {
-                Text("Menu")
-                    .bold()
-                    .foregroundColor(getProfileColor(index: userLoggedIn))
-                    .font(.system(size: 61, weight: .bold, design: .default))
-                    .padding(.bottom, 581)
+                if getProfileColor(index: userLoggedIn) == Color.white.opacity(elementOpacity + 0.1) {
+                    Text("Menu")
+                        .bold()
+                        .foregroundColor(.black.opacity(0.8))
+                        .font(.system(size: 61, weight: .bold, design: .default))
+                        .padding(.bottom, 581)
+                } else {
+                    Text("Menu")
+                        .bold()
+                        .foregroundColor(getProfileColor(index: userLoggedIn))
+                        .font(.system(size: 61, weight: .bold, design: .default))
+                        .padding(.bottom, 581)
+                }
                 ScrollView {
                     VStack (spacing: menuButtonSpacing) {
                         HStack (alignment: .top, spacing: menuButtonSpacing) {
@@ -818,7 +829,7 @@ struct ContentView: View {
                     .padding(.top, 35)
             }
             
-            //MARK: Spam - spam end
+            //MARK: Spam - end
             if state == "spammed S" {
                 
                 Button(action: {
@@ -843,7 +854,7 @@ struct ContentView: View {
                 RoundedRectangle(cornerRadius: 18)
                     .size(width: dynamicEndBarWidth, height: 18)
                     .padding(.trailing, 350)
-                    .padding(.top, 586)
+                    .padding(.top, 600)
                     .foregroundColor(Color.black.opacity(elementOpacity))
             }
             
@@ -900,7 +911,10 @@ struct ContentView: View {
                     }.foregroundColor(.white)
                         .buttonStyle(.plain)
                         .keyboardShortcut("m", modifiers: [])
-                }.padding(.top, 510)
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.12))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
             }
             
             //MARK: Spam - settings
@@ -932,6 +946,9 @@ struct ContentView: View {
                         Slider(value: $slider4Value, in: 1...10, step: 1)
                             .tint(.green)
                             .frame(width: 250)
+                            .onAppear() {
+                                slider4Value = Double(spamWaitTime)
+                            }
                         Text("\(slider4ValueText) s.")
                             .padding(.leading, 285)
                     }
@@ -1043,7 +1060,7 @@ struct ContentView: View {
             if state == "start R" {
                 ZStack {
                     Button(action: {
-                        randomWait = Float.random(in: minWaitTime...maxWaitTime)
+                        randomWait = Double.random(in: minWaitTime...maxWaitTime)
                         print("Waiting randomly \(randomWait)")
                         print("starting game..")
                         state = "wait R"
@@ -1196,7 +1213,7 @@ struct ContentView: View {
             //MARK: Reaction - click end
             if state == "clicked R" {
                 Button(action: {
-                    randomWait = Float.random(in: minWaitTime...maxWaitTime)
+                    randomWait = Double.random(in: minWaitTime...maxWaitTime)
                     print("Waiting randomly \(randomWait)")
                     if testCount <= testCountGoal {
                         print("starting new game.. (\(testCount)/5)")
@@ -1273,7 +1290,7 @@ struct ContentView: View {
                     print("starting game..")
                     state = "wait R"
                     print("Waiting..")
-                    randomWait = Float.random(in: minWaitTime...maxWaitTime)
+                    randomWait = Double.random(in: minWaitTime...maxWaitTime)
                     print("Waiting randomly \(randomWait)")
                     Task {
                         try? await Task.sleep(nanoseconds: UInt64(randomWait) * 1_000_000_000)
@@ -1499,8 +1516,8 @@ struct ContentView: View {
                             Button(action: {
                                 print("Save button clicked.")
                                 if slider2Value >= slider1Value + 1 {
-                                    minWaitTime = Float(slider1Value)
-                                    maxWaitTime = Float(slider2Value)
+                                    minWaitTime = Double(slider1Value)
+                                    maxWaitTime = Double(slider2Value)
                                     saveMessage = "Changes Saved."
                                     print("Saved changes.")
                                 } else if slider1Value > slider2Value{
@@ -1530,6 +1547,9 @@ struct ContentView: View {
                             Slider(value: $slider3Value, in: 3...10, step: 1)
                                 .tint(.green)
                                 .frame(width: 250)
+                                .onAppear() {
+                                    slider3Value = Double(testCount)
+                                }
                             Text("\(slider3ValueText) rounds.")
                                 .padding(.leading, 320)
                         }
@@ -2399,6 +2419,7 @@ struct ContentView: View {
                         userOnLogin = Int(index - 1)
                         bgOpacity = UserPreferencesBgOpacity[userOnLogin]
                         elementOpacity = UserPreferencesElementOpacity[userOnLogin]
+                        darkMode = userPreferencesDarkMode[userOnLogin]
                         if elementOpacity > 0.7 || userColor[userOnLogin] == "white" {
                             textColor = .black
                         } else {
@@ -2497,23 +2518,27 @@ struct ContentView: View {
             }
             //MARK: Login user
             if usersState == "login" {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                    .ignoresSafeArea()
                 Text(getProfilePicture(index: userOnLogin))
                     .font(.system(size: 125, weight: .thin, design: .default))
-                    .foregroundColor(textColor.opacity(0.8))
+                    .foregroundColor(darkMode ? textColor.opacity(0.8) : Color.black.opacity(0.8))
                     .frame(width: 250, height: 250)
                     .background(getProfileColor(index: userOnLogin))
                     .clipShape(Circle())
                     .padding(.bottom, 110)
                 Text(userNames[userOnLogin])
+                    .foregroundColor(darkMode ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
                     .font(.largeTitle)
                     .padding(.top, 190)
                 HStack(spacing: -35) {
                     SecureField("Password...", text: $passwordInput)
                         .font(.largeTitle)
+                        .foregroundColor(darkMode ? Color.gray : Color.white)
                         .padding(.leading, 10)
                         .textFieldStyle(.plain)
                         .frame(width: 190, height: 40)
-                        .background(Color.gray.opacity(0.3))
+                        .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.black.opacity(elementOpacity))
                         .clipShape(RoundedRectangle(cornerRadius: 20))
                     
                     Button(action: {
@@ -2523,12 +2548,12 @@ struct ContentView: View {
                             state = "loggedin"
                             userLoggedIn = userOnLogin
                             lastLoggedIn = userLoggedIn
-                            print("User \(userLoggedIn) will get their appearance from \(UserPreferencesBgOpacity) BG and \(UserPreferencesElementOpacity) EL")
                             bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
                             elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
-                            print("BG: \(bgOpacity)")
-                            print("EL: \(elementOpacity)")
+                            darkMode = userPreferencesDarkMode[userLoggedIn]
+
                             passwordInput = ""
+                            passwordRepeat = ""
                             print("Last logged in: \(lastLoggedIn)")
                         } else {
                             print("INCORRECT PASSWORD ON LOGIN")
@@ -2537,9 +2562,9 @@ struct ContentView: View {
                     }) {
                         Image(systemName: "arrow.right")
                             .font(.largeTitle)
-                            .foregroundColor(.gray)
+                            .foregroundColor(darkMode ? .gray : .white)
                             .frame(width: 30, height: 30)
-                            .background(Color.gray.opacity(0.2))
+                            .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.black.opacity(elementOpacity))
                             .clipShape(Circle())
                     }.buttonStyle(.plain)
                         .keyboardShortcut(.return, modifiers: [])
@@ -2555,9 +2580,9 @@ struct ContentView: View {
                 }) {
                     Image(systemName: "arrow.left")
                         .font(.largeTitle)
-                        .foregroundColor(.gray)
+                        .foregroundColor(darkMode ? .gray : .white)
                         .frame(width: 40, height: 40)
-                        .background(Color.gray.opacity(0.2))
+                        .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.black.opacity(elementOpacity))
                         .clipShape(Circle())
                 }.buttonStyle(.plain)
                     .keyboardShortcut(.return, modifiers: [])
@@ -2665,9 +2690,11 @@ struct ContentView: View {
                                     userColor.append("blue")
                                     UserPreferencesBgOpacity.append(0.6)
                                     UserPreferencesElementOpacity.append(0.45)
+                                    userPreferencesDarkMode.append(true)
                                     passwordState = "done"
                                     usersState = "choosing"
                                     passwordInput = ""
+                                    passwordRepeat = ""
                                 } else {
                                     print("PASSWORDS ARE NOT MATCHING")
                                 }
@@ -2687,6 +2714,7 @@ struct ContentView: View {
             
         //MARK: Auto login
         }.onAppear {
+            print(userPreferencesDarkMode)
             if isOnFresh {
                 if resetOnLaunch {
                     userNames.removeAll()
@@ -2716,6 +2744,7 @@ struct ContentView: View {
                             userLoggedIn = lastLoggedIn
                             bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
                             elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
+                            darkMode = userPreferencesDarkMode[userLoggedIn]
                             usersState = "loggedin"
                             state = "loggedin"
                             //passwordState = "done"
@@ -2744,10 +2773,10 @@ struct ContentView: View {
             VStack(spacing: -20) {
                 Text("Welcome back,")
                     .font(.largeTitle)
-                    .foregroundColor(Color.white.opacity(0.6))
+                    .foregroundColor(darkMode ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
                 Text(getProfileName(index:userLoggedIn))
                     .font(.system(size: 81, weight: .bold, design: .default))
-                    .foregroundColor(Color.white.opacity(0.7))
+                    .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
             }.padding(.bottom, 500)
             
             ZStack {
@@ -2881,14 +2910,14 @@ struct ContentView: View {
             VStack(spacing: -20) {
                 Text("Settings for")
                     .font(.largeTitle)
-                    .foregroundColor(Color.white.opacity(0.6))
+                    .foregroundColor(darkMode ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
                 HStack(spacing: 20) {
                     Text(adminStatus(index:userLoggedIn))
                         .font(.system(size: 81, weight: .thin, design: .default))
-                        .foregroundColor(Color.white.opacity(0.7))
+                        .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
                     Text(getProfileName(index:userLoggedIn))
                         .font(.system(size: 81, weight: .bold, design: .default))
-                        .foregroundColor(Color.white.opacity(0.7))
+                        .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
                 }
             }.padding(.bottom, 500)
             
@@ -2975,7 +3004,23 @@ struct ContentView: View {
                 }.padding(.bottom, 11)
             }.frame(width: 600, height: 300)
                 .clipShape(RoundedRectangle(cornerRadius: 30))
-                .padding(.bottom, 11)
+                .padding(.bottom, 61)
+            
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                HStack {
+                    Toggle("Dark mode", isOn: $darkMode)
+                        .tint(darkMode ? Color.white : Color.black)
+                        .toggleStyle(.switch)
+                        .onChange(of: darkMode) {newMode in
+                            userPreferencesDarkMode[userLoggedIn] = darkMode
+                        }
+                        
+                }
+            }.frame(width: 600, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 340)
+            
             Button(action: {
                 print("Back to userView")
                 state = "loggedin"
@@ -3009,17 +3054,19 @@ struct ContentView: View {
     //MARK: User settings
     var userSettingsView: some View {
         ZStack {
+            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                .ignoresSafeArea()
             VStack(spacing: -20) {
                 Text("User settings for")
                     .font(.largeTitle)
-                    .foregroundColor(Color.white.opacity(0.6))
+                    .foregroundColor(darkMode ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
                 HStack(spacing: 20) {
                     Text(adminStatus(index:userLoggedIn))
                         .font(.system(size: 81, weight: .thin, design: .default))
-                        .foregroundColor(Color.white.opacity(0.7))
+                        .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
                     Text(getProfileName(index:userLoggedIn))
                         .font(.system(size: 81, weight: .bold, design: .default))
-                        .foregroundColor(Color.white.opacity(0.7))
+                        .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
                 }
             }.padding(.bottom, 500)
             
@@ -3333,14 +3380,16 @@ struct ContentView: View {
     @State private var modePadding: Int = 0
     var userResults: some View {
         ZStack {
+            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                .ignoresSafeArea()
             VStack(spacing: -20) {
                 Text("Leaderboard for")
                     .font(.largeTitle)
-                    .foregroundColor(Color.white.opacity(0.6))
+                    .foregroundColor(darkMode ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
                 HStack(spacing: 20) {
                     Text(leaderboardText)
                         .font(.system(size: 81, weight: .bold, design: .default))
-                        .foregroundColor(Color.white.opacity(0.7))
+                        .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
                         
                 }
             }.padding(.bottom, 500)
@@ -3421,7 +3470,7 @@ struct ContentView: View {
                     ScrollView {
                         ForEach(0...userNames.count - 1, id: \.self) {index in
                             if aimLeaderboard[index].hasPrefix("N") {
-                                Text("#\(index+1). \(userNames[bestAimValues.firstIndex(of: aimLeaderboard[index])!]) \(aimLeaderboard[index])) ---ms.")
+                                Text("#\(index+1). \(userNames[bestAimValues.firstIndex(of: aimLeaderboard[index])!]) ---ms.")
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
                             } else {
@@ -3472,7 +3521,7 @@ struct ContentView: View {
                         .background(Color.black.opacity(elementOpacity))
                         .clipShape(RoundedRectangle(cornerRadius: 30))
                 }.buttonStyle(.plain)
-                    .padding(.trailing, 530)
+                    .padding(.trailing, 520)
                 
                 Button(action: {
                     if modePadding != 4200 {
@@ -3495,7 +3544,7 @@ struct ContentView: View {
                         .background(Color.black.opacity(elementOpacity))
                         .clipShape(RoundedRectangle(cornerRadius: 30))
                 }.buttonStyle(.plain)
-                    .padding(.leading, 530)
+                    .padding(.leading, 520)
 
             }.padding(.top, 500)
         }
@@ -3504,10 +3553,17 @@ struct ContentView: View {
     //MARK: BODY
     var body: some View {
         ZStack {
-            Rectangle()
-                .fill(Color(white: 0.15).opacity(bgLowOpacity))
-                .frame(width: 700, height: 630)
-                .ignoresSafeArea()
+            if darkMode {
+                Rectangle()
+                    .fill(Color(white: 0.15).opacity(bgLowOpacity))
+                    .frame(width: 700, height: 630)
+                    .ignoresSafeArea()
+            } else {
+                Rectangle()
+                    .fill(Color.white.opacity(bgLowOpacity))
+                    .frame(width: 700, height: 630)
+                    .ignoresSafeArea()
+            }
                 
             if state == "menu" {
                 menuView
