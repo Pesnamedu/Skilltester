@@ -277,12 +277,14 @@ struct ContentView: View {
     
     @AppStorage("timeLogDates") private var timeLogDates: [String] = []
     @AppStorage("timeLogValues") private var timeLogValues: [String] = []
-    @AppStorage("timeLogDurations") private var timeLogDurations: [String] = []
     
     @AppStorage("aimLogDates") private var aimLogDates: [String] = []
     @AppStorage("aimLogBestV") private var aimLogBestV: [String] = []
     @AppStorage("aimLogWorstV") private var aimLogWorstV: [String] = []
     @AppStorage("aimLogAvaV") private var aimLogAvaV: [String] = []
+    
+    @AppStorage("memoryLogDates") private var memoryLogDates: [String] = []
+    @AppStorage("memoryLogValues") private var memoryLogValues: [String] = []
     
     @State private var realIdx: Int = 0
     
@@ -386,6 +388,17 @@ struct ContentView: View {
                     aimLogDates.remove(at: valueInLog(pos: idx))
                 }
             }
+        } else if log == "memory" {
+            while idx != memoryLogDates.count/2 {
+                if memoryLogDates[userInLog(pos: idx)] != String(user) {
+                    idx += 1
+                } else {
+                    memoryLogDates.remove(at: valueInLog(pos: idx))
+                    memoryLogDates.remove(at: valueInLog(pos: idx))
+                    memoryLogValues.remove(at: valueInLog(pos: idx))
+                    memoryLogValues.remove(at: valueInLog(pos: idx))
+                }
+            }
         }
     }
     @State private var logLen: Int = 1
@@ -463,6 +476,14 @@ struct ContentView: View {
                 }
                 idx += 1
             }
+        } else if log == "memory" {
+            while idx != memoryLogDates.count/2 {
+                if memoryLogDates[userInLog(pos: idx)] == String(user) {
+                    currentLogDates.append(memoryLogDates[valueInLog(pos: idx)])
+                    currentLogVal1.append(memoryLogValues[valueInLog(pos: idx)])
+                }
+                idx += 1
+            }
         }
     }
     func clearAllLogs() {
@@ -482,17 +503,22 @@ struct ContentView: View {
         aimLogBestV.removeAll()
         aimLogWorstV.removeAll()
         aimLogAvaV.removeAll()
+        
+        memoryLogDates.removeAll()
+        memoryLogValues.removeAll()
     }
     
     @State private var bestSpamValues: [String] = []
     @State private var bestReactValues: [String] = []
     @State private var bestTimeValues: [String] = []
     @State private var bestAimValues: [String] = []
+    @State private var bestMemoryValues: [String] = []
     
     @State private var spamLeaderboard: [String] = []
     @State private var reactLeaderboard: [String] = []
     @State private var timeLeaderboard: [String] = []
     @State private var aimLeaderboard: [String] = []
+    @State private var memoryLeaderboard: [String] = []
     
     func makeLogLeaderboard(mode: String) {
         if mode == "spam" {
@@ -548,8 +574,19 @@ struct ContentView: View {
             aimLeaderboard = bestAimValues.sorted()
             print("Best values: \(bestAimValues)")
             print("Leaderboard: \(aimLeaderboard)")
-        } else {
-
+        } else if mode == "memory" {
+            bestMemoryValues.removeAll()
+            memoryLeaderboard.removeAll()
+            for user in 0...userNames.count - 1 {
+                makeCurrentUserLog(log: "memory", user: user)
+                print("Curren log for user\(user): \(currentLogVal1)")
+                if !currentLogVal1.isEmpty {
+                    bestMemoryValues.append(currentLogVal1.max()!)
+                } else { bestMemoryValues.append("0%\(user)")}
+            }
+            memoryLeaderboard = bestMemoryValues.sorted(by: >)
+            print("Best values: \(bestMemoryValues)")
+            print("Leaderboard: \(memoryLeaderboard)")
         }
     }
     
@@ -2066,7 +2103,6 @@ struct ContentView: View {
                 
                 
                 ZStack {
-                    //SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
                     Button(action: {
                         state = "menu"
                     }) {
@@ -2395,25 +2431,25 @@ struct ContentView: View {
         }
     }
     
-    //MARK: Memory - start
-    
-    
+    //MARK: Memory - declarations
     @State private var squareCount: Int = 0
     @State private var squareAnswers: [Int] = []
     @State private var squareQuestions: [Int] = []
     @State private var valsReplaced: [Int] = []
     @State private var randInt: Int = 0
     @State private var regenerate: Bool = false
-    func generateSquaresList(count: Int) {
+    @State private var squareRowCount: Int = 0
+    func generateSquaresList(count: Int, rows: Int) {
+        let posCount = rows * rows - 1
         squareAnswers.removeAll()
         squareQuestions.removeAll()
         valsReplaced.removeAll()
-        for _ in 0...35 {
+        for _ in 0...posCount {
             squareAnswers.append(0)
             squareQuestions.append(0)
         }
         for _ in 0...count - 1 {
-            randInt = Int.random(in: 0...35)
+            randInt = Int.random(in: 0...posCount)
             if valsReplaced.contains(randInt) {
                 print("ValsRelpaced contained randInt, searching for new RANDOM one.")
                 regenerate = true
@@ -2427,7 +2463,7 @@ struct ContentView: View {
                         regenerate = false
                     } else {
                         print("List contains randInt, regenerated it.")
-                        randInt = Int.random(in: 0...35)
+                        randInt = Int.random(in: 0...posCount)
                     }
                 }
             } else {
@@ -2437,23 +2473,76 @@ struct ContentView: View {
             }
         }
     }
-    func checkValid(q: Int, a: Int) -> Color {
-        if q == a && q == 1{
-            return .green
-        } else if q != a && q == 1 {
-            return .red
-        } else if q != a && q == 0 {
-            return .white
+    func getSelectButtonColor(idx: Int, phase: String) -> Color {
+        if phase == "guessed M" {
+            if squareQuestions[idx] == squareAnswers[idx] && squareQuestions[idx] == 1{
+                return Color.white //green
+            } else if squareQuestions[idx] != squareAnswers[idx] && squareQuestions[idx] == 1 {
+                return Color.red
+            } else if squareQuestions[idx] != squareAnswers[idx] && squareQuestions[idx] == 0 {
+                return Color.white
+            } else {
+                return Color.gray.opacity(elementOpacity)
+            }
+        } else if phase == "showing M" {
+            if squareAnswers[idx] == 1 {
+                return Color.white
+            } else {
+                return Color.gray.opacity(elementOpacity)
+            }
+        } else if phase == "guessing M" {
+            if squareQuestions[idx] == 1 {
+                return Color.white
+            } else {
+                return Color.gray.opacity(elementOpacity)
+            }
         } else {
-            return .gray.opacity(elementOpacity)
+            return Color.purple
         }
     }
+    
+    func buttonGrid(x: Int, y: Int, phase: String) -> some View {
+        ZStack (alignment: .topLeading) {
+            let numberOfButtons = x*y - 1
+            ForEach(0...numberOfButtons, id: \.self) {index in
+                let column = index % x
+                let row = index / x
+                let BS = 500 / x
+                let BP = BS + 5
+                
+                Button(action: {
+                    if phase == "showing M" || phase == "guessed M" {
+                        
+                    } else if phase == "guessing M" {
+                        if squareQuestions[index] == 0 {
+                            squareQuestions[index] = 1
+                        } else {
+                            squareQuestions[index] = 0
+                        }
+                    }
+                }) {
+                    Text("")
+                        .frame(width: CGFloat(BS), height: CGFloat(BS))
+                        .font(.largeTitle)
+                        .background(getSelectButtonColor(idx: index, phase: phase))
+                        .clipShape(RoundedRectangle(cornerRadius: CGFloat(25 - x)))
+                }.buttonStyle(.plain)
+                    .padding(.leading, CGFloat(column * BP))
+                    .padding(.top, CGFloat(row * BP))
+            }
+        }.padding(.bottom, 50)
+            .padding(.leading, 0)
+    }
+    //MARK: Memory - start
+    
+    
     var memoryView: some View {
         ZStack {
             if state == "start M" {
                 Button(action: {
                     squareCount = 1
-                    generateSquaresList(count: squareCount)
+                    squareRowCount = 5
+                    generateSquaresList(count: squareCount, rows: squareRowCount)
                     state = "showing M"
                 }) {
                     Text("start")
@@ -2464,6 +2553,50 @@ struct ContentView: View {
                         .background(Color.green.opacity(bgOpacity))
                         .font(.largeTitle)
                 }.buttonStyle(.plain)
+                
+                ZStack {
+                    Button(action: {
+                        state = "menu"
+                    }) {
+                        Text("Back")
+                            .font(.largeTitle)
+                            .bold()
+                            .frame(width: 100, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        .padding(.trailing, 550)
+//                    Button(action: {
+//                        //state = "settings M"
+//                    }) {
+//                        Text("Settings")
+//                            .bold()
+//                            .font(.largeTitle)
+//                            .frame(width: 200, height: 50)
+//                            .background(Color.black.opacity(elementOpacity))
+//                            .clipShape(Capsule())
+//                    }.foregroundColor(.white)
+//                        .buttonStyle(.plain)
+//                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        makeCurrentUserLog(log: "memory", user: userLoggedIn)
+                        sentFrom = state
+                        state = "log M"
+                    }) {
+                        Text("Log")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.leading, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("l", modifiers: [])
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.12))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
             }
             
             if state == "showing M" {
@@ -2472,26 +2605,9 @@ struct ContentView: View {
                         .foregroundColor(.blue.opacity(bgOpacity))
                         .frame(width: 700, height: 650)
                         .ignoresSafeArea()
-                    ZStack (alignment: .topLeading) {
-                        ForEach(0...35, id: \.self) {index in
-                            let column = index % 6
-                            let row = index / 6
-                            let isLit: Bool = squareAnswers[index] == 1
-                            
-                            Button(action: {
-                                
-                            }) {
-                                Text("")
-                                    .frame(width: 80, height: 80)
-                                    .font(.largeTitle)
-                                    .background(isLit ? Color.white : Color.gray.opacity(elementOpacity))
-                                    .clipShape(RoundedRectangle(cornerRadius: 18))
-                            }.buttonStyle(.plain)
-                                .padding(.leading, CGFloat(column * 85))
-                                .padding(.top, CGFloat(row * 85))
-                        }
-                    }.padding(.bottom, 50)
-                        .padding(.leading, 0)
+                    
+                    buttonGrid(x: squareRowCount, y: squareRowCount, phase: state)
+                    
                     Button(action: {
                         state = "guessing M"
                     }) {
@@ -2512,35 +2628,12 @@ struct ContentView: View {
                         .foregroundColor(.blue.opacity(bgOpacity))
                         .ignoresSafeArea()
                     
-                    ZStack (alignment: .topLeading) {
-                        ForEach(0...35, id: \.self) {index in
-                            let column = index % 6
-                            let row = index / 6
-                            let isLit: Bool = squareQuestions[index] == 1
-                            
-                            Button(action: {
-                                if squareQuestions[index] == 0 {
-                                    squareQuestions[index] = 1
-                                } else {
-                                    squareQuestions[index] = 0
-                                }
-                            }) {
-                                Text("")
-                                    .frame(width: 80, height: 80)
-                                    .font(.largeTitle)
-                                    .background(isLit ? Color.white : Color.gray.opacity(elementOpacity))
-                                    .clipShape(RoundedRectangle(cornerRadius: 18))
-                            }.buttonStyle(.plain)
-                                .padding(.leading, CGFloat(column * 85))
-                                .padding(.top, CGFloat(row * 85))
-                        }
-                    }.padding(.bottom, 50)
-                        .padding(.leading, 0)
+                    buttonGrid(x: squareRowCount, y: squareRowCount, phase: state)
                     
                     Button(action: {
                         state = "guessed M"
                     }) {
-                        Text("Continue")
+                        Text("Check")
                             .font(.largeTitle)
                             .frame(width: 130, height: 50)
                             .background(Color.black.opacity(elementOpacity))
@@ -2554,42 +2647,33 @@ struct ContentView: View {
                 ZStack {
                     Rectangle()
                         .frame(width: 700, height: 650)
-                        .foregroundColor(.blue.opacity(bgOpacity))
+                        .foregroundColor(.green.opacity(bgOpacity))
                         .ignoresSafeArea()
                     
-                    ZStack (alignment: .topLeading) {
-                        ForEach(0...35, id: \.self) {index in
-                            let column = index % 6
-                            let row = index / 6
-                            
-                            Button(action: {
-                                
-                            }) {
-                                Text("")
-                                    .frame(width: 80, height: 80)
-                                    .font(.largeTitle)
-                                    .background(checkValid(q: squareQuestions[index], a: squareAnswers[index]))
-                                    .clipShape(RoundedRectangle(cornerRadius: 18))
-                            }.buttonStyle(.plain)
-                                .padding(.leading, CGFloat(column * 85))
-                                .padding(.top, CGFloat(row * 85))
-                        }
-                    }.padding(.bottom, 50)
+                    buttonGrid(x: squareRowCount, y: squareRowCount, phase: state)
                     
                     Button(action: {
                         if squareQuestions == squareAnswers {
                             squareCount += 1
-                            generateSquaresList(count: squareCount)
+                            if squareCount >= (squareRowCount * squareRowCount) / 2 {
+                                squareRowCount += 1
+                            }
+                            generateSquaresList(count: squareCount, rows: squareRowCount)
                             print("all good, starting new round with \(squareCount) squares")
                             state = "showing M"
                         } else {
                             print("no good, sending to results")
                             state = "results M"
+                            memoryLogDates.append(Date().formatted(date: .omitted, time: .standard))
+                            memoryLogDates.append(String(userLoggedIn))
+                            memoryLogValues.append(String(squareCount - 1))
+                            memoryLogValues.append(String(userLoggedIn))
+                            
                         }
                     }) {
-                        Text("Continue")
+                        Text("Next round  (\(squareCount).)")
                             .font(.largeTitle)
-                            .frame(width: 130, height: 50)
+                            .frame(width: 225, height: 50)
                             .background(Color.black.opacity(elementOpacity))
                             .clipShape(Capsule())
                     }.buttonStyle(.plain)
@@ -2602,13 +2686,140 @@ struct ContentView: View {
             }
             
             if state == "results M" {
-                Text("You memorized \(squareCount) squares.")
+                Text("You memorized \(squareCount - 1) squares.")
                     .font(.largeTitle)
-                    .bold
+                    .bold()
+                ZStack {
+                    Button(action: {
+                        state = "start M"
+                    }) {
+                        Text("Start again")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.blue.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        state = "menu"
+                        clickTimes.removeAll()
+                    }) {
+                        Text("Menu")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.trailing, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("l", modifiers: [])
+                    
+                    Button(action: {
+                        makeCurrentUserLog(log: "memory", user: userLoggedIn)
+                        sentFrom = state
+                        state = "log M"
+                    }) {
+                        Text("Log")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.green.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.leading, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("m", modifiers: [])
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.12))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
             }
             
             if state == "log M" {
-                
+                if 0 < timeLogValues.count && 0 < timeLogDates.count {
+                    ScrollView {
+                        VStack {
+                            ForEach(0..<currentLogDates.count, id: \.self) { index in
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
+                                        .padding(.horizontal, 35)
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        Text("\(currentLogVal1[index]) squares memorized.")
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(currentLogDates[index])")
+                                            .font(.title2)
+                                            .padding(.trailing, 40)
+                                    }
+                                }
+                            }
+                        }.frame(maxWidth: .infinity)
+                    }.frame(height: 400)
+                } else {
+                    Text("No log stored.")
+                        .font(.title2)
+                }
+                ZStack {
+                    Button(action: {
+                        print(sentFrom)
+                        if sentFrom == "results M" {
+                            state = "results M"
+                        } else if sentFrom == "start M" {
+                            state = "start M"
+                        }
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 180, height: 50)
+                            .background(Color.blue.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .foregroundColor(.white)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        state = "menu"
+                        
+                    }) {
+                        Text("Menu")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.trailing, 550)
+                            .foregroundColor(.white)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("m", modifiers: [])
+                    Button(action: {
+                        deleteUserLog(log: "memory", user: userLoggedIn)
+                        makeCurrentUserLog(log: "memory", user: userLoggedIn)
+                    }) {
+                        Text("Clear")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.leading, 550)
+                            .foregroundColor(.white)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("c", modifiers: [])
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.12))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
             }
         }
     }
@@ -3041,6 +3252,7 @@ struct ContentView: View {
                     makeLogLeaderboard(mode: "react")
                     makeLogLeaderboard(mode: "time")
                     makeLogLeaderboard(mode: "aim")
+                    makeLogLeaderboard(mode: "memory")
                     
                     state = "user results"
                 }) {
@@ -3571,7 +3783,7 @@ struct ContentView: View {
                 .padding(.top, 500)
         }
     }
-    //MARK: User results
+    //MARK: User leaderboard
     
     func getLeaderboardfont(index: Int) -> Font {
         if index == 0 {
@@ -3667,7 +3879,7 @@ struct ContentView: View {
                     ScrollView {
                         ForEach(0...userNames.count - 1, id: \.self) {index in
                             if timeLeaderboard[index].hasPrefix("N") {
-                                Text("#\(index+1). \(userNames[bestTimeValues.firstIndex(of: timeLeaderboard[index])!]) -.-s.")
+                                Text("#\(index+1). \(userNames[bestTimeValues.firstIndex(of: timeLeaderboard[index])!]) -.--s.")
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
                             } else {
@@ -3707,6 +3919,29 @@ struct ContentView: View {
                 .padding(.leading, CGFloat(4200 - modePadding))
             
             ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                // MEMORY
+                VStack {
+                    ScrollView {
+                        ForEach(0...userNames.count - 1, id: \.self) {index in
+                            if memoryLeaderboard[index].hasPrefix("0") {
+                                Text("#\(index+1). \(userNames[bestMemoryValues.firstIndex(of: memoryLeaderboard[index])!]) - squares.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            } else {
+                                Text("#\(index+1). \(userNames[bestMemoryValues.firstIndex(of: memoryLeaderboard[index])!]) \(memoryLeaderboard[index]) squares.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            }
+                        }
+                    }.padding(.top, 5)
+                }
+            }.frame(width: 600, height: 390)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 10)
+                .padding(.leading, CGFloat(5600 - modePadding))
+            
+            ZStack {
                 Button(action: {
                     print("Back to userView")
                     state = "loggedin"
@@ -3728,6 +3963,8 @@ struct ContentView: View {
                             leaderboardText = "Reaction mode"
                         } else if modePadding == 1400 {
                             leaderboardText = "Spam mode"
+                        } else if modePadding == 4200 {
+                            leaderboardText = "Aim mode"
                         }
                         withAnimation(.easeInOut(duration: 0.7)) {
                             modePadding -= 1400
@@ -3744,13 +3981,15 @@ struct ContentView: View {
                     .padding(.trailing, 520)
                 
                 Button(action: {
-                    if modePadding != 4200 {
+                    if modePadding != 5600 {
                         if modePadding == 0 {
                             leaderboardText = "Reaction mode"
                         } else if modePadding == 1400 {
                             leaderboardText = "Time mode"
                         } else if modePadding == 2800 {
                             leaderboardText = "Aim mode"
+                        } else if modePadding == 4200 {
+                            leaderboardText = "Memory mode"
                         }
                         withAnimation(.easeInOut(duration: 0.7)) {
                             modePadding += 1400
