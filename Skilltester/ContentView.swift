@@ -2892,6 +2892,10 @@ struct ContentView: View {
                     .foregroundColor(Color.white.opacity(0.7))
             }.padding(.bottom, 500)
             
+            Text("Log into existing account")
+                .font(.largeTitle)
+                .padding(.bottom, 270)
+            
             //MARK: Chosing users
             if usersState == "choosing" {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -2906,24 +2910,27 @@ struct ContentView: View {
                                     .foregroundColor(.clear)
                                     .padding(.trailing, 180)
                             } else {
-                                userCard(at: index, size: 250)
+                                userCard(at: index, size: 200)
                             }
                         }
                         
-                    }.padding(.bottom, 109)
+                    }.padding(.bottom, 0)
                 }
                 
 //                Text("or")
 //                    .font(.system(size: 50, design: .default))
 //                    .baselineOffset(0.5)
 //                    .padding(.top, 300)
+                Text("or")
+                    .font(.largeTitle)
+                    .padding(.top, 350)
 
                 Button(action: {
                     usersState = "creating"
                     passwordState = "name"
                 }) {
-                    Text("Add User")
-                        .font(.system(size: 50, weight: .thin, design: .default))
+                    Text("Create new")
+                        .font(.system(size: 40, weight: .thin, design: .default))
                         .baselineOffset(0.5)
                         .frame(width: 220, height: 60)
                         .background(Color.blue.opacity(0.45))
@@ -2951,6 +2958,15 @@ struct ContentView: View {
             if usersState == "login" {
                 SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
                     .ignoresSafeArea()
+                VStack(spacing: -20) {
+                    Text("Welcome to")
+                        .font(.largeTitle)
+                        .foregroundColor(Color.white.opacity(0.6))
+                    Text("Skill tester.")
+                        .font(.system(size: 81, weight: .bold, design: .default))
+                        .foregroundColor(Color.white.opacity(0.7))
+                }.padding(.bottom, 500)
+                
                 Text(getProfilePicture(index: userOnLogin))
                     .font(.system(size: 125, weight: .thin, design: .default))
                     .foregroundColor(darkMode ? textColor.opacity(0.8) : Color.black.opacity(0.8))
@@ -3245,7 +3261,7 @@ struct ContentView: View {
                         .background(Color.gray.opacity(0.3))
                         .clipShape(RoundedRectangle(cornerRadius: 35))
                 }.buttonStyle(.plain)
-                    .padding(.trailing, 400)
+                    .padding(.trailing, 420)
                 
                 Button(action: {
                     makeLogLeaderboard(mode: "spam")
@@ -3260,14 +3276,29 @@ struct ContentView: View {
                         .font(.system(size: 33, design: .default))
                         .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
-                        .background(Color.gray.opacity(0.3))
+                        .background(Color.gray.opacity(elementOpacity))
                         .clipShape(RoundedRectangle(cornerRadius: 35))
                 }.buttonStyle(.plain)
-                    .padding(.trailing, 210)
+                    .padding(.trailing, 250)
+                
+                Button(action: {
+                    state = "analytics"
+                }) {
+                    Image(systemName: "chart.pie")
+                        .font(.system(size: 33, design: .default))
+                        .foregroundColor(textColor.opacity(0.8))
+                        .frame(width: 70, height: 70)
+                        .background(Color.gray.opacity(elementOpacity))
+                        .clipShape(Capsule())
+                }.buttonStyle(.plain)
+                    .padding(.trailing, 75)
+                
             }.frame(width: 680, height: 90)
                 .background(Color.black.opacity(0.12))
                 .clipShape(Capsule())
                 .padding(.top, 490)
+            
+            
             
             //MARK: Click profile menu
             
@@ -4009,6 +4040,13 @@ struct ContentView: View {
         }
     }
     
+    var analyticsView: some View {
+        ZStack {
+            Text("Analitics.")
+        }
+    }
+    
+    
     //MARK: BODY
     var body: some View {
         ZStack {
@@ -4048,6 +4086,8 @@ struct ContentView: View {
                 userSettingsView
             } else if state == "user results" {
                 userResults
+            } else if state == "analytics" {
+                analyticsView
             }
         }
         .frame(minWidth: 700, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
