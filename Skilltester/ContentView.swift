@@ -3791,6 +3791,38 @@ struct ContentView: View {
         }
     }
     
+    //MARK: User analyatics
+    
+    
+    @State private var graphValList: [Double] = []
+    @State private var graphTextList: [String] = []
+    func graph(maxWidth: CGFloat, maxHeight: CGFloat, valueCount: Int, color: Color) -> some View {
+        ZStack {
+            HStack(alignment: .bottom) {
+                ForEach(0..<valueCount, id: \.self) { index in
+                    let barHeight: CGFloat = (graphValList[index] / graphValList.max()!) * maxHeight
+                    let barWidth: CGFloat = maxWidth / CGFloat(valueCount)
+                    let barCornerRadius: CGFloat = barWidth / 3.6
+                    let barText: String = graphTextList[index]
+                    //let barTextPadding: CGFloat = barHeight / 2 + 20
+                    
+                    ZStack {
+                        RoundedRectangle(cornerRadius: barCornerRadius)
+                            .frame(width: barWidth, height: barHeight)
+                            .foregroundColor(color)
+                            .overlay(alignment: .bottom) {
+                                Text(barText)
+                                    .alignmentGuide(.bottom) { dimensions in
+                                        dimensions[.top]
+                                    }
+                            }
+                        
+                    }.padding(.vertical, barWidth/4)
+                    
+                }
+            }
+        }
+    }
     var analyticsView: some View {
         ZStack {
             Text("Analitics.")
