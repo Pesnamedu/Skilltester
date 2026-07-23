@@ -378,7 +378,9 @@ struct ContentView: View {
             if kind == "start" {
                 ZStack {
                     Button(action: {
+                        slider3Value = Double(testCountGoal)
                         state = "settings \(state.suffix(1))"
+                        print("sending user to settings \(slider3Value)")
                     }) {
                         Text("Settings")
                             .bold()
@@ -1646,9 +1648,7 @@ struct ContentView: View {
                             Slider(value: $slider3Value, in: 3...10, step: 1)
                                 .tint(.green)
                                 .frame(width: 250)
-                                .onAppear() {
-                                    slider3Value = Double(testCount)
-                                }
+                                
                             Text("\(slider3ValueText) rounds.")
                                 .padding(.leading, 320)
                         }
