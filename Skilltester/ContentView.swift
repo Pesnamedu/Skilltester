@@ -264,6 +264,45 @@ struct ContentView: View {
     @State private var targetRandomX: Int = 0
     @State private var targetRandomY: Int = 0
     
+    //MARK: COLOR variables
+    @State private var rightColor: Int = 0
+    @State private var guesColor: Int = 0
+    @State private var colorsList: [Color] = []
+    @State private var randomColor: Color = .white
+    func makeColorsList(offset: Double) {
+        colorsList.removeAll()
+        let r = Double.random(in: 50...255)
+        let g = Double.random(in: 50...255)
+        let b = Double.random(in: 50...255)
+        let oa = Int.random(in: 0...2)
+        for i in 0..<16 {
+            if i == rightColor {
+                if oa == 0 {
+                    randomColor = Color(
+                        red: (r - offset)/255,
+                        green: g/255,
+                        blue: b/255
+                    )
+                } else if oa == 1 {
+                    randomColor = Color(
+                        red: r/255,
+                        green: (g - offset)/255,
+                        blue: b/255
+                    )
+                } else {
+                    randomColor = Color(
+                        red: r / 255,
+                        green: g/255,
+                        blue: (b - offset)/255
+                    )
+                }
+                    
+            } else {
+               randomColor = Color(red: r/255, green: g/255, blue: b/255)
+            }
+            colorsList.append(randomColor)
+        }
+    }
     
     //MARK: LOG variables
     @AppStorage("spamLogDates") private var spamLogDates: [String] = []
@@ -687,9 +726,9 @@ struct ContentView: View {
                             
                             Button(action: {
                                 print("clicked button 6")
-                                //state = "start A"
+                                state = "start C"
                             }) {
-                                Text("Unused button")
+                                Text("Color")
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
@@ -2496,6 +2535,14 @@ struct ContentView: View {
             } else {
                 return Color.gray.opacity(elementOpacity)
             }
+        } else if phase == "guess C" {
+            return colorsList[idx]
+        } else if phase == "guessed C" {
+            if idx == rightColor {
+                return .green
+            } else {
+                return.black
+            }
         } else {
             return Color.purple
         }
@@ -2518,6 +2565,21 @@ struct ContentView: View {
                             squareQuestions[index] = 1
                         } else {
                             squareQuestions[index] = 0
+                        }
+                    }  else if phase == "guess C" {
+                        if index == rightColor {
+                            state = "guessed C"
+                            Task {
+                                colorOffset -= 10 - colorOffsetEasing
+                                if colorOffsetEasing < 9 {
+                                    colorOffsetEasing += 1
+                                }
+                                makeColorsList(offset: colorOffset)
+                                try? await Task.sleep(nanoseconds: UInt64(0.25 * 1_000_000_000))
+                                state = "guess C"
+                            }
+                        } else {
+                            state = "results C"
                         }
                     }
                 }) {
@@ -2824,6 +2886,53 @@ struct ContentView: View {
         }
     }
     
+    //MARK: Color - start
+    
+    @State private var colorOffsetEasing: Double = 0
+    @State private var colorOffset: Double = 70
+    var colorView: some View {
+        ZStack {
+            if state == "start C" {
+                Button(action: {
+                    rightColor = Int.random(in: 0...15)
+                    makeColorsList(offset: colorOffset)
+                    
+                    state = "guess C"
+                }) {
+                    Text("Start")
+                        .font(.largeTitle)
+                        .bold()
+                        .frame(width: 700, height: 650)
+                        .background(Color.green.opacity(bgOpacity))
+                        .clipShape(Rectangle())
+                }.buttonStyle(.plain)
+                    .ignoresSafeArea()
+            }
+            
+            if state == "guess C" {
+                Rectangle()
+                    .frame(width: 700, height: 650)
+                    .foregroundColor(Color.black.opacity(bgOpacity))
+                    .ignoresSafeArea()
+                buttonGrid(x: 4, y: 4, phase: "guess C")
+            }
+            
+            if state == "guessed C" {
+                Rectangle()
+                    .frame(width: 700, height: 650)
+                    .foregroundColor(Color.black.opacity(bgOpacity))
+                    .ignoresSafeArea()
+                buttonGrid(x: 4, y: 4, phase: "guessed C")
+            }
+            
+            if state == "results C" {
+                Text("Results")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 550)
+            }
+        }
+    }
     
     
     var tutorView: some View {
@@ -4074,6 +4183,8 @@ struct ContentView: View {
                 aimView
             } else if state.hasSuffix("M") {
                 memoryView
+            } else if state.hasSuffix("C") {
+                colorView
             } else if state == "tutor" {
                 tutorView
             } else if state == "startup" {
