@@ -6,9 +6,17 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct ContentView: View {
+    
+    init() {
+        print("-startup")
+    }
+    
     //MARK: SETUP variables
+    @AppStorage("screenTimes") private var screenTimes: [Int] = []
+    
     @State private var state: String = "startup" // nezapomen zmenit na startup
     @AppStorage("users") private var users: [String] = []
     @State private var passwordInput: String = ""
@@ -298,8 +306,10 @@ struct ContentView: View {
     }
     
     //MARK: COLOR variables
+    @State private var colorRound: Int = 0
+    @State private var colorOffsetEasing: Double = 0
+    @State private var colorOffset: Double = 100
     @State private var rightColor: Int = 0
-    @State private var guesColor: Int = 0
     @State private var colorsList: [Color] = []
     @State private var randomColor: Color = .white
     func makeColorsList(offset: Double) {
@@ -329,9 +339,8 @@ struct ContentView: View {
                         blue: (b - offset)/255
                     )
                 }
-                    
             } else {
-               randomColor = Color(red: r/255, green: g/255, blue: b/255)
+                randomColor = Color(red: r/255, green: g/255, blue: b/255)
             }
             colorsList.append(randomColor)
         }
@@ -363,7 +372,14 @@ struct ContentView: View {
     @AppStorage("colorLogDates") private var colorLogDates: [String] = []
     @AppStorage("colorLogValues") private var colorLogValues: [String] = []
     
-    @State private var realIdx: Int = 0
+    
+    private static let logDateFormat: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd. MM. HH:mm"
+        return formatter
+    }()
+    let formattedDate = Self.logDateFormat.string(from: Date())
+        
     
     //TIMER BELOW
     @State private var timeElapsed = 0
@@ -377,20 +393,22 @@ struct ContentView: View {
         ZStack {
             if kind == "start" {
                 ZStack {
-                    Button(action: {
-                        slider3Value = Double(testCountGoal)
-                        state = "settings \(state.suffix(1))"
-                        print("sending user to settings \(slider3Value)")
-                    }) {
-                        Text("Settings")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
+                    if !state.hasSuffix("M") && !state.hasSuffix("C") {
+                        Button(action: {
+                            slider3Value = Double(testCountGoal)
+                            state = "settings \(state.suffix(1))"
+                            print("sending user to settings \(slider3Value)")
+                        }) {
+                            Text("Settings")
+                                .bold()
+                                .font(.largeTitle)
+                                .frame(width: 200, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                        }.foregroundColor(.white)
+                            .buttonStyle(.plain)
+                            .keyboardShortcut(.space, modifiers: [.shift])
+                    }
                     
                     Button(action: {
                         state = "menu"
@@ -771,19 +789,19 @@ struct ContentView: View {
     }
     
     //MARK: makeLogLeaderboard
-    @State private var bestSpamValues: [String] = []
-    @State private var bestReactValues: [String] = []
-    @State private var bestTimeValues: [String] = []
-    @State private var bestAimValues: [String] = []
-    @State private var bestMemoryValues: [String] = []
-    @State private var bestColorValues: [String] = []
+    @State private var bestSpamValues: [Int] = []
+    @State private var bestReactValues: [Int] = []
+    @State private var bestTimeValues: [Double] = []
+    @State private var bestAimValues: [Int] = []
+    @State private var bestMemoryValues: [Int] = []
+    @State private var bestColorValues: [Int] = []
     
-    @State private var spamLeaderboard: [String] = []
-    @State private var reactLeaderboard: [String] = []
-    @State private var timeLeaderboard: [String] = []
-    @State private var aimLeaderboard: [String] = []
-    @State private var memoryLeaderboard: [String] = []
-    @State private var colorLeaderboard: [String] = []
+    @State private var spamLeaderboard: [Int] = []
+    @State private var reactLeaderboard: [Int] = []
+    @State private var timeLeaderboard: [Double] = []
+    @State private var aimLeaderboard: [Int] = []
+    @State private var memoryLeaderboard: [Int] = []
+    @State private var colorLeaderboard: [Int] = []
     
     func makeLogLeaderboard(mode: String) {
         if mode == "spam" {
@@ -793,8 +811,8 @@ struct ContentView: View {
                 makeCurrentUserLog(log: "S", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
-                    bestSpamValues.append(currentLogVal1.max()!)
-                } else { bestSpamValues.append("0%\(user)") }
+                    bestSpamValues.append(Int(currentLogVal1.max()!)!)
+                } else { bestSpamValues.append(0 - user) }
             }
             spamLeaderboard = bestSpamValues.sorted(by: >)
             print("Best values: \(bestSpamValues)")
@@ -807,8 +825,8 @@ struct ContentView: View {
                 makeCurrentUserLog(log: "R", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
-                    bestReactValues.append(currentLogVal1.min()!)
-                } else { bestReactValues.append("None\(user)") }
+                    bestReactValues.append(Int(currentLogVal1.min()!) ?? 67)
+                } else { bestReactValues.append(100000 + user) }
             }
             reactLeaderboard = bestReactValues.sorted()
             print("Best values: \(bestReactValues)")
@@ -820,8 +838,8 @@ struct ContentView: View {
                 makeCurrentUserLog(log: "T", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
-                    bestTimeValues.append(currentLogVal1.min()!)
-                } else { bestTimeValues.append("None\(user)") }
+                    bestTimeValues.append(Double(currentLogVal1.min()!)!)
+                } else { bestTimeValues.append(Double(100000 + user)) }
             }
             timeLeaderboard = bestTimeValues.sorted()
             print("Best values: \(bestTimeValues)")
@@ -833,8 +851,8 @@ struct ContentView: View {
                 makeCurrentUserLog(log: "A", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
-                    bestAimValues.append(currentLogVal1.min()!)
-                } else { bestAimValues.append("None\(user)") }
+                    bestAimValues.append(Int(currentLogVal1.min()!)!)
+                } else { bestAimValues.append(100000 + user) }
             }
             aimLeaderboard = bestAimValues.sorted()
             print("Best values: \(bestAimValues)")
@@ -846,8 +864,8 @@ struct ContentView: View {
                 makeCurrentUserLog(log: "M", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
-                    bestMemoryValues.append(currentLogVal1.max()!)
-                } else { bestMemoryValues.append("0%\(user)")}
+                    bestMemoryValues.append(Int(currentLogVal1.max()!)!)
+                } else { bestMemoryValues.append(0 - user)}
             }
             memoryLeaderboard = bestMemoryValues.sorted(by: >)
             print("Best values: \(bestMemoryValues)")
@@ -859,8 +877,8 @@ struct ContentView: View {
                 makeCurrentUserLog(log: "C", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
-                    bestColorValues.append(currentLogVal1.max()!)
-                } else { bestColorValues.append("0%\(user)")}
+                    bestColorValues.append(Int(currentLogVal1.max()!)!)
+                } else { bestColorValues.append(0 - user)}
             }
             colorLeaderboard = bestColorValues.sorted(by: >)
             print("Best values: \(bestColorValues)")
@@ -871,7 +889,7 @@ struct ContentView: View {
     //MARK: writeToLog
     func writeToLog(log: String) {
         if log == "aim" {
-            aimLogDates.append(Date().formatted(date: .omitted, time: .standard))
+            aimLogDates.append(formattedDate)
             aimLogDates.append(String(userLoggedIn))
             aimLogBestV.append(String(timeToHit.min()!))
             aimLogBestV.append(String(userLoggedIn))
@@ -880,21 +898,18 @@ struct ContentView: View {
             aimLogAvaV.append(String(avaTimeToHit))
             aimLogAvaV.append(String(userLoggedIn))
             print("Added everything into aim logs")
-            print(aimLogDates)
-            print(aimLogBestV)
-            print(aimLogWorstV)
-            print(aimLogAvaV)
         } else if log == "memory" {
-            memoryLogDates.append(Date().formatted(date: .omitted, time: .standard))
+            memoryLogDates.append(formattedDate)
             memoryLogDates.append(String(userLoggedIn))
             memoryLogValues.append(String(squareCount - 1))
             memoryLogValues.append(String(userLoggedIn))
             print("Added everything into memory logs")
         } else if log == "color" {
-            colorLogDates.append(Date().formatted(date: .omitted, time: .standard))
+            colorLogDates.append(formattedDate)
             colorLogDates.append(String(userLoggedIn))
             colorLogValues.append(String(colorRound))
             colorLogValues.append(String(userLoggedIn))
+            print("Added everything into color logs")
         }
     }
     
@@ -1011,6 +1026,7 @@ struct ContentView: View {
                         
                     }.navigationTitle("Menu")
                         .onAppear() {
+                            print("DATE: \(formattedDate)")
                             print("In Menu.")
                             //clearAllLogs()
                             print("SPAM")
@@ -1077,7 +1093,7 @@ struct ContentView: View {
                             print("saving spam data to log")
                             spamLogValues.append(String(cps))
                             spamLogValues.append(String(userLoggedIn))
-                            spamLogDates.append(Date().formatted(date: .omitted, time: .standard))
+                            spamLogDates.append(formattedDate)
                             spamLogDates.append(String(userLoggedIn))
                             spamLogDurations.append(String(spamWaitTime))
                             spamLogDurations.append(String(userLoggedIn))
@@ -1398,7 +1414,7 @@ struct ContentView: View {
                             try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
                             state = "results R"
                             testCount = 0
-                            reactLogDates.append(Date().formatted(date: .omitted, time: .standard));
+                            reactLogDates.append(formattedDate);
                             reactLogAvaV.append(String(round(avaTime)))
                             reactLogBestV.append(String(clickTimes.min() ?? 0))
                             reactLogWorstV.append(String(clickTimes.max() ?? 0))
@@ -2185,9 +2201,9 @@ struct ContentView: View {
             return colorsList[idx]
         } else if phase == "guessed C" {
             if idx == rightColor {
-                return .green
+                return .black
             } else {
-                return.black
+                return .black
             }
         } else {
             return Color.purple
@@ -2214,18 +2230,24 @@ struct ContentView: View {
                         }
                     }  else if phase == "guess C" {
                         if index == rightColor {
+                            print("Passed round \(colorRound) with offset \(colorOffset).")
                             state = "guessed C"
                             colorRound += 1
                             Task {
-                                colorOffset -= 10 - colorOffsetEasing
+                                if colorOffset > 2 {
+                                    colorOffset -= 10 - colorOffsetEasing
+                                }
                                 if colorOffsetEasing < 9 {
                                     colorOffsetEasing += 1
                                 }
+                                rightColor = Int.random(in: 0...15)
                                 makeColorsList(offset: colorOffset)
+                                print("Next up is button \(rightColor); offset \(colorOffset).")
                                 try? await Task.sleep(nanoseconds: UInt64(0.25 * 1_000_000_000))
                                 state = "guess C"
                             }
                         } else {
+                            writeToLog(log: "color")
                             state = "results C"
                         }
                     }
@@ -2312,10 +2334,17 @@ struct ContentView: View {
             
             if state == "guessed M" {
                 ZStack {
-                    Rectangle()
-                        .frame(width: 700, height: 650)
-                        .foregroundColor(.green.opacity(bgOpacity))
-                        .ignoresSafeArea()
+                    if squareQuestions == squareAnswers {
+                        Rectangle()
+                            .frame(width: 700, height: 650)
+                            .foregroundColor(.green.opacity(bgOpacity))
+                            .ignoresSafeArea()
+                    } else {
+                        Rectangle()
+                            .frame(width: 700, height: 650)
+                            .foregroundColor(.red.opacity(bgOpacity))
+                            .ignoresSafeArea()
+                    }
                     
                     buttonGrid(x: squareRowCount, y: squareRowCount, phase: state)
                     
@@ -2332,14 +2361,23 @@ struct ContentView: View {
                             print("no good, sending to results")
                             state = "results M"
                             
+                            writeToLog(log: "memory")
                             
                         }
                     }) {
-                        Text("Next round  (\(squareCount).)")
-                            .font(.largeTitle)
-                            .frame(width: 225, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
+                        if squareQuestions == squareAnswers {
+                            Text("Next round  \(squareCount).")
+                                .font(.largeTitle)
+                                .frame(width: 225, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                        } else {
+                            Text("Results.")
+                                .font(.largeTitle)
+                                .frame(width: 225, height: 50)
+                                .background(Color.black.opacity(elementOpacity))
+                                .clipShape(Capsule())
+                        }
                     }.buttonStyle(.plain)
                         .padding(.top, 530)
                 }
@@ -2394,9 +2432,7 @@ struct ContentView: View {
     
     //MARK: Color - start
     
-    @State private var colorRound: Int = 0
-    @State private var colorOffsetEasing: Double = 0
-    @State private var colorOffset: Double = 70
+    
     var colorView: some View {
         ZStack {
             if state == "start C" {
@@ -2424,6 +2460,9 @@ struct ContentView: View {
                     .foregroundColor(Color.black.opacity(bgOpacity))
                     .ignoresSafeArea()
                 buttonGrid(x: 4, y: 4, phase: "guess C")
+                Text("Round \(colorRound).")
+                    .font(.title2)
+                    .padding(.top, 520)
             }
             
             if state == "guessed C" {
@@ -2461,7 +2500,7 @@ struct ContentView: View {
                                             .font(.title2)
                                             .padding(.leading, 40)
                                         Spacer()
-                                        Text("\(currentLogVal1[index]) squares memorized.")
+                                        Text("\(currentLogVal1[index]) rounds.")
                                             .font(.title2)
                                         Spacer()
                                         Text("\(currentLogDates[index])")
@@ -2926,6 +2965,7 @@ struct ContentView: View {
                     makeLogLeaderboard(mode: "time")
                     makeLogLeaderboard(mode: "aim")
                     makeLogLeaderboard(mode: "memory")
+                    makeLogLeaderboard(mode: "color")
                     
                     state = "user results"
                 }) {
@@ -2939,6 +2979,15 @@ struct ContentView: View {
                     .padding(.trailing, 250)
                 
                 Button(action: {
+                    print("ENTERING ANALYTICS")
+                    graphValList.removeAll()
+                    graphTextList.removeAll()
+                    for i in 0...9 {
+                        graphValList.append(Double.random(in: 0...20))
+                        graphTextList.append("idx: \(i)")
+                    }
+                    print(graphValList)
+                    print(graphTextList)
                     state = "analytics"
                 }) {
                     Image(systemName: "chart.pie")
@@ -3526,7 +3575,9 @@ struct ContentView: View {
                 VStack {
                     ScrollView {
                         ForEach(0...userNames.count - 1, id: \.self) {index in
-                            if spamLeaderboard[index].hasPrefix("0") {
+                            if spamLeaderboard.isEmpty {
+                                EmptyView()
+                            } else if spamLeaderboard[index] <= 0 {
                                 Text("#\(index+1). \(userNames[bestSpamValues.firstIndex(of: spamLeaderboard[index])!]) -cps.")
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
@@ -3549,7 +3600,9 @@ struct ContentView: View {
                 VStack {
                     ScrollView {
                         ForEach(0...userNames.count - 1, id: \.self) {index in
-                            if reactLeaderboard[index].hasPrefix("N") {
+                            if reactLeaderboard.isEmpty {
+                                EmptyView()
+                            } else if reactLeaderboard[index] >= 100000 {
                                 Text("#\(index+1). \(userNames[bestReactValues.firstIndex(of: reactLeaderboard[index])!]) ---ms.")
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
@@ -3572,7 +3625,9 @@ struct ContentView: View {
                 VStack {
                     ScrollView {
                         ForEach(0...userNames.count - 1, id: \.self) {index in
-                            if timeLeaderboard[index].hasPrefix("N") {
+                            if timeLeaderboard.isEmpty {
+                                EmptyView()
+                            } else if timeLeaderboard[index] >= 100000 {
                                 Text("#\(index+1). \(userNames[bestTimeValues.firstIndex(of: timeLeaderboard[index])!]) -.--s.")
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
@@ -3595,7 +3650,9 @@ struct ContentView: View {
                 VStack {
                     ScrollView {
                         ForEach(0...userNames.count - 1, id: \.self) {index in
-                            if aimLeaderboard[index].hasPrefix("N") {
+                            if aimLeaderboard.isEmpty {
+                                EmptyView()
+                            } else if aimLeaderboard[index] >= 100000 {
                                 Text("#\(index+1). \(userNames[bestAimValues.firstIndex(of: aimLeaderboard[index])!]) ---ms.")
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
@@ -3618,7 +3675,9 @@ struct ContentView: View {
                 VStack {
                     ScrollView {
                         ForEach(0...userNames.count - 1, id: \.self) {index in
-                            if memoryLeaderboard[index].hasPrefix("0") {
+                            if memoryLeaderboard.isEmpty {
+                                EmptyView()
+                            } else if memoryLeaderboard[index] <= 0 {
                                 Text("#\(index+1). \(userNames[bestMemoryValues.firstIndex(of: memoryLeaderboard[index])!]) - squares.")
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
@@ -3634,6 +3693,31 @@ struct ContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 30))
                 .padding(.top, 10)
                 .padding(.leading, CGFloat(5600 - modePadding))
+            
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                // COLOR
+                VStack {
+                    ScrollView {
+                        ForEach(0...userNames.count - 1, id: \.self) {index in
+                            if colorLeaderboard.isEmpty {
+                                EmptyView()
+                            } else if colorLeaderboard[index] <= 0 {
+                                Text("#\(index+1). \(userNames[bestColorValues.firstIndex(of: colorLeaderboard[index])!]) - rounds.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            } else {
+                                Text("#\(index+1). \(userNames[bestColorValues.firstIndex(of: colorLeaderboard[index])!]) \(colorLeaderboard[index]) rounds.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            }
+                        }
+                    }.padding(.top, 5)
+                }
+            }.frame(width: 600, height: 390)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 10)
+                .padding(.leading, CGFloat(7000 - modePadding))
             
             ZStack {
                 Button(action: {
@@ -3657,8 +3741,10 @@ struct ContentView: View {
                             leaderboardText = "Reaction mode"
                         } else if modePadding == 1400 {
                             leaderboardText = "Spam mode"
-                        } else if modePadding == 4200 {
+                        } else if modePadding == 5600 {
                             leaderboardText = "Aim mode"
+                        } else if modePadding == 7000 {
+                            leaderboardText = "Memory mode"
                         }
                         withAnimation(.easeInOut(duration: 0.7)) {
                             modePadding -= 1400
@@ -3675,7 +3761,7 @@ struct ContentView: View {
                     .padding(.trailing, 520)
                 
                 Button(action: {
-                    if modePadding != 5600 {
+                    if modePadding != 7000 {
                         if modePadding == 0 {
                             leaderboardText = "Reaction mode"
                         } else if modePadding == 1400 {
@@ -3684,6 +3770,8 @@ struct ContentView: View {
                             leaderboardText = "Aim mode"
                         } else if modePadding == 4200 {
                             leaderboardText = "Memory mode"
+                        } else if modePadding == 5600 {
+                            leaderboardText = "Color mode"
                         }
                         withAnimation(.easeInOut(duration: 0.7)) {
                             modePadding += 1400
@@ -3778,7 +3866,6 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
-import Foundation
 
 extension Array: RawRepresentable where Element: Codable {
     public init?(rawValue: String) {
