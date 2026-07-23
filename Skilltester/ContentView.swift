@@ -3825,7 +3825,38 @@ struct ContentView: View {
     }
     var analyticsView: some View {
         ZStack {
-            Text("Analitics.")
+            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                .ignoresSafeArea()
+            VStack(spacing: -20) {
+                Text("User analytics for")
+                    .font(.largeTitle)
+                    .foregroundColor(darkMode ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
+                HStack(spacing: 20) {
+                    Text(adminStatus(index:userLoggedIn))
+                        .font(.system(size: 81, weight: .thin, design: .default))
+                        .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
+                    Text(getProfileName(index:userLoggedIn))
+                        .font(.system(size: 81, weight: .bold, design: .default))
+                        .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
+                }
+            }.padding(.bottom, 500)
+            
+            graph(maxWidth: 500, maxHeight: 300, valueCount: 10, color: .blue)
+            
+            Button(action: {
+                print("Back to userView")
+                state = "loggedin"
+                usersState = "loggedin"
+                adminEditState = "none"
+                clearAllLogs()
+            }) {
+                Text("Back")
+                    .font(.largeTitle)
+                    .frame(width: 120, height: 50)
+                    .background(Color.black.opacity(elementOpacity))
+                    .clipShape(RoundedRectangle(cornerRadius: 30))
+            }.buttonStyle(.plain)
+                .padding(.top, 500)
         }
     }
     
