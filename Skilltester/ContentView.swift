@@ -263,6 +263,39 @@ struct ContentView: View {
     @State private var targetCount: Int = 10
     @State private var targetRandomX: Int = 0
     @State private var targetRandomY: Int = 0
+    @State private var showingTarget: Int = 0
+    @State private var missedTargets: Int = 0
+    @State private var timeToHit: [Int] = []
+    @State private var targetSpawnDate: Date = Date()
+    @State private var slider6Value: Double = 0
+    func getTargetPadding(index: Int) -> CGFloat {
+        return CGFloat(index * 50)
+    }
+    func getTargetBarWidth(index: Int) -> CGFloat {
+        print("Index: \(index) line length: \(CGFloat((Float(timeToHit[index]) / Float(timeToHit.max()!)) * 420))")
+        return CGFloat((Float(timeToHit[index]) / Float(timeToHit.max()!)) * 420)
+    }
+    func getTargetColor(index: Int) -> Color {
+        if timeToHit[index] ==  timeToHit.min() {
+            return .green
+        } else if timeToHit[index] == timeToHit.max() {
+            return .red
+        } else {
+            return .white
+        }
+    }
+    var avaTimeToHit: Int {
+        guard !timeToHit.isEmpty else {return 0}
+        return Int(Float(timeToHit.reduce(0, +)) / Float(timeToHit.count))
+    }
+    func getTargetAvaLinePos() -> CGFloat {
+        guard !timeToHit.isEmpty else {return 0}
+        print("avarage time to hit")
+        print(avaTimeToHit)
+        print("therefore ofset is \(CGFloat(Float(avaTimeToHit) / Float(timeToHit.max()!)) * 420)")
+        return -116 + CGFloat(Float(avaTimeToHit) / Float(timeToHit.max()!)) * 725
+        
+    }
     
     //MARK: COLOR variables
     @State private var rightColor: Int = 0
@@ -304,7 +337,9 @@ struct ContentView: View {
         }
     }
     
-    //MARK: LOG variables
+    //MARK: LOG LISTS
+    
+    
     @AppStorage("spamLogDates") private var spamLogDates: [String] = []
     @AppStorage("spamLogValues") private var spamLogValues: [String] = []
     @AppStorage("spamLogDurations") private var spamLogDurations: [String] = []
@@ -325,6 +360,9 @@ struct ContentView: View {
     @AppStorage("memoryLogDates") private var memoryLogDates: [String] = []
     @AppStorage("memoryLogValues") private var memoryLogValues: [String] = []
     
+    @AppStorage("colorLogDates") private var colorLogDates: [String] = []
+    @AppStorage("colorLogValues") private var colorLogValues: [String] = []
+    
     @State private var realIdx: Int = 0
     
     //TIMER BELOW
@@ -334,7 +372,166 @@ struct ContentView: View {
         String(format: "%.2f", Double(timeElapsed) / 1000)
     }
     
-    // FUNCTIONS BELOW
+    //MARK: NAVIGATION bar
+    func navigationBar(kind: String) -> some View {
+        ZStack {
+            if kind == "start" {
+                ZStack {
+                    Button(action: {
+                        state = "settings \(state.suffix(1))"
+                    }) {
+                        Text("Settings")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    
+                    Button(action: {
+                        state = "menu"
+                        clickTimes.removeAll()
+                        print("Pressed back; sending to \(state)")
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.trailing, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("b", modifiers: [])
+                    Button(action: {
+                        sentFrom = state
+                        makeCurrentUserLog(log: String(state.suffix(1)), user: userLoggedIn)
+                        state = "log \(state.suffix(1))"
+                    }) {
+                        Text("Log")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.black.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.leading, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("l", modifiers: [])
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.12))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
+            } else if kind == "results" {
+                ZStack {
+                    Button(action: {
+                        state = "start \(state.suffix(1))"
+                    }) {
+                        Text("Start again")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.blue.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        state = "menu"
+                        clickTimes.removeAll()
+                    }) {
+                        Text("Menu")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.trailing, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("m", modifiers: [])
+                    
+                    Button(action: {
+                        sentFrom = state
+                        makeCurrentUserLog(log: String(state.suffix(1)), user: userLoggedIn)
+                        state = "log \(state.suffix(1))"
+                    }) {
+                        Text("Log")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.green.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .padding(.leading, 550)
+                    }.foregroundColor(.white)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("l", modifiers: [])
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.12))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
+            } else if kind == "log" {
+                ZStack {
+                    Button(action: {
+                        print(sentFrom)
+                        if sentFrom == "results \(state.suffix(1))" {
+                            state = "results \(state.suffix(1))"
+                        } else if sentFrom == "start \(state.suffix(1))" {
+                            state = "start \(state.suffix(1))"
+                        }
+                    }) {
+                        Text("Back")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 200, height: 50)
+                            .background(Color.blue.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .foregroundColor(.white)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.space, modifiers: [.shift])
+                    Button(action: {
+                        state = "menu"
+                    }) {
+                        Text("Menu")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .foregroundColor(.white)
+                            .padding(.trailing, 550)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("m", modifiers: [])
+                    Button(action: {
+                        deleteUserLog(log: String(state.suffix(1)), user: userLoggedIn)
+                    }) {
+                        Text("Clear")
+                            .bold()
+                            .font(.largeTitle)
+                            .frame(width: 100, height: 50)
+                            .background(Color.red.opacity(elementOpacity))
+                            .clipShape(Capsule())
+                            .foregroundColor(.white)
+                            .padding(.leading, 550)
+                    }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("x", modifiers: [])
+                }.frame(width: 670, height: 70)
+                    .background(Color.black.opacity(0.2))
+                    .clipShape(Capsule())
+                    .padding(.top, 500)
+            } else {
+                EmptyView()
+            }
+        }
+    }
+    
+    
+    //MARK: - FUNCTIONS BELOW
     func startTest(name: String) -> String {
         
         return "0"
@@ -346,6 +543,7 @@ struct ContentView: View {
     func valueInLog(pos: Int) -> Int {
         return (pos + 1) * 2 - 2
     }
+    //MARK: deleteUser
     func deleteUser(user: Int) {
         print("Before delete (deleting user number \(user))")
         print(userNames)
@@ -373,7 +571,7 @@ struct ContentView: View {
     @State private var idx: Int = 0
     func deleteUserLog(log: String, user: Int) {
         idx = 0
-        if log == "spam" {
+        if log == "S" {
             while idx != spamLogDates.count/2 {
                 if spamLogValues[userInLog(pos: idx)] != String(user) {
                     idx += 1
@@ -386,7 +584,7 @@ struct ContentView: View {
                     spamLogDurations.remove(at: valueInLog(pos: idx))
                 }
             }
-        } else if log == "react" {
+        } else if log == "R" {
             while idx != reactLogDates.count/2 {
                 if reactLogDates[userInLog(pos: idx)] != String(user) {
                     idx += 1
@@ -401,7 +599,7 @@ struct ContentView: View {
                     reactLogDates.remove(at: valueInLog(pos: idx))
                 }
             }
-        } else if log == "time" {
+        } else if log == "T" {
             while idx != timeLogDates.count/2 {
                 if timeLogDates[userInLog(pos: idx)] != String(user) {
                     idx += 1
@@ -412,7 +610,7 @@ struct ContentView: View {
                     timeLogValues.remove(at: valueInLog(pos: idx))
                 }
             }
-        } else if log == "aim" {
+        } else if log == "A" {
             while idx != aimLogDates.count/2 {
                 if aimLogDates[userInLog(pos: idx)] != String(user) {
                     idx += 1
@@ -427,7 +625,7 @@ struct ContentView: View {
                     aimLogDates.remove(at: valueInLog(pos: idx))
                 }
             }
-        } else if log == "memory" {
+        } else if log == "M" {
             while idx != memoryLogDates.count/2 {
                 if memoryLogDates[userInLog(pos: idx)] != String(user) {
                     idx += 1
@@ -436,6 +634,17 @@ struct ContentView: View {
                     memoryLogDates.remove(at: valueInLog(pos: idx))
                     memoryLogValues.remove(at: valueInLog(pos: idx))
                     memoryLogValues.remove(at: valueInLog(pos: idx))
+                }
+            }
+        } else if log == "C" {
+            while idx != colorLogDates.count/2 {
+                if colorLogDates[userInLog(pos: idx)] != String(user) {
+                    idx += 1
+                } else {
+                    colorLogDates.remove(at: valueInLog(pos: idx))
+                    colorLogDates.remove(at: valueInLog(pos: idx))
+                    colorLogValues.remove(at: valueInLog(pos: idx))
+                    colorLogValues.remove(at: valueInLog(pos: idx))
                 }
             }
         }
@@ -467,6 +676,7 @@ struct ContentView: View {
         }
         return logLen
     }
+    //MARK: makeCurrentLog
     @State private var currentLogDates: [String] = []
     @State private var currentLogVal1: [String] = []
     @State private var currentLogVal2: [String] = []
@@ -478,7 +688,7 @@ struct ContentView: View {
         currentLogVal1.removeAll()
         currentLogVal2.removeAll()
         currentLogVal3.removeAll()
-        if log == "spam" {
+        if log == "S" {
             while idx != spamLogDates.count/2 {
                 if spamLogDates[userInLog(pos: idx)] == String(user) {
                     currentLogDates.append(spamLogDates[valueInLog(pos: idx)])
@@ -487,7 +697,7 @@ struct ContentView: View {
                 }
                 idx += 1
             }
-        } else if log == "react" {
+        } else if log == "R" {
             while idx != reactLogDates.count/2 {
                 if reactLogDates[userInLog(pos: idx)] == String(user) {
                     currentLogDates.append(reactLogDates[valueInLog(pos: idx)])
@@ -497,7 +707,7 @@ struct ContentView: View {
                 }
                 idx += 1
             }
-        } else if log == "time" {
+        } else if log == "T" {
             while idx != timeLogDates.count/2 {
                 if timeLogDates[userInLog(pos: idx)] == String(user) {
                     currentLogDates.append(timeLogDates[valueInLog(pos: idx)])
@@ -505,7 +715,7 @@ struct ContentView: View {
                 }
                 idx += 1
             }
-        } else if log == "aim" {
+        } else if log == "A" {
             while idx != aimLogDates.count/2 {
                 if aimLogDates[userInLog(pos: idx)] == String(user) {
                     currentLogDates.append(aimLogDates[valueInLog(pos: idx)])
@@ -515,11 +725,19 @@ struct ContentView: View {
                 }
                 idx += 1
             }
-        } else if log == "memory" {
+        } else if log == "M" {
             while idx != memoryLogDates.count/2 {
                 if memoryLogDates[userInLog(pos: idx)] == String(user) {
                     currentLogDates.append(memoryLogDates[valueInLog(pos: idx)])
                     currentLogVal1.append(memoryLogValues[valueInLog(pos: idx)])
+                }
+                idx += 1
+            }
+        } else if log == "C" {
+            while idx != colorLogDates.count/2 {
+                if colorLogDates[userInLog(pos: idx)] == String(user) {
+                    currentLogDates.append(colorLogDates[valueInLog(pos: idx)])
+                    currentLogVal1.append(colorLogValues[valueInLog(pos: idx)])
                 }
                 idx += 1
             }
@@ -545,26 +763,32 @@ struct ContentView: View {
         
         memoryLogDates.removeAll()
         memoryLogValues.removeAll()
+        
+        colorLogDates.removeAll()
+        colorLogValues.removeAll()
     }
     
+    //MARK: makeLogLeaderboard
     @State private var bestSpamValues: [String] = []
     @State private var bestReactValues: [String] = []
     @State private var bestTimeValues: [String] = []
     @State private var bestAimValues: [String] = []
     @State private var bestMemoryValues: [String] = []
+    @State private var bestColorValues: [String] = []
     
     @State private var spamLeaderboard: [String] = []
     @State private var reactLeaderboard: [String] = []
     @State private var timeLeaderboard: [String] = []
     @State private var aimLeaderboard: [String] = []
     @State private var memoryLeaderboard: [String] = []
+    @State private var colorLeaderboard: [String] = []
     
     func makeLogLeaderboard(mode: String) {
         if mode == "spam" {
             bestSpamValues.removeAll()
             spamLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
-                makeCurrentUserLog(log: "spam", user: user)
+                makeCurrentUserLog(log: "S", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
                     bestSpamValues.append(currentLogVal1.max()!)
@@ -578,7 +802,7 @@ struct ContentView: View {
             bestReactValues.removeAll()
             reactLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
-                makeCurrentUserLog(log: "react", user: user)
+                makeCurrentUserLog(log: "R", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
                     bestReactValues.append(currentLogVal1.min()!)
@@ -591,7 +815,7 @@ struct ContentView: View {
             bestTimeValues.removeAll()
             timeLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
-                makeCurrentUserLog(log: "time", user: user)
+                makeCurrentUserLog(log: "T", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
                     bestTimeValues.append(currentLogVal1.min()!)
@@ -604,7 +828,7 @@ struct ContentView: View {
             bestAimValues.removeAll()
             aimLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
-                makeCurrentUserLog(log: "react", user: user)
+                makeCurrentUserLog(log: "A", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
                     bestAimValues.append(currentLogVal1.min()!)
@@ -617,7 +841,7 @@ struct ContentView: View {
             bestMemoryValues.removeAll()
             memoryLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
-                makeCurrentUserLog(log: "memory", user: user)
+                makeCurrentUserLog(log: "M", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
                     bestMemoryValues.append(currentLogVal1.max()!)
@@ -626,10 +850,53 @@ struct ContentView: View {
             memoryLeaderboard = bestMemoryValues.sorted(by: >)
             print("Best values: \(bestMemoryValues)")
             print("Leaderboard: \(memoryLeaderboard)")
+        }  else if mode == "color" {
+            bestColorValues.removeAll()
+            colorLeaderboard.removeAll()
+            for user in 0...userNames.count - 1 {
+                makeCurrentUserLog(log: "C", user: user)
+                print("Curren log for user\(user): \(currentLogVal1)")
+                if !currentLogVal1.isEmpty {
+                    bestColorValues.append(currentLogVal1.max()!)
+                } else { bestColorValues.append("0%\(user)")}
+            }
+            colorLeaderboard = bestColorValues.sorted(by: >)
+            print("Best values: \(bestColorValues)")
+            print("Leaderboard: \(colorLeaderboard)")
         }
     }
     
-    //MARK: Menu
+    //MARK: writeToLog
+    func writeToLog(log: String) {
+        if log == "aim" {
+            aimLogDates.append(Date().formatted(date: .omitted, time: .standard))
+            aimLogDates.append(String(userLoggedIn))
+            aimLogBestV.append(String(timeToHit.min()!))
+            aimLogBestV.append(String(userLoggedIn))
+            aimLogWorstV.append(String(timeToHit.max()!))
+            aimLogWorstV.append(String(userLoggedIn))
+            aimLogAvaV.append(String(avaTimeToHit))
+            aimLogAvaV.append(String(userLoggedIn))
+            print("Added everything into aim logs")
+            print(aimLogDates)
+            print(aimLogBestV)
+            print(aimLogWorstV)
+            print(aimLogAvaV)
+        } else if log == "memory" {
+            memoryLogDates.append(Date().formatted(date: .omitted, time: .standard))
+            memoryLogDates.append(String(userLoggedIn))
+            memoryLogValues.append(String(squareCount - 1))
+            memoryLogValues.append(String(userLoggedIn))
+            print("Added everything into memory logs")
+        } else if log == "color" {
+            colorLogDates.append(Date().formatted(date: .omitted, time: .standard))
+            colorLogDates.append(String(userLoggedIn))
+            colorLogValues.append(String(colorRound))
+            colorLogValues.append(String(userLoggedIn))
+        }
+    }
+    
+    //MARK: - MENU
     
     let menuButtonSpacing: CGFloat = 18
     var menuView: some View {
@@ -833,53 +1100,7 @@ struct ContentView: View {
                     Text("Spam duration is set to \(spamWaitTime) s.")
                         .padding(.top, 45)
                     
-                    ZStack {
-                        Button(action: {
-                            state = "settings S"
-                        }) {
-                            Text("Settings")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 200, height: 50)
-                                .background(Color.black.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut(.space, modifiers: [.shift])
-                        
-                        Button(action: {
-                            state = "menu"
-                            clickTimes.removeAll()
-                            print("Pressed back; sending to \(state)")
-                        }) {
-                            Text("Back")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 100, height: 50)
-                                .background(Color.black.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                .padding(.trailing, 550)
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut("b", modifiers: [])
-                        Button(action: {
-                            sentFrom = state
-                            state = "log S"
-                        }) {
-                            Text("Log")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 100, height: 50)
-                                .background(Color.black.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                .padding(.leading, 550)
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut("l", modifiers: [])
-                    }.frame(width: 670, height: 70)
-                        .background(Color.black.opacity(0.12))
-                        .clipShape(Capsule())
-                        .padding(.top, 500)
+                    navigationBar(kind: "start")
                 }.navigationTitle("Skilltester - Spamming")
                 
             }
@@ -945,52 +1166,7 @@ struct ContentView: View {
                     
                     Text("For total length of \(spamWaitTime) s.")
                 }
-                ZStack {
-                    Button(action: {
-                        state = "start S"
-                    }) {
-                        Text("Start again")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.blue.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    Button(action: {
-                        state = "menu"
-                        clickTimes.removeAll()
-                    }) {
-                        Text("Menu")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.trailing, 550)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("l", modifiers: [])
-                    
-                    Button(action: {
-                        sentFrom = state
-                        state = "log S"
-                    }) {
-                        Text("Log")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.green.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.leading, 550)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("m", modifiers: [])
-                }.frame(width: 670, height: 70)
-                    .background(Color.black.opacity(0.12))
-                    .clipShape(Capsule())
-                    .padding(.top, 500)
+                navigationBar(kind: "results")
             }
             
             //MARK: Spam - settings
@@ -1065,65 +1241,13 @@ struct ContentView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
-                        .onAppear() {
-                            makeCurrentUserLog(log: "spam", user: userLoggedIn)
-                        }
+
                 } else {
                     Text("No log stored.")
                         .font(.title2)
                 }
                 
-                ZStack {
-                    Button(action: {
-                        print(sentFrom)
-                        if sentFrom == "results S" {
-                            state = "results S"
-                        } else if sentFrom == "start S" {
-                            state = "start S"
-                        }
-                    }) {
-                        Text("Back")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.blue.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .foregroundColor(.white)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    Button(action: {
-                        state = "menu"
-                    }) {
-                        Text("Menu")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .foregroundColor(.white)
-                            .padding(.trailing, 550)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("m", modifiers: [])
-                    Button(action: {
-                        deleteUserLog(log: "spam", user: userLoggedIn)
-                    }) {
-                        Text("Clear")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .foregroundColor(.white)
-                            .padding(.leading, 550)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("x", modifiers: [])
-                }.frame(width: 670, height: 70)
-                    .background(Color.black.opacity(0.2))
-                    .clipShape(Capsule())
-                    .padding(.top, 500)
+                navigationBar(kind: "log")
             }
         }
     }
@@ -1180,62 +1304,8 @@ struct ContentView: View {
                     Text("You will do \(testCountGoal) rounds.")
                         .padding(.top, 45)
                     
-                    ZStack {
-                        Button(action: {
-                            state = "settings R"
-                            clickTimes.removeAll()
-                            saveMessage = "No changes made."
-                            slider1Value = Double(minWaitTime)
-                            slider2Value = Double(maxWaitTime)
-                            slider3Value = Double(testCountGoal)
-                        }) {
-                            Text("Settings")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 200, height: 50)
-                                .background(Color.black.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut(.space, modifiers: [.shift])
-                        
-                        Button(action: {
-                            state = "menu"
-                            clickTimes.removeAll()
-                            print("Pressed back; sending to \(state)")
-                        }) {
-                            Text("Back")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 100, height: 50)
-                                .background(Color.black.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                .padding(.trailing, 550)
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut(.space, modifiers: [.control])
-                        
-                        Button(action: {
-                            makeCurrentUserLog(log: "react", user: userLoggedIn)
-                            sentFrom = state
-                            state = "log R"
-                        }) {
-                            Text("Log")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 100, height: 50)
-                                .background(Color.black.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                .padding(.leading, 550)
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut("l", modifiers: [])
-                    }.frame(width: 670, height: 70)
-                        .background(Color.black.opacity(0.12))
-                        .clipShape(Capsule())
-                        .padding(.top, 500)
                     
+                    navigationBar(kind: "start")
                 }.navigationTitle("Skilltester - Reaction time")
             }
             
@@ -1431,55 +1501,8 @@ struct ContentView: View {
                         .font(.largeTitle)
                         .padding(.bottom, 530)
                         .padding(.horizontal, 200)
-                    ZStack {
-                        Button(action: {
-                            state = "start R"
-                            clickTimes.removeAll()
-                        }) {
-                            Text("Start again")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 200, height: 50)
-                                .background(Color.blue.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut(.space, modifiers: [.shift])
-                        Button(action: {
-                            state = "menu"
-                            clickTimes.removeAll()
-                        }) {
-                            Text("Menu")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 100, height: 50)
-                                .background(Color.red.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                .padding(.trailing, 550)
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut("m", modifiers: [])
-                        Button(action: {
-                            makeCurrentUserLog(log: "react", user: userLoggedIn)
-                            sentFrom = state
-                            state = "log R"
-                        }) {
-                            Text("Log")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 100, height: 50)
-                                .background(Color.green.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                .padding(.leading, 550)
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut("l", modifiers: [])
-                    }.frame(width: 670, height: 70)
-                        .background(Color.black.opacity(0.12))
-                        .clipShape(Capsule())
-                        .padding(.top, 500)
-                    .navigationTitle("Skilltester - Reaction time, Results")
                     
+                    navigationBar(kind: "results")
                 }
                 
                 ZStack(alignment: .topLeading) {
@@ -1669,54 +1692,7 @@ struct ContentView: View {
                         .font(.title2)
                 }
                 
-                ZStack {
-                    Button(action: {
-                        print(sentFrom)
-                        if sentFrom == "results R" {
-                            state = "results R"
-                        } else if sentFrom == "start R" {
-                            state = "start R"
-                        }
-                    }) {
-                        Text("Back")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.blue.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    Button(action: {
-                        state = "menu"
-                    }) {
-                        Text("Menu")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.trailing, 550)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("m", modifiers: [])
-                    Button(action: {
-                        deleteUserLog(log: "react", user: userLoggedIn)
-                    }) {
-                        Text("Clear")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.leading, 550)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("x", modifiers: [])
-                }.frame(width: 670, height: 70)
-                    .background(Color.black.opacity(0.12))
-                    .clipShape(Capsule())
-                    .padding(.top, 500)
+                navigationBar(kind: "log")
             }
         }
     }
@@ -1748,54 +1724,7 @@ struct ContentView: View {
                     Text("Timer duration is set to \(slider5Text).")
                         .padding(.top, 45)
                     
-                    ZStack {
-                        Button(action: {
-                            state = "settings T"
-                        }) {
-                            Text("Settings")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 200, height: 50)
-                                .background(Color.black.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut(.space, modifiers: [.shift])
-                        
-                        Button(action: {
-                            state = "menu"
-                            clickTimes.removeAll()
-                            print("Pressed back; sending to \(state)")
-                        }) {
-                            Text("Back")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 100, height: 50)
-                                .background(Color.black.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                .padding(.trailing, 550)
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut("b", modifiers: [])
-                        
-                        Button(action: {
-                            sentFrom = state
-                            state = "log T"
-                        }) {
-                            Text("Log")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 100, height: 50)
-                                .background(Color.black.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                .padding(.leading, 550)
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut("l", modifiers: [])
-                    }.frame(width: 670, height: 70)
-                        .background(Color.black.opacity(0.12))
-                        .clipShape(Capsule())
-                        .padding(.top, 500)
+                    navigationBar(kind: "start")
                 }
             }
             
@@ -1875,52 +1804,7 @@ struct ContentView: View {
                         .font(.largeTitle)
                         .padding(.bottom, 530)
                         .padding(.horizontal, 200)
-                    ZStack {
-                        Button(action: {
-                            state = "start T"
-                            clickTimes.removeAll()
-                        }) {
-                            Text("Start again")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 200, height: 50)
-                                .background(Color.blue.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut(.space, modifiers: [.shift])
-                        Button(action: {
-                            state = "menu"
-                            clickTimes.removeAll()
-                        }) {
-                            Text("Menu")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 100, height: 50)
-                                .background(Color.red.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                .padding(.trailing, 550)
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut("m", modifiers: [])
-                        Button(action: {
-                            sentFrom = state
-                            state = "log T"
-                        }) {
-                            Text("Log")
-                                .bold()
-                                .font(.largeTitle)
-                                .frame(width: 100, height: 50)
-                                .background(Color.green.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                                .padding(.leading, 550)
-                        }.foregroundColor(.white)
-                            .buttonStyle(.plain)
-                            .keyboardShortcut("l", modifiers: [])
-                    }.frame(width: 670, height: 70)
-                        .background(Color.black.opacity(0.12))
-                        .clipShape(Capsule())
-                        .padding(.top, 500)
+                    
                     Text("You stopped at")
                         .padding(.bottom, 45)
                     Text("\(timeStoppedText) / \(randomTimeText) s.")
@@ -1929,6 +1813,7 @@ struct ContentView: View {
                     Text("Difference: \(timeDifferenceText) s.")
                         .padding(.top, 45)
                     
+                    navigationBar(kind: "results")
                 }
             }
             
@@ -2005,121 +1890,18 @@ struct ContentView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
-                        .onAppear() {
-                            makeCurrentUserLog(log: "time", user: userLoggedIn)
-                        }
+
                 } else {
                     Text("No log stored.")
                         .font(.title2)
                 }
                 
-                ZStack {
-                    Button(action: {
-                        print(sentFrom)
-                        if sentFrom == "results T" {
-                            state = "results T"
-                        } else if sentFrom == "start T" {
-                            state = "start T"
-                        }
-                    }) {
-                        Text("Back")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.blue.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .foregroundColor(.white)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    Button(action: {
-                        state = "menu"
-                    }) {
-                        Text("Menu")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.trailing, 550)
-                            .foregroundColor(.white)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("m", modifiers: [])
-                    Button(action: {
-                        deleteUserLog(log: "time", user: userLoggedIn)
-                    }) {
-                        Text("Clear")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.leading, 550)
-                            .foregroundColor(.white)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("x", modifiers: [])
-                }.frame(width: 670, height: 70)
-                    .background(Color.black.opacity(0.12))
-                    .clipShape(Capsule())
-                    .padding(.top, 500)
+                navigationBar(kind: "log")
             }
         }
     }
     
-    //MARK: Aim
     
-    @State private var showingTarget: Int = 0
-    @State private var missedTargets: Int = 0
-    @State private var timeToHit: [Int] = []
-    @State private var targetSpawnDate: Date = Date()
-    @State private var slider6Value: Double = 0
-    func getTargetPadding(index: Int) -> CGFloat {
-        return CGFloat(index * 50)
-    }
-    func getTargetBarWidth(index: Int) -> CGFloat {
-        print("Index: \(index) line length: \(CGFloat((Float(timeToHit[index]) / Float(timeToHit.max()!)) * 420))")
-        return CGFloat((Float(timeToHit[index]) / Float(timeToHit.max()!)) * 420)
-    }
-    func getTargetColor(index: Int) -> Color {
-        if timeToHit[index] ==  timeToHit.min() {
-            return .green
-        } else if timeToHit[index] == timeToHit.max() {
-            return .red
-        } else {
-            return .white
-        }
-    }
-    var avaTimeToHit: Int {
-        guard !timeToHit.isEmpty else {return 0}
-        return Int(Float(timeToHit.reduce(0, +)) / Float(timeToHit.count))
-    }
-    func getTargetAvaLinePos() -> CGFloat {
-        guard !timeToHit.isEmpty else {return 0}
-        print("avarage time to hit")
-        print(avaTimeToHit)
-        print("therefore ofset is \(CGFloat(Float(avaTimeToHit) / Float(timeToHit.max()!)) * 420)")
-        return -116 + CGFloat(Float(avaTimeToHit) / Float(timeToHit.max()!)) * 725
-        
-    }
-    func writeToLog(log: String) {
-        if log == "aim" {
-            aimLogDates.append(Date().formatted(date: .omitted, time: .standard))
-            aimLogDates.append(String(userLoggedIn))
-            aimLogBestV.append(String(timeToHit.min()!))
-            aimLogBestV.append(String(userLoggedIn))
-            aimLogWorstV.append(String(timeToHit.max()!))
-            aimLogWorstV.append(String(userLoggedIn))
-            aimLogAvaV.append(String(avaTimeToHit))
-            aimLogAvaV.append(String(userLoggedIn))
-            print("Added everything into aim logs")
-            print(aimLogDates)
-            print(aimLogBestV)
-            print(aimLogWorstV)
-            print(aimLogAvaV)
-        }
-    }
     //MARK: Start Aim
     
     
@@ -2141,52 +1923,7 @@ struct ContentView: View {
                 }.buttonStyle(.plain)
                 
                 
-                ZStack {
-                    Button(action: {
-                        state = "menu"
-                    }) {
-                        Text("Back")
-                            .font(.largeTitle)
-                            .bold()
-                            .frame(width: 100, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                    }.buttonStyle(.plain)
-                        //.padding(.top, 500)
-                        .padding(.trailing, 550)
-                    Button(action: {
-                        state = "settings A"
-                    }) {
-                        Text("Settings")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            //.padding(.top, 500)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    Button(action: {
-                        makeCurrentUserLog(log: "aim", user: userLoggedIn)
-                        sentFrom = state
-                        state = "log A"
-                    }) {
-                        Text("Log")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            //.padding(.top, 500)
-                            .padding(.leading, 550)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("l", modifiers: [])
-                }.frame(width: 670, height: 70)
-                    .background(Color.black.opacity(0.12))
-                    .clipShape(Capsule())
-                    .padding(.top, 500)
+                navigationBar(kind: "start")
             }
             //MARK: Aim - settings
             if state == "settings A" {
@@ -2243,7 +1980,7 @@ struct ContentView: View {
                                         try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
                                         state = "results A"
                                         writeToLog(log: "aim")
-                                        makeCurrentUserLog(log: "aim", user: userLoggedIn)
+                                        //makeCurrentUserLog(log: "aim", user: userLoggedIn)
                                         print(currentLogVal1)
                                         print(currentLogVal2)
                                         print(currentLogVal3)
@@ -2319,49 +2056,7 @@ struct ContentView: View {
                         .padding(.top, CGFloat(-270 + 40*targetCount))
                         .padding(.leading, getTargetAvaLinePos())
                     
-                    ZStack {
-                        Button(action: {
-                            state = "menu"
-                            timeToHit.removeAll()
-                        }) {
-                            Text("Menu")
-                                .font(.largeTitle)
-                                .bold()
-                                .frame(width: 100, height: 50)
-                                .background(Color.red.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                        }.buttonStyle(.plain)
-                            .padding(.trailing, 550)
-                        
-                        Button(action: {
-                            state = "start A"
-                            timeToHit.removeAll()
-                        }) {
-                            Text("Start again")
-                                .font(.largeTitle)
-                                .bold()
-                                .frame(width: 180, height: 50)
-                                .background(Color.blue.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                        }.buttonStyle(.plain)
-                        
-                        Button(action: {
-                            sentFrom = state
-                            state = "log A"
-                            
-                        }) {
-                            Text("Log")
-                                .font(.largeTitle)
-                                .bold()
-                                .frame(width: 100, height: 50)
-                                .background(Color.green.opacity(elementOpacity))
-                                .clipShape(Capsule())
-                        }.buttonStyle(.plain)
-                            .padding(.leading, 550)
-                    }.frame(width: 670, height: 70)
-                        .background(Color.black.opacity(0.12))
-                        .clipShape(Capsule())
-                        .padding(.top, 500)
+                    
                     HStack(spacing: 21) {
                         Text("Best: \(timeToHit.min()!)ms")
                             .font(.title2)
@@ -2376,6 +2071,8 @@ struct ContentView: View {
                             .bold()
                             .foregroundColor(.red)
                     }.padding(.top, 400)
+                    
+                    navigationBar(kind: "results")
                 }
             }
             //MARK: Aim - log
@@ -2412,60 +2109,9 @@ struct ContentView: View {
                     }.frame(maxWidth: .infinity)
                 }.frame(height: 400)
                 
-                ZStack {
-                    Button(action: {
-                        print(sentFrom)
-                        if sentFrom == "results A" {
-                            state = "results A"
-                        } else if sentFrom == "start A" {
-                            state = "start A"
-                        }
-                    }) {
-                        Text("Back")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 180, height: 50)
-                            .background(Color.blue.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .foregroundColor(.white)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    Button(action: {
-                        state = "menu"
-                        timeToHit.removeAll()
-                    }) {
-                        Text("Menu")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.trailing, 550)
-                            .foregroundColor(.white)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("m", modifiers: [])
-                    Button(action: {
-                        deleteUserLog(log: "aim", user: userLoggedIn)
-                        makeCurrentUserLog(log: "aim", user: userLoggedIn)
-                    }) {
-                        Text("Clear")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.leading, 550)
-                            .foregroundColor(.white)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("x", modifiers: [])
-                }.frame(width: 670, height: 70)
-                    .background(Color.black.opacity(0.12))
-                    .clipShape(Capsule())
-                    .padding(.top, 500)
+                navigationBar(kind: "log")
             }
+           
             
         }
     }
@@ -2569,6 +2215,7 @@ struct ContentView: View {
                     }  else if phase == "guess C" {
                         if index == rightColor {
                             state = "guessed C"
+                            colorRound += 1
                             Task {
                                 colorOffset -= 10 - colorOffsetEasing
                                 if colorOffsetEasing < 9 {
@@ -2616,49 +2263,7 @@ struct ContentView: View {
                         .font(.largeTitle)
                 }.buttonStyle(.plain)
                 
-                ZStack {
-                    Button(action: {
-                        state = "menu"
-                    }) {
-                        Text("Back")
-                            .font(.largeTitle)
-                            .bold()
-                            .frame(width: 100, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                    }.buttonStyle(.plain)
-                        .padding(.trailing, 550)
-//                    Button(action: {
-//                        //state = "settings M"
-//                    }) {
-//                        Text("Settings")
-//                            .bold()
-//                            .font(.largeTitle)
-//                            .frame(width: 200, height: 50)
-//                            .background(Color.black.opacity(elementOpacity))
-//                            .clipShape(Capsule())
-//                    }.foregroundColor(.white)
-//                        .buttonStyle(.plain)
-//                        .keyboardShortcut(.space, modifiers: [.shift])
-                    Button(action: {
-                        makeCurrentUserLog(log: "memory", user: userLoggedIn)
-                        sentFrom = state
-                        state = "log M"
-                    }) {
-                        Text("Log")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.black.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.leading, 550)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("l", modifiers: [])
-                }.frame(width: 670, height: 70)
-                    .background(Color.black.opacity(0.12))
-                    .clipShape(Capsule())
-                    .padding(.top, 500)
+                navigationBar(kind: "start")
             }
             
             if state == "showing M" {
@@ -2726,10 +2331,7 @@ struct ContentView: View {
                         } else {
                             print("no good, sending to results")
                             state = "results M"
-                            memoryLogDates.append(Date().formatted(date: .omitted, time: .standard))
-                            memoryLogDates.append(String(userLoggedIn))
-                            memoryLogValues.append(String(squareCount - 1))
-                            memoryLogValues.append(String(userLoggedIn))
+                            
                             
                         }
                     }) {
@@ -2751,53 +2353,8 @@ struct ContentView: View {
                 Text("You memorized \(squareCount - 1) squares.")
                     .font(.largeTitle)
                     .bold()
-                ZStack {
-                    Button(action: {
-                        state = "start M"
-                    }) {
-                        Text("Start again")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 200, height: 50)
-                            .background(Color.blue.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    Button(action: {
-                        state = "menu"
-                        clickTimes.removeAll()
-                    }) {
-                        Text("Menu")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.trailing, 550)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("l", modifiers: [])
-                    
-                    Button(action: {
-                        makeCurrentUserLog(log: "memory", user: userLoggedIn)
-                        sentFrom = state
-                        state = "log M"
-                    }) {
-                        Text("Log")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.green.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.leading, 550)
-                    }.foregroundColor(.white)
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("m", modifiers: [])
-                }.frame(width: 670, height: 70)
-                    .background(Color.black.opacity(0.12))
-                    .clipShape(Capsule())
-                    .padding(.top, 500)
+                
+                navigationBar(kind: "results")
             }
             
             if state == "log M" {
@@ -2829,65 +2386,15 @@ struct ContentView: View {
                     Text("No log stored.")
                         .font(.title2)
                 }
-                ZStack {
-                    Button(action: {
-                        print(sentFrom)
-                        if sentFrom == "results M" {
-                            state = "results M"
-                        } else if sentFrom == "start M" {
-                            state = "start M"
-                        }
-                    }) {
-                        Text("Back")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 180, height: 50)
-                            .background(Color.blue.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .foregroundColor(.white)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.space, modifiers: [.shift])
-                    Button(action: {
-                        state = "menu"
-                        
-                    }) {
-                        Text("Menu")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.trailing, 550)
-                            .foregroundColor(.white)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("m", modifiers: [])
-                    Button(action: {
-                        deleteUserLog(log: "memory", user: userLoggedIn)
-                        makeCurrentUserLog(log: "memory", user: userLoggedIn)
-                    }) {
-                        Text("Clear")
-                            .bold()
-                            .font(.largeTitle)
-                            .frame(width: 100, height: 50)
-                            .background(Color.red.opacity(elementOpacity))
-                            .clipShape(Capsule())
-                            .padding(.leading, 550)
-                            .foregroundColor(.white)
-                    }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("c", modifiers: [])
-                }.frame(width: 670, height: 70)
-                    .background(Color.black.opacity(0.12))
-                    .clipShape(Capsule())
-                    .padding(.top, 500)
+                
+                navigationBar(kind: "log")
             }
         }
     }
     
     //MARK: Color - start
     
+    @State private var colorRound: Int = 0
     @State private var colorOffsetEasing: Double = 0
     @State private var colorOffset: Double = 70
     var colorView: some View {
@@ -2907,6 +2414,8 @@ struct ContentView: View {
                         .clipShape(Rectangle())
                 }.buttonStyle(.plain)
                     .ignoresSafeArea()
+                
+                navigationBar(kind: "start")
             }
             
             if state == "guess C" {
@@ -2930,6 +2439,45 @@ struct ContentView: View {
                     .font(.largeTitle)
                     .bold()
                     .padding(.bottom, 550)
+                
+                Text("You cleared \(colorRound) rounds.")
+                    .font(.largeTitle)
+                    .bold()
+                
+                navigationBar(kind: "results")
+            }
+            
+            if state == "log C" {
+                if !currentLogDates.isEmpty {
+                    ScrollView {
+                        VStack {
+                            ForEach(0..<currentLogDates.count, id: \.self) { index in
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
+                                        .padding(.horizontal, 35)
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        Text("\(currentLogVal1[index]) squares memorized.")
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(currentLogDates[index])")
+                                            .font(.title2)
+                                            .padding(.trailing, 40)
+                                    }
+                                }
+                            }
+                        }.frame(maxWidth: .infinity)
+                    }.frame(height: 400)
+                } else {
+                    Text("No log stored.")
+                        .font(.title2)
+                }
+                
+                navigationBar(kind: "log")
             }
         }
     }
@@ -3713,9 +3261,12 @@ struct ContentView: View {
                                     if isAdmin.contains(userLoggedIn) {
                                         adminEditState = "none"
                                         
-                                        deleteUserLog(log: "spam", user: accountUnderEdit)
-                                        deleteUserLog(log: "react", user: accountUnderEdit)
-                                        deleteUserLog(log: "time", user: accountUnderEdit)
+                                        deleteUserLog(log: "S", user: accountUnderEdit)
+                                        deleteUserLog(log: "R", user: accountUnderEdit)
+                                        deleteUserLog(log: "T", user: accountUnderEdit)
+                                        deleteUserLog(log: "A", user: accountUnderEdit)
+                                        deleteUserLog(log: "M", user: accountUnderEdit)
+                                        deleteUserLog(log: "C", user: accountUnderEdit)
                                         deleteUser(user: accountUnderEdit)
                                         
                                     } else {
@@ -3727,9 +3278,12 @@ struct ContentView: View {
                                         bgOpacity = 0.6
                                         elementOpacity = 0.45
                                         
-                                        deleteUserLog(log: "spam", user: accountUnderEdit)
-                                        deleteUserLog(log: "react", user: accountUnderEdit)
-                                        deleteUserLog(log: "time", user: accountUnderEdit)
+                                        deleteUserLog(log: "S", user: accountUnderEdit)
+                                        deleteUserLog(log: "R", user: accountUnderEdit)
+                                        deleteUserLog(log: "T", user: accountUnderEdit)
+                                        deleteUserLog(log: "A", user: accountUnderEdit)
+                                        deleteUserLog(log: "M", user: accountUnderEdit)
+                                        deleteUserLog(log: "C", user: accountUnderEdit)
                                         deleteUser(user: accountUnderEdit)
                                     }
                                 } else {
