@@ -12,10 +12,93 @@ struct ContentView: View {
     
     init() {
         print("-startup")
+        print("Date -\(formattedDate)")
+        if Date().weekDay == "Mon" && !screenTimeReseted {
+            for i in 0..<userNames.count {
+                screenTimeMon[i] = 0
+                screenTimeTue[i] = 0
+                screenTimeWed[i] = 0
+                screenTimeThu[i] = 0
+                screenTimeFri[i] = 0
+                screenTimeSat[i] = 0
+                screenTimeSun[i] = 0
+            }
+            screenTimeReseted = true
+        }
+        if Date().weekDay != "Mon" {
+            screenTimeReseted = false
+        }
+        print(screenTimeReseted)
+        print("-")
+    }
+    
+    @State private var graphValList: [Double] = []
+    @State private var graphTextList: [String] = []
+    func graph(maxWidth: CGFloat, maxHeight: CGFloat, barWidth: CGFloat, color: Color, valueCount: Int, maxValue: Double) -> some View {
+        ZStack(alignment: .bottom) {
+            RoundedRectangle(cornerRadius: barWidth / 3.6)
+                .strokeBorder(Color.gray, lineWidth: 1)
+                .frame(width: maxWidth + 2, height: maxHeight)
+                .padding(.bottom, 11.5)
+            ForEach(1...3, id: \.self) { index in
+                let basePadding: CGFloat = -12.7
+                Rectangle()
+                    .strokeBorder(Color.gray, lineWidth: 1)
+                    .frame(width: maxWidth, height: 1)
+                    .padding(.bottom, CGFloat(index) * maxHeight/4 - basePadding)
+            }
+            
+            
+            if !graphValList.isEmpty && !graphTextList.isEmpty {
+                HStack(alignment: .bottom, spacing: 25) {
+                    ForEach(0..<valueCount, id: \.self) { index in
+                        let barHeight: CGFloat = (graphValList[index] / maxValue) * maxHeight
+                        let barCornerRadius: CGFloat = barWidth / 3.6
+                        let barText: String = graphTextList[index]
+                        let barValue: String = String("\(Int(graphValList[index]))m")
+                        //let barTextPadding: CGFloat = barHeight / 2 + 20
+                        
+                        ZStack {
+                            RoundedRectangle(cornerRadius: barCornerRadius)
+                                .frame(width: barWidth, height: barHeight)
+                                .foregroundColor(color)
+                                .overlay(alignment: .bottom) {
+                                    Text(barText)
+                                        .frame(width: 50)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                        .alignmentGuide(.bottom) { dimensions in
+                                            dimensions[.top]
+                                        }
+                                }
+                                .overlay(alignment: .bottom) {
+                                    Text(barValue)
+                                        .frame(width: 50)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                        .alignmentGuide(.top) { dimensions in
+                                            dimensions[.bottom]
+                                        }
+                                        .padding(.bottom, barHeight)
+                                    /*
+                                    Rectangle()
+                                        .frame(width: barWidth, height: 1)
+                                        .foregroundColor(.white)
+                                        .alignmentGuide(.top) { dimensions in
+                                            dimensions[.bottom]
+                                        }
+                                        .padding(.bottom, barHeight - 17)
+                                     */
+                                }
+                            
+                        }.padding(.vertical, barWidth/4)
+                        
+                    }
+                }
+            }
+        }
     }
     
     //MARK: SETUP variables
-    @AppStorage("screenTimes") private var screenTimes: [Int] = []
+    //@AppStorage("screenTimes") private var screenTimes: [Int] = []
     
     @State private var state: String = "startup" // nezapomen zmenit na startup
     @AppStorage("users") private var users: [String] = []
@@ -372,6 +455,32 @@ struct ContentView: View {
     @AppStorage("colorLogDates") private var colorLogDates: [String] = []
     @AppStorage("colorLogValues") private var colorLogValues: [String] = []
     
+    
+    @AppStorage("resetetST") private var screenTimeReseted: Bool = true
+    @State private var previousDate: Date = Date()
+    @State private var signalTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
+    @Environment(\.scenePhase) private var scenePhase
+    
+    @AppStorage("STmon") private var screenTimeMon: [Int] = []
+    @AppStorage("STtue") private var screenTimeTue: [Int] = []
+    @AppStorage("STwed") private var screenTimeWed: [Int] = []
+    @AppStorage("STthu") private var screenTimeThu: [Int] = []
+    @AppStorage("STfri") private var screenTimeFri: [Int] = []
+    @AppStorage("STsat") private var screenTimeSat: [Int] = []
+    @AppStorage("STsun") private var screenTimeSun: [Int] = []
+    
+    func getScreenTimeAvarage() -> String {
+        guard userLoggedIn < 100, !graphValList.isEmpty else {return "error"}
+        let timeAva: Double = Double((screenTimeMon[userLoggedIn] + screenTimeTue[userLoggedIn] + screenTimeWed[userLoggedIn] + screenTimeThu[userLoggedIn] + screenTimeFri[userLoggedIn] + screenTimeSat[userLoggedIn] + screenTimeSun[userLoggedIn])/(screenTimeMon.count-1))
+        
+        if timeAva < 60 {
+            return "\(timeAva) min."
+        } else {
+            let h = floor(timeAva/60)
+            let m = timeAva - h*60
+            return "\(Int(h))h \(Int(m))m"
+        }
+    }
     
     private static let logDateFormat: DateFormatter = {
         let formatter = DateFormatter()
@@ -904,6 +1013,8 @@ struct ContentView: View {
             memoryLogValues.append(String(squareCount - 1))
             memoryLogValues.append(String(userLoggedIn))
             print("Added everything into memory logs")
+            print(memoryLogDates)
+            print(memoryLogValues)
         } else if log == "color" {
             colorLogDates.append(formattedDate)
             colorLogDates.append(String(userLoggedIn))
@@ -1037,6 +1148,10 @@ struct ContentView: View {
                             makeLogLeaderboard(mode: "time")
                             print("AIM")
                             makeLogLeaderboard(mode: "aim")
+                            print("MEMORY")
+                            makeLogLeaderboard(mode: "memory")
+                            print("COLOR")
+                            makeLogLeaderboard(mode: "color")
                             
                         }
                     
@@ -2394,9 +2509,10 @@ struct ContentView: View {
                 
                 navigationBar(kind: "results")
             }
+            //MARK: Memory - log
             
             if state == "log M" {
-                if 0 < timeLogValues.count && 0 < timeLogDates.count {
+                if !currentLogDates.isEmpty {
                     ScrollView {
                         VStack {
                             ForEach(0..<currentLogDates.count, id: \.self) { index in
@@ -2588,9 +2704,6 @@ struct ContentView: View {
                     .foregroundColor(Color.white.opacity(0.7))
             }.padding(.bottom, 500)
             
-            Text("Log into existing account")
-                .font(.largeTitle)
-                .padding(.bottom, 270)
             
             //MARK: Chosing users
             if usersState == "choosing" {
@@ -2606,35 +2719,32 @@ struct ContentView: View {
                                     .foregroundColor(.clear)
                                     .padding(.trailing, 180)
                             } else {
-                                userCard(at: index, size: 200)
+                                userCard(at: index, size: 280)
+                                    .padding(.bottom, 50)
                             }
                         }
                         
                     }.padding(.bottom, 0)
                 }
                 
-//                Text("or")
-//                    .font(.system(size: 50, design: .default))
-//                    .baselineOffset(0.5)
-//                    .padding(.top, 300)
-                Text("or")
-                    .font(.largeTitle)
-                    .padding(.top, 350)
 
-                Button(action: {
-                    usersState = "creating"
-                    passwordState = "name"
-                }) {
-                    Text("Create new")
-                        .font(.system(size: 40, weight: .thin, design: .default))
-                        .baselineOffset(0.5)
-                        .frame(width: 220, height: 60)
-                        .background(Color.blue.opacity(0.45))
-                        .clipShape(RoundedRectangle(cornerRadius: 40))
-                }.buttonStyle(.plain)
-                    .padding(.top, 485)
-                    .padding(.trailing, 1)
+                HStack {
+                    Text("Don't have an account?")
+                        .font(.title2)
+                    Button(action: {
+                        usersState = "creating"
+                        passwordState = "name"
+                    }) {
+                        Text("Create new")
+                            .font(.title2)
+                            .baselineOffset(0.5)
+                            .frame(width: 110, height: 30)
+                            .background(Color.blue.opacity(0.45))
+                            .clipShape(RoundedRectangle(cornerRadius: 40))
+                    }.buttonStyle(.plain)
+                }.padding(.top, 530)
             }
+                
             //MARK: Creating user
             if usersState == "creating" {
                 Button(action: {
@@ -2717,6 +2827,7 @@ struct ContentView: View {
                     usersState = "choosing"
                     passwordState = "done"
                     passwordInput = ""
+                    passwordRepeat = ""
                     
                     bgOpacity = 0.6
                     elementOpacity = 0.45
@@ -2777,7 +2888,27 @@ struct ContentView: View {
                                 .clipShape(Circle())
                         }.buttonStyle(.plain)
                             .keyboardShortcut(.return, modifiers: [])
+                        
                     }.padding(.top, 1)
+                    Button(action: {
+                        usersState = "choosing"
+                        passwordState = "done"
+                        passwordInput = ""
+                        passwordRepeat = ""
+                        
+                        bgOpacity = 0.6
+                        elementOpacity = 0.45
+                    }) {
+                        Image(systemName: "arrow.left")
+                            .font(.largeTitle)
+                            .foregroundColor(darkMode ? .gray : .white)
+                            .frame(width: 40, height: 40)
+                            .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.black.opacity(elementOpacity))
+                            .clipShape(Circle())
+                    }.buttonStyle(.plain)
+                        .keyboardShortcut(.return, modifiers: [])
+                        .padding(.top, 1)
+                        .padding(.trailing, 230)
                 } else {
                     if usersState == "creating" {
                         Text(nameInput)
@@ -2813,6 +2944,7 @@ struct ContentView: View {
                                 .clipShape(Circle())
                         }.buttonStyle(.plain)
                             .keyboardShortcut(.return, modifiers: [])
+                        
                     }.padding(.top, 65)
                     if passwordState == "repeat" {
                         HStack(spacing: -35) {
@@ -2867,7 +2999,6 @@ struct ContentView: View {
                     UserPreferencesBgOpacity = []
                     UserPreferencesElementOpacity = []
                     
-                    clearAllLogs()
                 }
                 
                 print("\(howManyButtons) buttons")
@@ -2939,7 +3070,7 @@ struct ContentView: View {
                     usersState = "userSettings"
                 }) {
                     Text(getProfilePicture(index: userLoggedIn))
-                        .font(.system(size: 51, weight: .thin, design: .default))
+                        .font(.system(size: 41, weight: .thin, design: .default))
                         .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
                         .background(getProfileColor(index: userLoggedIn))
@@ -2970,7 +3101,7 @@ struct ContentView: View {
                     state = "user results"
                 }) {
                     Image(systemName: "chart.bar")
-                        .font(.system(size: 33, design: .default))
+                        .font(.system(size: 41, design: .default))
                         .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
                         .background(Color.gray.opacity(elementOpacity))
@@ -2982,16 +3113,13 @@ struct ContentView: View {
                     print("ENTERING ANALYTICS")
                     graphValList.removeAll()
                     graphTextList.removeAll()
-                    for i in 0...9 {
-                        graphValList.append(Double.random(in: 0...20))
-                        graphTextList.append("idx: \(i)")
-                    }
+                    loadAnalyticsData()
                     print(graphValList)
                     print(graphTextList)
                     state = "analytics"
                 }) {
                     Image(systemName: "chart.pie")
-                        .font(.system(size: 33, design: .default))
+                        .font(.system(size: 43, design: .default))
                         .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
                         .background(Color.gray.opacity(elementOpacity))
@@ -3793,36 +3921,48 @@ struct ContentView: View {
     
     //MARK: User analyatics
     
-    
-    @State private var graphValList: [Double] = []
-    @State private var graphTextList: [String] = []
-    func graph(maxWidth: CGFloat, maxHeight: CGFloat, valueCount: Int, color: Color) -> some View {
-        ZStack {
-            HStack(alignment: .bottom) {
-                ForEach(0..<valueCount, id: \.self) { index in
-                    let barHeight: CGFloat = (graphValList[index] / graphValList.max()!) * maxHeight
-                    let barWidth: CGFloat = maxWidth / CGFloat(valueCount)
-                    let barCornerRadius: CGFloat = barWidth / 3.6
-                    let barText: String = graphTextList[index]
-                    //let barTextPadding: CGFloat = barHeight / 2 + 20
-                    
-                    ZStack {
-                        RoundedRectangle(cornerRadius: barCornerRadius)
-                            .frame(width: barWidth, height: barHeight)
-                            .foregroundColor(color)
-                            .overlay(alignment: .bottom) {
-                                Text(barText)
-                                    .alignmentGuide(.bottom) { dimensions in
-                                        dimensions[.top]
-                                    }
-                            }
-                        
-                    }.padding(.vertical, barWidth/4)
-                    
+    @State private var listIndex: Int = 0
+    func loadAnalyticsData() {
+        /*
+        listIndex = spamLogDates.count/2 - 1
+        if !spamLogDates.isEmpty {
+            if spamLogDates.count/2 > 6 {
+                while listIndex > spamLogDates.count/2 - 6 {
+                    graphValList.append(Double(spamLogValues[valueInLog(pos: listIndex)])!)
+                    graphTextList.append(spamLogDates[valueInLog(pos: listIndex)])
+                    listIndex -= 1
+                }
+            } else {
+                for i in 0..<spamLogDates.count/2 {
+                    print("tryna get \(listIndex); i: \(i)")
+                    graphValList.append(Double(spamLogValues[valueInLog(pos: listIndex)])!)
+                    graphTextList.append(spamLogDates[valueInLog(pos: listIndex)])
+                    listIndex -= 1
                 }
             }
         }
+         */
+        graphValList.removeAll()
+        graphTextList.removeAll()
+        graphValList.append(Double(screenTimeMon[userLoggedIn]))
+        graphTextList.append("Mon")
+        graphValList.append(Double(screenTimeTue[userLoggedIn]))
+        graphTextList.append("Tue")
+        graphValList.append(Double(screenTimeWed[userLoggedIn]))
+        graphTextList.append("Wed")
+        graphValList.append(Double(screenTimeThu[userLoggedIn]))
+        graphTextList.append("Thu")
+        graphValList.append(Double(screenTimeFri[userLoggedIn]))
+        graphTextList.append("Fri")
+        graphValList.append(Double(screenTimeSat[userLoggedIn]))
+        graphTextList.append("Sat")
+        graphValList.append(Double(screenTimeSun[userLoggedIn]))
+        graphTextList.append("Sun")
+        print("LOADED ANALYTICS DATA")
+        print(graphValList)
+        print(graphTextList)
     }
+    
     var analyticsView: some View {
         ZStack {
             SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
@@ -3841,14 +3981,51 @@ struct ContentView: View {
                 }
             }.padding(.bottom, 500)
             
-            graph(maxWidth: 500, maxHeight: 300, valueCount: 10, color: .blue)
+            Text("Daily avarage \(getScreenTimeAvarage())")
+                .font(.title3)
+                .padding(.bottom, 270)
+            
+            if graphValList.max()! <= 30 {
+            } else if graphValList.max()! <= 60 {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 60)
+                    .padding(.top, 70)
+            } else if graphValList.max()! <= 120 {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 120)
+                    .padding(.top, 70)
+            } else if graphValList.max()! <= 180 {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 180)
+                    .padding(.top, 70)
+            } else if graphValList.max()! <= 240 {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 240)
+                    .padding(.top, 70)
+            } else if graphValList.max()! <= 300 {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 300)
+                    .padding(.top, 70)
+            } else if graphValList.max()! <= 420 {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 420)
+                    .padding(.top, 70)
+            } else if graphValList.max()! <= 540 {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 540)
+                    .padding(.top, 70)
+            } else if graphValList.max()! <= 720 {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 720)
+                    .padding(.top, 70)
+            } else {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 1440)
+                    .padding(.top, 70)
+            }
+            
+            /*
+            Text("SCREEN TIME\(screenTimeSat[userLoggedIn])")
+                .font(.largeTitle)
+                .padding(.top, 450)
+            */
             
             Button(action: {
                 print("Back to userView")
                 state = "loggedin"
                 usersState = "loggedin"
                 adminEditState = "none"
-                clearAllLogs()
             }) {
                 Text("Back")
                     .font(.largeTitle)
@@ -3911,6 +4088,30 @@ struct ContentView: View {
         .onReceive(timer) { _ in
             timeElapsed += 1
         }
+        .onReceive(signalTimer) { currentTime in
+            guard scenePhase == .active, !userNames.isEmpty, userLoggedIn < userNames.count else {return}
+            let timePassedS = currentTime.timeIntervalSince(previousDate)
+            if timePassedS >= 60 {
+                let timePassedM = Int(timePassedS/60)
+                previousDate = previousDate.addingTimeInterval(Double(timePassedM * 60))
+                let week = Date().weekDay
+                if week == "Mon" {
+                    screenTimeMon[userLoggedIn] = Int(screenTimeMon[userLoggedIn] + timePassedM)
+                } else if week == "Tue" {
+                    screenTimeTue[userLoggedIn] = Int(screenTimeTue[userLoggedIn] + timePassedM)
+                } else if week == "Wed" {
+                    screenTimeWed[userLoggedIn] = Int(screenTimeMon[userLoggedIn] + timePassedM)
+                } else if week == "Thu" {
+                    screenTimeThu[userLoggedIn] = Int(screenTimeThu[userLoggedIn] + timePassedM)
+                } else if week == "Fri" {
+                    screenTimeFri[userLoggedIn] = Int(screenTimeFri[userLoggedIn] + timePassedM)
+                } else if week == "Sat" {
+                    screenTimeSat[userLoggedIn] = Int(screenTimeSat[userLoggedIn] + timePassedM)
+                } else if week == "Sun" {
+                    screenTimeSun[userLoggedIn] = Int(screenTimeSun[userLoggedIn] + timePassedM)
+                }
+            }
+        }
         .onAppear() {
             print(userNames)
             print(userPass)
@@ -3942,5 +4143,13 @@ extension Array: RawRepresentable where Element: Codable {
               let result = String(data: data, encoding: .utf8)
         else { return "[]" }
         return result
+    }
+}
+
+extension Date {
+    var weekDay: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter.string(from: self)
     }
 }
