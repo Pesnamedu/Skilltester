@@ -469,6 +469,9 @@ struct ContentView: View {
     @AppStorage("STsat") private var screenTimeSat: [Int] = []
     @AppStorage("STsun") private var screenTimeSun: [Int] = []
     
+    @AppStorage("streak") private var userStreaks: [Int] = []
+    @AppStorage("lastStreak") private var lastStreakDays: [String] = ["Sat", "Sat", "Sat", "Sat", "Sat"]
+    
     func getScreenTimeAvarage() -> String {
         guard userLoggedIn < 100, !graphValList.isEmpty else {return "error"}
         let timeAva: Double = Double((screenTimeMon[userLoggedIn] + screenTimeTue[userLoggedIn] + screenTimeWed[userLoggedIn] + screenTimeThu[userLoggedIn] + screenTimeFri[userLoggedIn] + screenTimeSat[userLoggedIn] + screenTimeSun[userLoggedIn])/(screenTimeMon.count-1))
@@ -872,6 +875,8 @@ struct ContentView: View {
             }
         }
     }
+    //MARK: clearAllLogs
+    
     func clearAllLogs() {
         spamLogDates.removeAll()
         spamLogValues.removeAll()
@@ -993,6 +998,38 @@ struct ContentView: View {
             print("Best values: \(bestColorValues)")
             print("Leaderboard: \(colorLeaderboard)")
         }
+    }
+    @State private var usersBest: String = ""
+    @State private var soloBestValue: [Int] = []
+    @State private var soloBestMode: String = ""
+    func makeUsersBest(user: Int) {
+        makeLogLeaderboard(mode: "spam")
+        makeLogLeaderboard(mode: "react")
+        makeLogLeaderboard(mode: "time")
+        makeLogLeaderboard(mode: "aim")
+        makeLogLeaderboard(mode: "memory")
+        makeLogLeaderboard(mode: "color")
+        soloBestValue.append(spamLeaderboard.firstIndex(of: bestSpamValues[user])!)
+        soloBestValue.append(reactLeaderboard.firstIndex(of: bestReactValues[user])!)
+        soloBestValue.append(timeLeaderboard.firstIndex(of: bestTimeValues[user])!)
+        soloBestValue.append(aimLeaderboard.firstIndex(of: bestAimValues[user])!)
+        soloBestValue.append(memoryLeaderboard.firstIndex(of: bestMemoryValues[user])!)
+        soloBestValue.append(colorLeaderboard.firstIndex(of: bestColorValues[user])!)
+        let indexPos = soloBestValue.firstIndex(of: soloBestValue.min()!)
+        if indexPos == 0 {
+            soloBestMode = "spam"
+        } else if indexPos == 1 {
+            soloBestMode = "react"
+        } else if indexPos == 2 {
+            soloBestMode = "time"
+        } else if indexPos == 3 {
+            soloBestMode = "aim"
+        } else if indexPos == 4 {
+            soloBestMode = "memory"
+        } else if indexPos == 5 {
+            soloBestMode = "color"
+        }
+        usersBest = String("#\(soloBestValue.min()! + 1) in \(soloBestMode)")
     }
     
     //MARK: writeToLog
@@ -2797,6 +2834,7 @@ struct ContentView: View {
                     Button(action: {
                         if passwordInput == userPass[userOnLogin] {
                             print("USER NAME: \(userNames[userOnLogin]) SIGNED IN")
+                            makeUsersBest(user: userOnLogin)
                             usersState = "loggedin"
                             state = "loggedin"
                             userLoggedIn = userOnLogin
@@ -2804,7 +2842,13 @@ struct ContentView: View {
                             bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
                             elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
                             darkMode = userPreferencesDarkMode[userLoggedIn]
-
+                            
+                            if lastStreakDays[userLoggedIn] != Date().weekDay {
+                                lastStreakDays[userLoggedIn] = Date().weekDay
+                                userStreaks[userLoggedIn] = Int(userStreaks[userLoggedIn] + 1)
+                                print("Added a streak to \(userNames[userLoggedIn])")
+                            }
+                            
                             passwordInput = ""
                             passwordRepeat = ""
                             print("Last logged in: \(lastLoggedIn)")
@@ -3016,6 +3060,18 @@ struct ContentView: View {
                         if lastLoggedIn < 100 {
                             //print("Trying to get \(lastLoggedIn) from \(keepLoggedIn)")
                             userLoggedIn = lastLoggedIn
+                            if lastStreakDays[userLoggedIn] != Date().weekDay {
+                                lastStreakDays[userLoggedIn] = Date().weekDay
+                                userStreaks[userLoggedIn] = Int(userStreaks[userLoggedIn] + 1)
+                                print("Added a streak to \(userNames[userLoggedIn])")
+                            }
+                            
+                            makeUsersBest(user: userLoggedIn)
+                            print("UsersBest: \(usersBest)")
+                            let charAray = Array(usersBest)
+                            print(charAray)
+                            print("Int from it: \(Int(String(charAray[1]))!)")
+                            
                             bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
                             elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
                             darkMode = userPreferencesDarkMode[userLoggedIn]
@@ -3053,6 +3109,8 @@ struct ContentView: View {
                     .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
             }.padding(.bottom, 500)
             
+            userScreen()
+            
             ZStack {
                 Button(action: {
                     state = "menu"
@@ -3070,7 +3128,7 @@ struct ContentView: View {
                     usersState = "userSettings"
                 }) {
                     Text(getProfilePicture(index: userLoggedIn))
-                        .font(.system(size: 41, weight: .thin, design: .default))
+                        .font(.system(size: 51, weight: .thin, design: .default))
                         .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
                         .background(getProfileColor(index: userLoggedIn))
@@ -3111,8 +3169,6 @@ struct ContentView: View {
                 
                 Button(action: {
                     print("ENTERING ANALYTICS")
-                    graphValList.removeAll()
-                    graphTextList.removeAll()
                     loadAnalyticsData()
                     print(graphValList)
                     print(graphTextList)
@@ -3190,6 +3246,8 @@ struct ContentView: View {
                     .padding(.top, 370)
                     .padding(.trailing, 461)
             }
+        }.onAppear() {
+            print("UsersBest: \(usersBest)")
         }
     }
     
@@ -3922,28 +3980,11 @@ struct ContentView: View {
     //MARK: User analyatics
     
     @State private var listIndex: Int = 0
+    @State private var maxVal: Int = 0
     func loadAnalyticsData() {
-        /*
-        listIndex = spamLogDates.count/2 - 1
-        if !spamLogDates.isEmpty {
-            if spamLogDates.count/2 > 6 {
-                while listIndex > spamLogDates.count/2 - 6 {
-                    graphValList.append(Double(spamLogValues[valueInLog(pos: listIndex)])!)
-                    graphTextList.append(spamLogDates[valueInLog(pos: listIndex)])
-                    listIndex -= 1
-                }
-            } else {
-                for i in 0..<spamLogDates.count/2 {
-                    print("tryna get \(listIndex); i: \(i)")
-                    graphValList.append(Double(spamLogValues[valueInLog(pos: listIndex)])!)
-                    graphTextList.append(spamLogDates[valueInLog(pos: listIndex)])
-                    listIndex -= 1
-                }
-            }
-        }
-         */
         graphValList.removeAll()
         graphTextList.removeAll()
+        
         graphValList.append(Double(screenTimeMon[userLoggedIn]))
         graphTextList.append("Mon")
         graphValList.append(Double(screenTimeTue[userLoggedIn]))
@@ -3958,6 +3999,29 @@ struct ContentView: View {
         graphTextList.append("Sat")
         graphValList.append(Double(screenTimeSun[userLoggedIn]))
         graphTextList.append("Sun")
+        
+        let currentMax = graphValList.max() ?? 0
+        if currentMax <= 30 {
+        } else if currentMax <= 60 {
+            maxVal = 60
+        } else if currentMax <= 120 {
+            maxVal = 120
+        } else if currentMax <= 180 {
+            maxVal = 180
+        } else if currentMax <= 240 {
+            maxVal = 240
+        } else if currentMax <= 300 {
+            maxVal = 300
+        } else if currentMax <= 420 {
+            maxVal = 420
+        } else if currentMax <= 540 {
+            maxVal = 540
+        } else if currentMax <= 720 {
+            maxVal = 720
+        } else {
+            maxVal = 1440
+        }
+        
         print("LOADED ANALYTICS DATA")
         print(graphValList)
         print(graphTextList)
@@ -3984,36 +4048,14 @@ struct ContentView: View {
             Text("Daily avarage \(getScreenTimeAvarage())")
                 .font(.title3)
                 .padding(.bottom, 270)
-            
-            if graphValList.max()! <= 30 {
-            } else if graphValList.max()! <= 60 {
-                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 60)
-                    .padding(.top, 70)
-            } else if graphValList.max()! <= 120 {
-                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 120)
-                    .padding(.top, 70)
-            } else if graphValList.max()! <= 180 {
-                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 180)
-                    .padding(.top, 70)
-            } else if graphValList.max()! <= 240 {
-                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 240)
-                    .padding(.top, 70)
-            } else if graphValList.max()! <= 300 {
-                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 300)
-                    .padding(.top, 70)
-            } else if graphValList.max()! <= 420 {
-                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 420)
-                    .padding(.top, 70)
-            } else if graphValList.max()! <= 540 {
-                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 540)
-                    .padding(.top, 70)
-            } else if graphValList.max()! <= 720 {
-                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 720)
-                    .padding(.top, 70)
-            } else {
-                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 1440)
-                    .padding(.top, 70)
+                .onAppear() {
+                    print(graphValList)
+                    print(graphTextList)
+                }
+            if maxVal > 0 {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: Double(maxVal))
             }
+            
             
             /*
             Text("SCREEN TIME\(screenTimeSat[userLoggedIn])")
@@ -4037,6 +4079,99 @@ struct ContentView: View {
         }
     }
     
+    func getStreakColor(index: Int) -> Color {
+        if index == 0 {
+            if screenTimeMon[userLoggedIn] > 0 { return getProfileColor(index: userLoggedIn) } else { return .gray }
+        } else if index == 1 {
+            if screenTimeTue[userLoggedIn] > 0 { return getProfileColor(index: userLoggedIn) } else { return .gray }
+        } else if index == 2 {
+            if screenTimeWed[userLoggedIn] > 0 { return getProfileColor(index: userLoggedIn) } else { return .gray }
+        } else if index == 3 {
+            if screenTimeThu[userLoggedIn] > 0 { return getProfileColor(index: userLoggedIn) } else { return .gray }
+        } else if index == 4 {
+            if screenTimeFri[userLoggedIn] > 0 { return getProfileColor(index: userLoggedIn) } else { return .gray }
+        } else if index == 5 {
+            if screenTimeSat[userLoggedIn] > 0 { return getProfileColor(index: userLoggedIn) } else { return .gray }
+        } else if index == 6 {
+            if screenTimeSun[userLoggedIn] > 0 { return getProfileColor(index: userLoggedIn) } else { return .gray }
+        } else { return .purple }
+    }
+    func dayOfWeek(day: Int) -> String {
+        switch day {
+        case 0: return "Mon"
+        case 1: return "Tue"
+        case 2: return "Wed"
+        case 3: return "Thu"
+        case 4: return "Fri"
+        case 5: return "Sat"
+        case 6: return "Sun"
+        default: return "Err"
+        }
+    }
+    
+    func userScreen() -> some View {
+        ZStack {
+            
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                HStack {
+                    
+                    ForEach(0...6, id: \.self) { index in
+                        let size: CGFloat = 55
+                        VStack {
+                            Circle()
+                                .frame(width: size, height: size)
+                                .foregroundColor(getStreakColor(index: index))
+                                
+                            Text(dayOfWeek(day: index))
+                                .font(.title3)
+                        }
+                    }
+                    
+                    
+                }.padding(.top, 10)
+                HStack {
+                    Image(systemName: "flame")
+                        .font(.system(size: 40, weight: .regular, design: .default))
+                    VStack(spacing: -5) {
+                        Text("\(userStreaks[userLoggedIn])d")
+                            .font(.largeTitle)
+                        Text("Streak")
+                    }
+                }.padding(.trailing, 560)
+                HStack {
+                    VStack(spacing: -5) {
+                        Text("\(userStreaks[userLoggedIn])d")
+                            .font(.largeTitle)
+                        Text("Total")
+                    }
+                    Image(systemName: "calendar")
+                        .font(.system(size: 40, weight: .regular, design: .default))
+                }.padding(.leading, 560)
+            }.frame(width: 680, height: 110)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.bottom, 220)
+            
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                if usersBest != "" {
+                    HStack {
+                        let charAray = Array(usersBest)
+                        Image(systemName: "chart.bar")
+                            .font(.system(size: 40, weight: .regular, design: .default))
+                        VStack(spacing: -10) {
+                            Text("\(usersBest) mode")
+                                .font(getLeaderboardfont(index: Int(String(charAray[1]))! - 1))
+                                .foregroundColor(getLeaderboardColor(index: Int(String(charAray[1]))! - 1))
+                            Text("Best rank")
+                        }
+                    }
+                }
+            }.frame(width: 680, height: 110)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 50)
+        }
+    }
     
     //MARK: BODY
     var body: some View {
