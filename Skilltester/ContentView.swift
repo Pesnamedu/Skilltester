@@ -29,6 +29,8 @@ struct ContentView: View {
             screenTimeReseted = false
         }
         print(screenTimeReseted)
+        print(lastStreakDays)
+        print(userStreaks)
         print("-")
     }
     
@@ -470,7 +472,7 @@ struct ContentView: View {
     @AppStorage("STsun") private var screenTimeSun: [Int] = []
     
     @AppStorage("streak") private var userStreaks: [Int] = []
-    @AppStorage("lastStreak") private var lastStreakDays: [String] = ["Sat", "Sat", "Sat", "Sat", "Sat"]
+    @AppStorage("lastStreak") private var lastStreakDays: [Int] = [6, 6, 6, 6, 6]
     
     func getScreenTimeAvarage() -> String {
         guard userLoggedIn < 100, !graphValList.isEmpty else {return "error"}
@@ -482,6 +484,31 @@ struct ContentView: View {
             let h = floor(timeAva/60)
             let m = timeAva - h*60
             return "\(Int(h))h \(Int(m))m"
+        }
+    }
+    
+    func dayOfWeek(day: Int) -> String {
+        switch day {
+        case 0: return "Mon"
+        case 1: return "Tue"
+        case 2: return "Wed"
+        case 3: return "Thu"
+        case 4: return "Fri"
+        case 5: return "Sat"
+        case 6: return "Sun"
+        default: return "Err"
+        }
+    }
+    func dayOfWeekNum(day: String) -> Int {
+        switch day {
+        case "Mon": return 0
+        case "Tue": return 1
+        case "Wed": return 2
+        case "Thu": return 3
+        case "Fri": return 4
+        case "Sat": return 5
+        case "Sun": return 6
+        default: return 7
         }
     }
     
@@ -1003,6 +1030,8 @@ struct ContentView: View {
     @State private var soloBestValue: [Int] = []
     @State private var soloBestMode: String = ""
     func makeUsersBest(user: Int) {
+        print("Making users best for user \(userNames[user])")
+        soloBestValue.removeAll()
         makeLogLeaderboard(mode: "spam")
         makeLogLeaderboard(mode: "react")
         makeLogLeaderboard(mode: "time")
@@ -1030,6 +1059,7 @@ struct ContentView: View {
             soloBestMode = "color"
         }
         usersBest = String("#\(soloBestValue.min()! + 1) in \(soloBestMode)")
+        print("UsersBest: \(usersBest)")
     }
     
     //MARK: writeToLog
@@ -1058,6 +1088,16 @@ struct ContentView: View {
             colorLogValues.append(String(colorRound))
             colorLogValues.append(String(userLoggedIn))
             print("Added everything into color logs")
+        }
+    }
+    func manageStreaks() {
+        if lastStreakDays[userLoggedIn] - 1 == dayOfWeekNum(day: Date().weekDay) || lastStreakDays[userLoggedIn] == dayOfWeekNum(day: Date().weekDay) + 6{
+            lastStreakDays[userLoggedIn] = dayOfWeekNum(day: Date().weekDay)
+            userStreaks[userLoggedIn] = userStreaks[userLoggedIn] + 1
+            print("Added a streak to \(userNames[userLoggedIn])")
+        } else if abs(lastStreakDays[userLoggedIn] - dayOfWeekNum(day: Date().weekDay)) > 1 {
+            userStreaks[userLoggedIn] = 0
+            print("Removed streak from \(userNames[userLoggedIn])")
         }
     }
     
@@ -2842,12 +2882,8 @@ struct ContentView: View {
                             bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
                             elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
                             darkMode = userPreferencesDarkMode[userLoggedIn]
-                            
-                            if lastStreakDays[userLoggedIn] != Date().weekDay {
-                                lastStreakDays[userLoggedIn] = Date().weekDay
-                                userStreaks[userLoggedIn] = Int(userStreaks[userLoggedIn] + 1)
-                                print("Added a streak to \(userNames[userLoggedIn])")
-                            }
+                            setUntriedMode(user: userLoggedIn)
+                            manageStreaks()
                             
                             passwordInput = ""
                             passwordRepeat = ""
@@ -3060,11 +3096,7 @@ struct ContentView: View {
                         if lastLoggedIn < 100 {
                             //print("Trying to get \(lastLoggedIn) from \(keepLoggedIn)")
                             userLoggedIn = lastLoggedIn
-                            if lastStreakDays[userLoggedIn] != Date().weekDay {
-                                lastStreakDays[userLoggedIn] = Date().weekDay
-                                userStreaks[userLoggedIn] = Int(userStreaks[userLoggedIn] + 1)
-                                print("Added a streak to \(userNames[userLoggedIn])")
-                            }
+                            manageStreaks()
                             
                             makeUsersBest(user: userLoggedIn)
                             print("UsersBest: \(usersBest)")
@@ -3072,6 +3104,7 @@ struct ContentView: View {
                             print(charAray)
                             print("Int from it: \(Int(String(charAray[1]))!)")
                             
+                            setUntriedMode(user: userLoggedIn)
                             bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
                             elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
                             darkMode = userPreferencesDarkMode[userLoggedIn]
@@ -3100,6 +3133,8 @@ struct ContentView: View {
     
     var userView: some View {
         ZStack {
+            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                .ignoresSafeArea()
             VStack(spacing: -20) {
                 Text("Welcome back,")
                     .font(.largeTitle)
@@ -3143,7 +3178,7 @@ struct ContentView: View {
                         .font(.system(size: 41, design: .default))
                         .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
-                        .background(Color.gray.opacity(0.3))
+                        .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.white.opacity(elementOpacity))
                         .clipShape(RoundedRectangle(cornerRadius: 35))
                 }.buttonStyle(.plain)
                     .padding(.trailing, 420)
@@ -3159,10 +3194,10 @@ struct ContentView: View {
                     state = "user results"
                 }) {
                     Image(systemName: "chart.bar")
-                        .font(.system(size: 41, design: .default))
+                        .font(.system(size: 35, design: .default))
                         .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
-                        .background(Color.gray.opacity(elementOpacity))
+                        .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.white.opacity(elementOpacity))
                         .clipShape(RoundedRectangle(cornerRadius: 35))
                 }.buttonStyle(.plain)
                     .padding(.trailing, 250)
@@ -3178,7 +3213,7 @@ struct ContentView: View {
                         .font(.system(size: 43, design: .default))
                         .foregroundColor(textColor.opacity(0.8))
                         .frame(width: 70, height: 70)
-                        .background(Color.gray.opacity(elementOpacity))
+                        .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.white.opacity(elementOpacity))
                         .clipShape(Capsule())
                 }.buttonStyle(.plain)
                     .padding(.trailing, 75)
@@ -3718,11 +3753,11 @@ struct ContentView: View {
         if index == 0 {
             return .system(size: 60, weight: .bold, design: .default)
         } else if index == 1 {
-            return .system(size: 50, weight: .bold, design: .default)
+            return .system(size: 55, weight: .bold, design: .default)
         } else if index == 2 {
             return .system(size: 50, weight: .bold, design: .default)
         } else {
-            return .system(size: 50, design: .default)
+            return .system(size: 45, design: .default)
         }
     }
     func getLeaderboardColor(index: Int) -> Color {
@@ -3733,7 +3768,7 @@ struct ContentView: View {
         } else if index == 2 {
             return .white
         } else {
-            return .gray
+            return Color(red: 0.8, green: 0.8, blue: 0.8)
         }
     }
     
@@ -4000,7 +4035,7 @@ struct ContentView: View {
         graphValList.append(Double(screenTimeSun[userLoggedIn]))
         graphTextList.append("Sun")
         
-        let currentMax = graphValList.max() ?? 0
+        let currentMax = graphValList.max() ?? 60
         if currentMax <= 30 {
         } else if currentMax <= 60 {
             maxVal = 60
@@ -4054,6 +4089,8 @@ struct ContentView: View {
                 }
             if maxVal > 0 {
                 graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: Double(maxVal))
+            } else {
+                graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: 60)
             }
             
             
@@ -4096,18 +4133,30 @@ struct ContentView: View {
             if screenTimeSun[userLoggedIn] > 0 { return getProfileColor(index: userLoggedIn) } else { return .gray }
         } else { return .purple }
     }
-    func dayOfWeek(day: Int) -> String {
-        switch day {
-        case 0: return "Mon"
-        case 1: return "Tue"
-        case 2: return "Wed"
-        case 3: return "Thu"
-        case 4: return "Fri"
-        case 5: return "Sat"
-        case 6: return "Sun"
-        default: return "Err"
+    
+    @State private var untriedMode: String = ""
+    func setUntriedMode(user: Int) {
+        untriedMode = "none"
+        if !spamLogDates.contains(String(userLoggedIn)) {
+            untriedMode = "spam"
+        }
+        if !reactLogDates.contains(String(userLoggedIn)) {
+            untriedMode = "spam"
+        }
+        if !timeLogDates.contains(String(userLoggedIn)) {
+            untriedMode = "time"
+        }
+        if !aimLogDates.contains(String(userLoggedIn)) {
+            untriedMode = "aim"
+        }
+        if !memoryLogDates.contains(String(userLoggedIn)) {
+            untriedMode = "memory"
+        }
+        if !colorLogDates.contains(String(userLoggedIn)) {
+            untriedMode = "color"
         }
     }
+    
     
     func userScreen() -> some View {
         ZStack {
@@ -4150,7 +4199,7 @@ struct ContentView: View {
                 }.padding(.leading, 560)
             }.frame(width: 680, height: 110)
                 .clipShape(RoundedRectangle(cornerRadius: 30))
-                .padding(.bottom, 220)
+                .padding(.bottom, 270)
             
             ZStack {
                 SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
@@ -4164,12 +4213,34 @@ struct ContentView: View {
                                 .font(getLeaderboardfont(index: Int(String(charAray[1]))! - 1))
                                 .foregroundColor(getLeaderboardColor(index: Int(String(charAray[1]))! - 1))
                             Text("Best rank")
-                        }
+                        }.padding(.trailing, 50)
                     }
                 }
             }.frame(width: 680, height: 110)
                 .clipShape(RoundedRectangle(cornerRadius: 30))
-                .padding(.top, 50)
+                .padding(.bottom, 20)
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                if untriedMode != "none" {
+                    Text("You haven't tried \(untriedMode) mode yet, give it a try!")
+                        .font(.largeTitle)
+                        .padding(.trailing, 100)
+                    Button(action: {
+                        if untriedMode.prefix(1).uppercased() != "" {
+                            state = "start \(untriedMode.prefix(1).uppercased())"
+                        }
+                    }) {
+                        Image(systemName: "arrowtriangle.right")
+                            .font(.system(size: 40, weight: .regular, design: .default))
+                            .frame(width: 60, height: 60)
+                            .background(getProfileColor(index: userLoggedIn))
+                            .clipShape(Circle())
+                    }.buttonStyle(.plain)
+                        .padding(.leading, 500)
+                }
+            }.frame(width: 680, height: 110)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 230)
         }
     }
     
