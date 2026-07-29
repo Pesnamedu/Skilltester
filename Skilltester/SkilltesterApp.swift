@@ -28,7 +28,7 @@ struct WindowAccesor: NSViewRepresentable {
             if let window = view.window{
                 window.backgroundColor = .clear
                 window.isOpaque = false
-                window.isMovableByWindowBackground = true
+                window.isMovableByWindowBackground = false
                 
                 window.styleMask.remove(.resizable)
                 

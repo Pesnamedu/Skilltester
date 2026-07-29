@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Foundation
+import AppKit
 
 struct ContentView: View {
     
@@ -33,6 +34,22 @@ struct ContentView: View {
         print(userStreaks)
         print("-")
     }
+    
+    @State private var mouseXY: NSPoint = .zero
+    @State private var mouseMonitor: Any?
+    private func setupMouse() {
+        mouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged]) { event in
+            mouseXY = event.locationInWindow
+            return event
+        }
+    }
+    private func removeMouse() {
+        if let monitor = mouseMonitor {
+            NSEvent.removeMonitor(monitor)
+            mouseMonitor = nil
+        }
+    }
+    
     
     @State private var graphValList: [Double] = []
     @State private var graphTextList: [String] = []
@@ -4230,7 +4247,7 @@ struct ContentView: View {
                             state = "start \(untriedMode.prefix(1).uppercased())"
                         }
                     }) {
-                        Image(systemName: "arrowtriangle.right")
+                        Image(systemName: "arrow.forward")
                             .font(.system(size: 40, weight: .regular, design: .default))
                             .frame(width: 60, height: 60)
                             .background(getProfileColor(index: userLoggedIn))
@@ -4242,6 +4259,15 @@ struct ContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 30))
                 .padding(.top, 230)
         }
+    }
+    
+    var topBar: some View {
+        ZStack {
+            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+        }.frame(width: 700, height: 30)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .padding(.bottom, 630)
+            .ignoresSafeArea()
     }
     
     //MARK: BODY
@@ -4273,6 +4299,8 @@ struct ContentView: View {
                 memoryView
             } else if state.hasSuffix("C") {
                 colorView
+            } else if state.hasSuffix("P") {
+                pickerView
             } else if state == "tutor" {
                 tutorView
             } else if state == "startup" {
@@ -4287,6 +4315,9 @@ struct ContentView: View {
                 userResults
             } else if state == "analytics" {
                 analyticsView
+            }
+            if mouseXY.y > 602 {
+                topBar
             }
         }
         .frame(minWidth: 700, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
@@ -4321,11 +4352,10 @@ struct ContentView: View {
         .onAppear() {
             print(userNames)
             print(userPass)
-            
-            print("Spam logs:")
-            print(spamLogDates)
-            print(spamLogValues)
-            print(spamLogDurations)
+            setupMouse()
+        }
+        .onDisappear() {
+            removeMouse()
         }
     }
 }
