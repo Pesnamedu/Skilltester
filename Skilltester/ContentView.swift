@@ -448,6 +448,11 @@ struct ContentView: View {
         }
     }
     
+    //MARK: PICKER variables
+    var pickerOffsetText: String {
+        String(format: "%.2f", round(pickerOffsets[pickerRound]*100)/100)
+    }
+    
     //MARK: LOG LISTS
     
     
@@ -1218,6 +1223,21 @@ struct ContentView: View {
                                 state = "start C"
                             }) {
                                 Text("Color")
+                                    .bold()
+                                    .font(.title2)
+                                    .frame(width: 200, height: 200)
+                                    .foregroundColor(textColor.opacity(0.8))
+                                    .background(getProfileColor(index: userLoggedIn))
+                                    .clipShape(RoundedRectangle(cornerRadius: 50))
+                                
+                            }.buttonStyle(.plain)
+                        }
+                        HStack (alignment: .top, spacing: menuButtonSpacing) {
+                            Button(action: {
+                                print("clicked button 7")
+                                state = "start P"
+                            }) {
+                                Text("Picker")
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
@@ -2731,6 +2751,193 @@ struct ContentView: View {
         }
     }
     
+    @State private var hueAList: [Double] = []
+    @State private var brightnessAList: [Double] = []
+    @State private var hueQList: [Double] = []
+    @State private var brightnessQList: [Double] = []
+    @State private var pickerOffsets: [Double] = []
+    func makeHueAList(count: Int) {
+        hueAList.removeAll()
+        for _ in 0..<count {
+            hueAList.append(Double.random(in: 0...1))
+        }
+    }
+    func makeBrightnessAList(count: Int) {
+        brightnessAList.removeAll()
+        for _ in 0..<count {
+            brightnessAList.append(Double.random(in: 0...1))
+        }
+    }
+    func calcColorOffset() {
+        let pr = pickerRound
+        pickerOffsets.append(abs(hueAList[pr] - hueQList[pr]) + abs(brightnessAList[pr] - brightnessQList[pr]))
+    }
+    @State private var pickerRound: Int = 0
+    @State private var colorSlider: Double = 0.2
+    @State private var brightnessSlider: Double = 0.8
+    var pickerView: some View {
+        ZStack {
+            if state == "start P" {
+                Button(action: {
+                    makeHueAList(count: 5)
+                    makeBrightnessAList(count: 5)
+                    print(hueAList)
+                    print(brightnessAList)
+                    
+                    state = "show P"
+                }) {
+                    Text("Start")
+                        .font(.largeTitle)
+                        .bold()
+                        .frame(width: 700, height: 650)
+                        .background(Color.green.opacity(bgOpacity))
+                        .clipShape(Rectangle())
+                }.buttonStyle(.plain)
+                    .ignoresSafeArea()
+                
+                navigationBar(kind: "start")
+            }
+            ZStack {
+                if state == "show P" {
+                    Rectangle()
+                        .frame(width: 700, height: 650)
+                        .foregroundColor(.black.opacity(bgOpacity))
+                        .ignoresSafeArea()
+                        .padding(.top, 50)
+                    RoundedRectangle(cornerRadius: 30)
+                        .frame(width: 500, height: 350)
+                        .foregroundColor(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
+                        .padding(.bottom, 140)
+                    Button(action: {
+                        state = "pick P"
+                    }) {
+                        Text("Continue")
+                            .frame(width: 150, height: 50)
+                            .font(.title2)
+                            .background(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        .padding(.top, 440)
+                }
+                if state == "pick P" {
+                    Rectangle()
+                        .frame(width: 700, height: 650)
+                        .foregroundColor(.black.opacity(bgOpacity))
+                        .ignoresSafeArea()
+                        .padding(.top, 50)
+                    
+                    RoundedRectangle(cornerRadius: 30)
+                        .frame(width: 500, height: 400)
+                        .foregroundColor(.black.opacity(elementOpacity))
+                        .padding(.top, 180)
+                    RoundedRectangle(cornerRadius: 30)
+                        .frame(width: 500, height: 350)
+                        .foregroundColor(Color(hue: colorSlider, saturation: 1.0, brightness: brightnessSlider))
+                        .padding(.bottom, 150)
+                    
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(
+                            LinearGradient(
+                                colors: [.red, .orange, .yellow, .green, .blue, .indigo, .purple, .red],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: 450, height: 50)
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { drag in
+                                    let val = drag.location.x / 450
+                                    colorSlider = min(max(val, 0), 1)
+                                }
+                        )
+                        .padding(.top, 270)
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.white)
+                        .frame(width: 20, height: 40)
+                        .offset(x: (colorSlider-0.5) * 430)
+                        .allowsHitTesting(false)
+                        .padding(.top, 270)
+                    
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(
+                            LinearGradient(
+                                colors: [.black, Color(hue: colorSlider, saturation: 1.0, brightness: 1.0)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: 450, height: 50)
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { drag in
+                                    let val = drag.location.x / 450
+                                    brightnessSlider = min(max(val, 0), 1)
+                                }
+                        )
+                        .padding(.top, 390)
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.white)
+                        .frame(width: 20, height: 40)
+                        .offset(x: (brightnessSlider-0.5) * 430)
+                        .allowsHitTesting(false)
+                        .padding(.top, 390)
+                    
+                    Button(action: {
+                        hueQList.append(colorSlider)
+                        brightnessQList.append(brightnessSlider)
+                        calcColorOffset()
+                        state = "result P"
+                    }) {
+                        Text("Check")
+                            .frame(width: 150, height: 50)
+                            .font(.title2)
+                            .background(Color(hue: colorSlider, saturation: 1.0, brightness: 1.0).opacity(elementOpacity))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        .padding(.top, 510)
+                    
+                }
+            }.padding(.bottom, 50)
+            if state == "result P" {
+                Rectangle()
+                    .frame(width: 700, height: 650)
+                    .foregroundColor(.black.opacity(bgOpacity))
+                    .ignoresSafeArea()
+                    .padding(.top, 50)
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 30)
+                        .frame(width: 250, height: 350)
+                        .foregroundColor(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
+                        .padding(.bottom, 140)
+                        .padding(.trailing, 25)
+                    Rectangle()
+                        .frame(width: 200, height: 350)
+                        .foregroundColor(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
+                        .padding(.bottom, 140)
+                        .padding(.leading, 25)
+                }.padding(.trailing, 200)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 30)
+                        .frame(width: 250, height: 350)
+                        .foregroundColor(Color(hue: hueQList[pickerRound], saturation: 1.0, brightness: brightnessQList[pickerRound]))
+                        .padding(.bottom, 140)
+                        .padding(.leading, 25)
+                    Rectangle()
+                        .frame(width: 200, height: 350)
+                        .foregroundColor(Color(hue: hueQList[pickerRound], saturation: 1.0, brightness: brightnessQList[pickerRound]))
+                        .padding(.bottom, 140)
+                        .padding(.trailing, 25)
+                }.padding(.leading, 200)
+                Text(pickerOffsetText)
+                    .font(.largeTitle)
+                    .padding(.top, 300)
+                
+            }
+        }
+    }
+     
     
     var tutorView: some View {
         ZStack {
