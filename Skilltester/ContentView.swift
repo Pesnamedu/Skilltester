@@ -83,6 +83,7 @@ struct ContentView: View {
                                 .foregroundColor(color)
                                 .overlay(alignment: .bottom) {
                                     Text(barText)
+                                        .foregroundColor(darkMode ? .white : .black)
                                         .frame(width: 50)
                                         .fixedSize(horizontal: true, vertical: false)
                                         .alignmentGuide(.bottom) { dimensions in
@@ -91,6 +92,7 @@ struct ContentView: View {
                                 }
                                 .overlay(alignment: .bottom) {
                                     Text(barValue)
+                                        .foregroundColor(darkMode ? .white : .black)
                                         .frame(width: 50)
                                         .fixedSize(horizontal: true, vertical: false)
                                         .alignmentGuide(.top) { dimensions in
@@ -160,7 +162,7 @@ struct ContentView: View {
             case "green": return Color.green.opacity(elementOpacity + 0.1)
             case "white": return Color.white.opacity(elementOpacity + 0.1)
             case "gray": return Color.gray.opacity(elementOpacity + 0.1)
-            case "black": return Color.blue.opacity(elementOpacity + 0.1)
+            case "black": return Color.black.opacity(elementOpacity + 0.1)
             default: return Color.blue.opacity(elementOpacity + 0.1)
             }
         } else {
@@ -382,7 +384,6 @@ struct ContentView: View {
         return CGFloat(index * 50)
     }
     func getTargetBarWidth(index: Int) -> CGFloat {
-        print("Index: \(index) line length: \(CGFloat((Float(timeToHit[index]) / Float(timeToHit.max()!)) * 420))")
         return CGFloat((Float(timeToHit[index]) / Float(timeToHit.max()!)) * 420)
     }
     func getTargetColor(index: Int) -> Color {
@@ -400,9 +401,6 @@ struct ContentView: View {
     }
     func getTargetAvaLinePos() -> CGFloat {
         guard !timeToHit.isEmpty else {return 0}
-        print("avarage time to hit")
-        print(avaTimeToHit)
-        print("therefore ofset is \(CGFloat(Float(avaTimeToHit) / Float(timeToHit.max()!)) * 420)")
         return -116 + CGFloat(Float(avaTimeToHit) / Float(timeToHit.max()!)) * 725
         
     }
@@ -479,6 +477,11 @@ struct ContentView: View {
     @AppStorage("colorLogDates") private var colorLogDates: [String] = []
     @AppStorage("colorLogValues") private var colorLogValues: [String] = []
     
+    @AppStorage("pickerLogDates") private var pickerLogDates: [String] = []
+    @AppStorage("pickerLogBestV") private var pickerLogBestV: [String] = []
+    @AppStorage("pickerLogWorstV") private var pickerLogWorstV: [String] = []
+    @AppStorage("pickerLogAvaV") private var pickerLogAvaV: [String] = []
+    
     
     @AppStorage("resetetST") private var screenTimeReseted: Bool = true
     @State private var previousDate: Date = Date()
@@ -554,7 +557,7 @@ struct ContentView: View {
         ZStack {
             if kind == "start" {
                 ZStack {
-                    if !state.hasSuffix("M") && !state.hasSuffix("C") {
+                    if !state.hasSuffix("M") && !state.hasSuffix("C") && !state.hasSuffix("P") {
                         Button(action: {
                             slider3Value = Double(testCountGoal)
                             state = "settings \(state.suffix(1))"
@@ -828,6 +831,21 @@ struct ContentView: View {
                     colorLogValues.remove(at: valueInLog(pos: idx))
                 }
             }
+        } else if log == "A" {
+            while idx != pickerLogDates.count/2 {
+                if pickerLogDates[userInLog(pos: idx)] != String(user) {
+                    idx += 1
+                } else {
+                    pickerLogBestV.remove(at: valueInLog(pos: idx))
+                    pickerLogBestV.remove(at: valueInLog(pos: idx))
+                    pickerLogWorstV.remove(at: valueInLog(pos: idx))
+                    pickerLogWorstV.remove(at: valueInLog(pos: idx))
+                    pickerLogAvaV.remove(at: valueInLog(pos: idx))
+                    pickerLogAvaV.remove(at: valueInLog(pos: idx))
+                    pickerLogDates.remove(at: valueInLog(pos: idx))
+                    pickerLogDates.remove(at: valueInLog(pos: idx))
+                }
+            }
         }
     }
     @State private var logLen: Int = 1
@@ -922,6 +940,16 @@ struct ContentView: View {
                 }
                 idx += 1
             }
+        } else if log == "P" {
+            while idx != pickerLogDates.count/2 {
+                if pickerLogDates[userInLog(pos: idx)] == String(user) {
+                    currentLogDates.append(pickerLogDates[valueInLog(pos: idx)])
+                    currentLogVal1.append(pickerLogBestV[valueInLog(pos: idx)])
+                    currentLogVal2.append(pickerLogWorstV[valueInLog(pos: idx)])
+                    currentLogVal3.append(pickerLogAvaV[valueInLog(pos: idx)])
+                }
+                idx += 1
+            }
         }
     }
     //MARK: clearAllLogs
@@ -958,6 +986,7 @@ struct ContentView: View {
     @State private var bestAimValues: [Int] = []
     @State private var bestMemoryValues: [Int] = []
     @State private var bestColorValues: [Int] = []
+    @State private var bestPickerValues: [Int] = []
     
     @State private var spamLeaderboard: [Int] = []
     @State private var reactLeaderboard: [Int] = []
@@ -965,6 +994,7 @@ struct ContentView: View {
     @State private var aimLeaderboard: [Int] = []
     @State private var memoryLeaderboard: [Int] = []
     @State private var colorLeaderboard: [Int] = []
+    @State private var pickerLeaderboard: [Int] = []
     
     func makeLogLeaderboard(mode: String) {
         if mode == "spam" {
@@ -1046,6 +1076,19 @@ struct ContentView: View {
             colorLeaderboard = bestColorValues.sorted(by: >)
             print("Best values: \(bestColorValues)")
             print("Leaderboard: \(colorLeaderboard)")
+        } else if mode == "picker" {
+            bestPickerValues.removeAll()
+            pickerLeaderboard.removeAll()
+            for user in 0...userNames.count - 1 {
+                makeCurrentUserLog(log: "A", user: user)
+                print("Curren log for user\(user): \(currentLogVal1)")
+                if !currentLogVal1.isEmpty {
+                    bestPickerValues.append(Int(currentLogVal1.min()!)!)
+                } else { bestPickerValues.append(100000 + user) }
+            }
+            pickerLeaderboard = bestPickerValues.sorted()
+            print("Best values: \(bestPickerValues)")
+            print("Leaderboard: \(pickerLeaderboard)")
         }
     }
     @State private var usersBest: String = ""
@@ -1060,6 +1103,7 @@ struct ContentView: View {
         makeLogLeaderboard(mode: "aim")
         makeLogLeaderboard(mode: "memory")
         makeLogLeaderboard(mode: "color")
+        makeLogLeaderboard(mode: "picker")
         soloBestValue.append(spamLeaderboard.firstIndex(of: bestSpamValues[user])!)
         soloBestValue.append(reactLeaderboard.firstIndex(of: bestReactValues[user])!)
         soloBestValue.append(timeLeaderboard.firstIndex(of: bestTimeValues[user])!)
@@ -1079,6 +1123,8 @@ struct ContentView: View {
             soloBestMode = "memory"
         } else if indexPos == 5 {
             soloBestMode = "color"
+        } else if indexPos == 6 {
+            soloBestMode = "picker"
         }
         usersBest = String("#\(soloBestValue.min()! + 1) in \(soloBestMode)")
         print("UsersBest: \(usersBest)")
@@ -1110,6 +1156,16 @@ struct ContentView: View {
             colorLogValues.append(String(colorRound))
             colorLogValues.append(String(userLoggedIn))
             print("Added everything into color logs")
+        } else if log == "picker" {
+            pickerLogDates.append(formattedDate)
+            pickerLogDates.append(String(userLoggedIn))
+            pickerLogBestV.append(String(format: "%.2f", round(pickerOffsets.min()! * 100)/100))
+            pickerLogBestV.append(String(userLoggedIn))
+            pickerLogWorstV.append(String(format: "%.2f", round(pickerOffsets.max()! * 100)/100))
+            pickerLogWorstV.append(String(userLoggedIn))
+            pickerLogAvaV.append(String(format: "%.2f", round(pickerOffsets.reduce(0.0, +)/Double(pickerOffsets.count) * 100)/100))
+            pickerLogAvaV.append(String(userLoggedIn))
+            print("Added everything into picker logs")
         }
     }
     func manageStreaks() {
@@ -1128,7 +1184,7 @@ struct ContentView: View {
     let menuButtonSpacing: CGFloat = 18
     var menuView: some View {
         ZStack {
-            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+            //SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
             if state == "menu" {
                 if getProfileColor(index: userLoggedIn) == Color.white.opacity(elementOpacity + 0.1) {
                     Text("Menu")
@@ -1154,7 +1210,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(textColor.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
                                 //.background(.ultraThinMaterial)
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
@@ -1169,7 +1225,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(textColor.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                             }.buttonStyle(.plain)
@@ -1182,7 +1238,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(textColor.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                                 
@@ -1198,7 +1254,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(textColor.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                                 
@@ -1212,7 +1268,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(textColor.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                                 
@@ -1220,13 +1276,16 @@ struct ContentView: View {
                             
                             Button(action: {
                                 print("clicked button 6")
+                                colorOffset = 100
+                                colorOffsetEasing = 0
+                                colorRound = 0
                                 state = "start C"
                             }) {
                                 Text("Color")
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(textColor.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                                 
@@ -1241,7 +1300,7 @@ struct ContentView: View {
                                     .bold()
                                     .font(.title2)
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(textColor.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                                 
@@ -1266,11 +1325,14 @@ struct ContentView: View {
                             makeLogLeaderboard(mode: "memory")
                             print("COLOR")
                             makeLogLeaderboard(mode: "color")
+                            print("PICKER")
+                            makeLogLeaderboard(mode: "picker")
                             
                         }
                     
-                }.frame(width: 600, height: 600)
-                    .padding(.top, 81)
+                }.frame(width: 660, height: 450)
+                    .padding(.bottom, 40)
+                    .clipShape(RoundedRectangle(cornerRadius: 50))
                 
                 Button(action: {
                     state = "tutor"
@@ -1290,7 +1352,7 @@ struct ContentView: View {
                 }) {
                     Text(getProfilePicture(index: userLoggedIn))
                         .font(.system(size: 51, weight: .thin, design: .default))
-                        .foregroundColor(textColor.opacity(0.8))
+                        .foregroundColor(darkMode ? textColor.opacity(0.8) : .white)
                         .frame(width: 70, height: 70)
                         .background(getProfileColor(index: userLoggedIn))
                         .clipShape(RoundedRectangle(cornerRadius: 40))
@@ -1470,13 +1532,16 @@ struct ContentView: View {
                                     HStack {
                                         Text("Attempt: \(index + 1)")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                             .padding(.leading, 40)
                                         Spacer()
                                         Text("\(currentLogVal1[index]) cps. (\(currentLogVal2[index])) s.)")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                         Spacer()
                                         Text("\(currentLogDates[index])")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                             .padding(.trailing, 40)
                                     }.onAppear() {
                                         
@@ -1918,13 +1983,16 @@ struct ContentView: View {
                                     HStack {
                                         Text("Attempt: \(index + 1)")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                             .padding(.leading, 40)
                                         Spacer()
                                         Text("Best: \(currentLogVal1[index]) ms. Avarge: \(currentLogVal3[index]) ms. Worst: \(currentLogVal2[index]) ms.")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                         Spacer()
                                         Text("\(currentLogDates[index])")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                             .padding(.trailing, 40)
                                     
                                     }
@@ -2122,13 +2190,16 @@ struct ContentView: View {
                                     HStack {
                                         Text("Attempt: \(index + 1)")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                             .padding(.leading, 40)
                                         Spacer()
                                         Text("\(currentLogVal1[index]) second difference. ")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                         Spacer()
                                         Text("\(currentLogDates[index])")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                             .padding(.trailing, 40)
                                     }
                                 }
@@ -2156,6 +2227,9 @@ struct ContentView: View {
                 Button(action: {
                     showingTarget = 0
                     missedTargets = 0
+                    print(timeToHit)
+                    timeToHit.removeAll()
+                    print(timeToHit)
                     state = "shooting A"
                 }) {
                     Text("start")
@@ -2206,6 +2280,7 @@ struct ContentView: View {
                 Button(action: {
                     missedTargets += 1
                     print("Missed!")
+                    print(timeToHit)
                 }) {
                     Rectangle()
                         .frame(width: 700, height: 800)
@@ -2219,6 +2294,7 @@ struct ContentView: View {
                                 if showingTarget < targetCount {
                                     showingTarget += 1
                                     timeToHit.append(Int(Date().timeIntervalSince(targetSpawnDate) * 1000))
+                                    print(timeToHit)
                                 } else {
                                     state = "end A"
                                     Task {
@@ -2271,26 +2347,33 @@ struct ContentView: View {
                         .font(.largeTitle)
                         .bold()
                         .padding(.bottom, 580)
-                    ZStack {
+                    VStack {
                         ForEach(0..<timeToHit.count, id: \.self) { index in
-                            Text("\(index + 1). Target:")
-                                .foregroundColor(getTargetColor(index: index))
-                                .font(.title2)
-                                .padding(.trailing, 500)
-                                .padding(.top, getTargetPadding(index: index))
-                            Text("\(timeToHit[index]) ms.")
-                                .foregroundColor(getTargetColor(index: index))
-                                .font(.title2)
-                                .padding(.trailing, 300)
-                                .padding(.top, getTargetPadding(index: index))
-                            RoundedRectangle(cornerRadius: 8)
-                                .foregroundColor(getTargetColor(index: index))
-                                .frame(width: getTargetBarWidth(index: index), height: 15)
-                                .padding(.top, getTargetPadding(index: index))
-                                .padding(.leading, getTargetBarWidth(index: index) - 180)
+                            ZStack {
+                                Text("\(index + 1). Target:")
+                                    .foregroundColor(getTargetColor(index: index))
+                                    .font(.title2)
+                                    .padding(.trailing, 500)
+                                    //.padding(.top, getTargetPadding(index: index))
+                                Text("\(timeToHit[index]) ms.")
+                                    .foregroundColor(getTargetColor(index: index))
+                                    .font(.title2)
+                                    .padding(.trailing, 300)
+                                    //.padding(.top, getTargetPadding(index: index))
+                                    .onAppear() {
+                                        print(timeToHit)
+                                    }
+                                RoundedRectangle(cornerRadius: 8)
+                                    .foregroundColor(getTargetColor(index: index))
+                                    .frame(width: getTargetBarWidth(index: index), height: 15)
+                                    //.padding(.top, getTargetPadding(index: index))
+                                    .padding(.leading, getTargetBarWidth(index: index) - 180)
+                            }
                         }
-                    }.padding(.bottom, 450)
+                         
+                    }.padding(.bottom, 150)
                         .padding(.trailing, 50)
+                         
                     RoundedRectangle(cornerRadius: 8)
                         .frame(width: 2, height: CGFloat(26 * timeToHit.count))
                         .foregroundColor(.blue)
@@ -2336,14 +2419,17 @@ struct ContentView: View {
                                         Text("Attempt: \(index + 1)")
                                             .font(.title2)
                                             .padding(.leading, 40)
+                                            .foregroundColor(darkMode ? .white : .black)
                                         Spacer()
                                         
                                         Text("Best: \(currentLogVal1[index]), Worst: \(currentLogVal2[index]), Avarage:  \(currentLogVal3[index])")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                         Spacer()
                                         Text("\(currentLogDates[index])")
                                             .font(.title2)
                                             .padding(.trailing, 40)
+                                            .foregroundColor(darkMode ? .white : .black)
                                         
                                     }
                                 }
@@ -2632,18 +2718,21 @@ struct ContentView: View {
                             ForEach(0..<currentLogDates.count, id: \.self) { index in
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 18)
-                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
+                                        .foregroundColor(darkMode ? .white : .black)
                                         .padding(.horizontal, 35)
                                     HStack {
                                         Text("Attempt: \(index + 1)")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                             .padding(.leading, 40)
                                         Spacer()
                                         Text("\(currentLogVal1[index]) squares memorized.")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                         Spacer()
                                         Text("\(currentLogDates[index])")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                             .padding(.trailing, 40)
                                     }
                                 }
@@ -2723,18 +2812,21 @@ struct ContentView: View {
                             ForEach(0..<currentLogDates.count, id: \.self) { index in
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 18)
-                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
+                                        .foregroundColor(darkMode ? .white : .black)
                                         .padding(.horizontal, 35)
                                     HStack {
                                         Text("Attempt: \(index + 1)")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                             .padding(.leading, 40)
                                         Spacer()
                                         Text("\(currentLogVal1[index]) rounds.")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                         Spacer()
                                         Text("\(currentLogDates[index])")
                                             .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
                                             .padding(.trailing, 40)
                                     }
                                 }
@@ -2765,12 +2857,12 @@ struct ContentView: View {
     func makeBrightnessAList(count: Int) {
         brightnessAList.removeAll()
         for _ in 0..<count {
-            brightnessAList.append(Double.random(in: 0...1))
+            brightnessAList.append(Double.random(in: 0.3...1))
         }
     }
     func calcColorOffset() {
         let pr = pickerRound
-        pickerOffsets.append(abs(hueAList[pr] - hueQList[pr]) + abs(brightnessAList[pr] - brightnessQList[pr]))
+        pickerOffsets.append(round(100 - (100 * abs(hueAList[pr] - hueQList[pr]) + abs(brightnessAList[pr] - brightnessQList[pr]))))
     }
     @State private var pickerRound: Int = 0
     @State private var colorSlider: Double = 0.2
@@ -2798,6 +2890,7 @@ struct ContentView: View {
                 navigationBar(kind: "start")
             }
             ZStack {
+                //MARK: Picker - show
                 if state == "show P" {
                     Rectangle()
                         .frame(width: 700, height: 650)
@@ -2805,9 +2898,13 @@ struct ContentView: View {
                         .ignoresSafeArea()
                         .padding(.top, 50)
                     RoundedRectangle(cornerRadius: 30)
+                        .frame(width: 500, height: 400)
+                        .foregroundColor(.black.opacity(elementOpacity))
+                        .padding(.top, 180)
+                    RoundedRectangle(cornerRadius: 30)
                         .frame(width: 500, height: 350)
                         .foregroundColor(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
-                        .padding(.bottom, 140)
+                        .padding(.bottom, 150)
                     Button(action: {
                         state = "pick P"
                     }) {
@@ -2817,8 +2914,9 @@ struct ContentView: View {
                             .background(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
                             .clipShape(Capsule())
                     }.buttonStyle(.plain)
-                        .padding(.top, 440)
+                        .padding(.top, 510)
                 }
+                //MARK: Picker - pick
                 if state == "pick P" {
                     Rectangle()
                         .frame(width: 700, height: 650)
@@ -2899,41 +2997,138 @@ struct ContentView: View {
                     
                 }
             }.padding(.bottom, 50)
+            //MARK: Picker - result
             if state == "result P" {
-                Rectangle()
-                    .frame(width: 700, height: 650)
-                    .foregroundColor(.black.opacity(bgOpacity))
-                    .ignoresSafeArea()
-                    .padding(.top, 50)
-                
                 ZStack {
-                    RoundedRectangle(cornerRadius: 30)
-                        .frame(width: 250, height: 350)
-                        .foregroundColor(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
-                        .padding(.bottom, 140)
-                        .padding(.trailing, 25)
                     Rectangle()
-                        .frame(width: 200, height: 350)
-                        .foregroundColor(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
-                        .padding(.bottom, 140)
-                        .padding(.leading, 25)
-                }.padding(.trailing, 200)
-                ZStack {
+                        .frame(width: 700, height: 650)
+                        .foregroundColor(.black.opacity(bgOpacity))
+                        .ignoresSafeArea()
+                        .padding(.top, 50)
+                    
                     RoundedRectangle(cornerRadius: 30)
-                        .frame(width: 250, height: 350)
-                        .foregroundColor(Color(hue: hueQList[pickerRound], saturation: 1.0, brightness: brightnessQList[pickerRound]))
-                        .padding(.bottom, 140)
-                        .padding(.leading, 25)
-                    Rectangle()
-                        .frame(width: 200, height: 350)
-                        .foregroundColor(Color(hue: hueQList[pickerRound], saturation: 1.0, brightness: brightnessQList[pickerRound]))
-                        .padding(.bottom, 140)
-                        .padding(.trailing, 25)
-                }.padding(.leading, 200)
-                Text(pickerOffsetText)
+                        .frame(width: 500, height: 400)
+                        .foregroundColor(.black.opacity(elementOpacity))
+                        .padding(.top, 180)
+                     
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 30)
+                            .frame(width: 250, height: 350)
+                            .foregroundColor(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
+                            .padding(.bottom, 150)
+                            .padding(.trailing, 25)
+                        Rectangle()
+                            .frame(width: 50, height: 350)
+                            .foregroundColor(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
+                            .padding(.bottom, 150)
+                            .padding(.leading, 175)
+                    }.padding(.trailing, 225)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 30)
+                            .frame(width: 250, height: 350)
+                            .foregroundColor(Color(hue: hueQList[pickerRound], saturation: 1.0, brightness: brightnessQList[pickerRound]))
+                            .padding(.bottom, 150)
+                            .padding(.leading, 25)
+                        Rectangle()
+                            .frame(width: 50, height: 350)
+                            .foregroundColor(Color(hue: hueQList[pickerRound], saturation: 1.0, brightness: brightnessQList[pickerRound]))
+                            .padding(.bottom, 150)
+                            .padding(.trailing, 175)
+                    }.padding(.leading, 225)
+                    
+                    Text(pickerOffsetText)
+                        .font(.system(size: 40, weight: .semibold, design: .default))
+                        .padding(.top, 300)
+                    Button(action: {
+                        if pickerRound < 4 {
+                            pickerRound += 1
+                            state = "show P"
+                        } else {
+                            writeToLog(log: "picker")
+                            state = "results P"
+                        }
+                        
+                    }) {
+                        Text("Continue")
+                            .frame(width: 150, height: 50)
+                            .font(.title2)
+                            .background(Color(hue: hueAList[pickerRound], saturation: 1.0, brightness: brightnessAList[pickerRound]))
+                            .clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                        .padding(.top, 510)
+                }.padding(.bottom, 50)
+            }
+            //MARK: Picker - results
+            if state == "results P" {
+                HStack {
+                    ForEach(0..<pickerOffsets.count, id: \.self) { index in
+                        let sqS: CGFloat = 110
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 18)
+                                .frame(width: sqS/2, height: sqS)
+                                .foregroundColor(Color(hue: hueAList[index], saturation: 1.0, brightness: brightnessAList[index]))
+                                .padding(.trailing, sqS/2)
+                            Rectangle()
+                                .frame(width: sqS/4, height: sqS)
+                                .foregroundColor(Color(hue: hueAList[index], saturation: 1.0, brightness: brightnessAList[index]))
+                                .padding(.trailing, sqS/4)
+                            
+                            RoundedRectangle(cornerRadius: 18)
+                                .frame(width: sqS/2, height: sqS)
+                                .foregroundColor(Color(hue: hueQList[index], saturation: 1.0, brightness: brightnessQList[index]))
+                                .padding(.leading, sqS/2)
+                            Rectangle()
+                                .frame(width: sqS/4, height: sqS)
+                                .foregroundColor(Color(hue: hueQList[index], saturation: 1.0, brightness: brightnessQList[index]))
+                                .padding(.leading, sqS/4)
+                            
+                            Text("\(String(format: "%.2f", round(pickerOffsets[index]*100)/100))")
+                                .padding(.top, sqS + 20)
+                                .font(.title2)
+                        }.frame(width: sqS, height: sqS)
+                        
+                    }
+                }.padding(.bottom, 420)
+                Text("Avarage offset: \(pickerOffsets.reduce(0.0, +) / Double(pickerOffsets.count))")
                     .font(.largeTitle)
-                    .padding(.top, 300)
+                    .bold()
+                navigationBar(kind: "results")
+            }
+            if state == "log P" {
+                ScrollView {
+                    VStack {
+                        if currentLogDates.count > 0 {
+                            ForEach(0..<currentLogDates.count, id: \.self) { index in
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
+                                        .padding(.horizontal, 35)
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        
+                                        Text("Best: \(currentLogVal1[index]), Worst: \(currentLogVal2[index]), Avarage:  \(currentLogVal3[index])")
+                                            .foregroundColor(darkMode ? .white : .black)
+                                            .font(.title2)
+                                        Spacer()
+                                        Text("\(currentLogDates[index])")
+                                            .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
+                                            .padding(.trailing, 40)
+                                        
+                                    }
+                                }
+                            }
+                        } else {
+                            Text("No log stored")
+                        }
+                    }.frame(maxWidth: .infinity)
+                }.frame(height: 400)
                 
+                navigationBar(kind: "log")
             }
         }
     }
@@ -3063,8 +3258,6 @@ struct ContentView: View {
             }
             //MARK: Login user
             if usersState == "login" {
-                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
-                    .ignoresSafeArea()
                 VStack(spacing: -20) {
                     Text("Welcome to")
                         .font(.largeTitle)
@@ -3076,7 +3269,7 @@ struct ContentView: View {
                 
                 Text(getProfilePicture(index: userOnLogin))
                     .font(.system(size: 125, weight: .thin, design: .default))
-                    .foregroundColor(darkMode ? textColor.opacity(0.8) : Color.black.opacity(0.8))
+                    .foregroundColor(darkMode ? .black.opacity(0.8) : Color.white.opacity(0.8))
                     .frame(width: 250, height: 250)
                     .background(getProfileColor(index: userOnLogin))
                     .clipShape(Circle())
@@ -3086,9 +3279,14 @@ struct ContentView: View {
                     .font(.largeTitle)
                     .padding(.top, 190)
                 HStack(spacing: -35) {
-                    SecureField("Password...", text: $passwordInput)
+                    SecureField(
+                        "Password...",
+                        text: $passwordInput,
+                        prompt: Text("Password...")
+                            .foregroundColor(darkMode ? Color.black : Color.white)
+                    )
                         .font(.largeTitle)
-                        .foregroundColor(darkMode ? Color.gray : Color.white)
+                        .foregroundColor(darkMode ? Color.black : Color.white)
                         .padding(.leading, 10)
                         .textFieldStyle(.plain)
                         .frame(width: 190, height: 40)
@@ -3119,7 +3317,7 @@ struct ContentView: View {
                     }) {
                         Image(systemName: "arrow.right")
                             .font(.largeTitle)
-                            .foregroundColor(darkMode ? .gray : .white)
+                            .foregroundColor(darkMode ? .black : .white)
                             .frame(width: 30, height: 30)
                             .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.black.opacity(elementOpacity))
                             .clipShape(Circle())
@@ -3138,7 +3336,7 @@ struct ContentView: View {
                 }) {
                     Image(systemName: "arrow.left")
                         .font(.largeTitle)
-                        .foregroundColor(darkMode ? .gray : .white)
+                        .foregroundColor(darkMode ? .black : .white)
                         .frame(width: 40, height: 40)
                         .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.black.opacity(elementOpacity))
                         .clipShape(Circle())
@@ -3357,8 +3555,6 @@ struct ContentView: View {
     
     var userView: some View {
         ZStack {
-            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
-                .ignoresSafeArea()
             VStack(spacing: -20) {
                 Text("Welcome back,")
                     .font(.largeTitle)
@@ -3376,7 +3572,7 @@ struct ContentView: View {
                 }) {
                     Text("Continue")
                         .font(.system(size: 51, weight: .bold, design: .default))
-                        .foregroundColor(textColor.opacity(0.8))
+                        .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
                         .frame(width: 250, height: 70)
                         .background(getProfileColor(index: userLoggedIn))
                         .clipShape(RoundedRectangle(cornerRadius: 40))
@@ -3388,7 +3584,7 @@ struct ContentView: View {
                 }) {
                     Text(getProfilePicture(index: userLoggedIn))
                         .font(.system(size: 51, weight: .thin, design: .default))
-                        .foregroundColor(textColor.opacity(0.8))
+                        .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
                         .frame(width: 70, height: 70)
                         .background(getProfileColor(index: userLoggedIn))
                         .clipShape(RoundedRectangle(cornerRadius: 40))
@@ -3414,6 +3610,7 @@ struct ContentView: View {
                     makeLogLeaderboard(mode: "aim")
                     makeLogLeaderboard(mode: "memory")
                     makeLogLeaderboard(mode: "color")
+                    makeLogLeaderboard(mode: "picker")
                     
                     state = "user results"
                 }) {
@@ -3544,22 +3741,53 @@ struct ContentView: View {
                     
                     HStack {
                         ForEach(0..<12, id: \.self) {index in
+                            
                             if userColor[userLoggedIn] == getButtonColorName(index: index) {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(textColor.opacity(0.8))
-                                    .frame(width: 40, height: 40)
-                                    .background(getButtonColor(index: index))
-                                    .clipShape(Circle())
-                                
-                            } else {
-                                Button(action: {
-                                    print("Button returned \(getButtonColor(index: index))")
-                                    userColor[userLoggedIn] = getButtonColorName(index: index)
-                                }) {
-                                    Text("")
+                                if index != 10 {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(textColor.opacity(0.8))
                                         .frame(width: 40, height: 40)
                                         .background(getButtonColor(index: index))
                                         .clipShape(Circle())
+                                } else {
+                                    HStack(spacing: 0) {
+                                        Color.white
+                                        Color.black
+                                    }.frame(width: 40, height: 40)
+                                        .clipShape(Circle())
+                                        .rotationEffect(.degrees(45))
+                                        .overlay() {
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(. white.opacity(0.8))
+                                                .frame(width: 40, height: 40)
+                                        }
+                                }
+                                
+                            } else {
+                                
+                                Button(action: {
+                                    print("Button returned \(getButtonColor(index: index))")
+                                    if getButtonColorName(index: index) == "white" && darkMode {
+                                        userColor[userLoggedIn] = getButtonColorName(index: index)
+                                    } else if getButtonColorName(index: index) == "white" && !darkMode {
+                                        userColor[userLoggedIn] = "black"
+                                    } else {
+                                        userColor[userLoggedIn] = getButtonColorName(index: index)
+                                    }
+                                }) {
+                                    if index != 10 {
+                                        Text("")
+                                            .frame(width: 40, height: 40)
+                                            .background(getButtonColor(index: index))
+                                            .clipShape(Circle())
+                                    } else {
+                                        HStack(spacing: 0) {
+                                            Color.white
+                                            Color.black
+                                        }.frame(width: 40, height: 40)
+                                            .clipShape(Circle())
+                                            .rotationEffect(.degrees(45))
+                                    }
                                     
                                 }.buttonStyle(.plain)
                             }
@@ -3607,8 +3835,11 @@ struct ContentView: View {
                             .frame(width: 250)
                             .tint(getProfileColor(index: userLoggedIn))
                             .onChange(of: bgOpacity) { newBgValue in
-                                UserPreferencesBgOpacity[userLoggedIn] = bgOpacity
-                                print("Background opacity changed!")
+                                if bgOpacity >= 0.8 {
+                                    UserPreferencesBgOpacity[userLoggedIn] = bgOpacity
+                                } else if !darkMode {
+                                    bgOpacity = 0.8
+                                }
                             }
                         Text("More opaque")
                             .font(.title3)
@@ -3628,6 +3859,15 @@ struct ContentView: View {
                         .toggleStyle(.switch)
                         .onChange(of: darkMode) {newMode in
                             userPreferencesDarkMode[userLoggedIn] = darkMode
+                            if userColor[userLoggedIn] == "black" && darkMode {
+                                userColor[userLoggedIn] = "white"
+                            } else if userColor[userLoggedIn] == "white" && !darkMode {
+                                userColor[userLoggedIn] = "black"
+                            }
+                            if bgOpacity <= 0.8 {
+                                bgOpacity = 0.8
+                                print("toggle changed bgOpa")
+                            }
                         }
                         
                 }
@@ -3668,8 +3908,8 @@ struct ContentView: View {
     //MARK: User settings
     var userSettingsView: some View {
         ZStack {
-            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
-                .ignoresSafeArea()
+            //SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+            //    .ignoresSafeArea()
             VStack(spacing: -20) {
                 Text("User settings for")
                     .font(.largeTitle)
@@ -3990,9 +4230,17 @@ struct ContentView: View {
         } else if index == 1 {
             return .orange
         } else if index == 2 {
-            return .white
+            if darkMode {
+                return .white
+            } else {
+                return .black
+            }
         } else {
-            return Color(red: 0.8, green: 0.8, blue: 0.8)
+            if darkMode {
+                return Color(red: 0.8, green: 0.8, blue: 0.8)
+            } else {
+                return Color(red: 0.2, green: 0.2, blue: 0.2)
+            }
         }
     }
     
@@ -4000,8 +4248,8 @@ struct ContentView: View {
     @State private var modePadding: Int = 0
     var userResults: some View {
         ZStack {
-            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
-                .ignoresSafeArea()
+            //SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+            //    .ignoresSafeArea()
             VStack(spacing: -20) {
                 Text("Leaderboard for")
                     .font(.largeTitle)
@@ -4165,6 +4413,31 @@ struct ContentView: View {
                 .padding(.leading, CGFloat(7000 - modePadding))
             
             ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                // COLOR
+                VStack {
+                    ScrollView {
+                        ForEach(0...userNames.count - 1, id: \.self) {index in
+                            if pickerLeaderboard.isEmpty {
+                                EmptyView()
+                            } else if pickerLeaderboard[index] >= 10000 {
+                                Text("#\(index+1). \(userNames[bestPickerValues.firstIndex(of: pickerLeaderboard[index])!]) - offset.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            } else {
+                                Text("#\(index+1). \(userNames[bestPickerValues.firstIndex(of: pickerLeaderboard[index])!]) \(pickerLeaderboard[index]) offset.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            }
+                        }
+                    }.padding(.top, 5)
+                }
+            }.frame(width: 600, height: 390)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 10)
+                .padding(.leading, CGFloat(8400 - modePadding))
+            
+            ZStack {
                 Button(action: {
                     print("Back to userView")
                     state = "loggedin"
@@ -4190,6 +4463,8 @@ struct ContentView: View {
                             leaderboardText = "Aim mode"
                         } else if modePadding == 7000 {
                             leaderboardText = "Memory mode"
+                        } else if modePadding == 8400 {
+                            leaderboardText = "Color mode"
                         }
                         withAnimation(.easeInOut(duration: 0.7)) {
                             modePadding -= 1400
@@ -4206,7 +4481,7 @@ struct ContentView: View {
                     .padding(.trailing, 520)
                 
                 Button(action: {
-                    if modePadding != 7000 {
+                    if modePadding != 8400 {
                         if modePadding == 0 {
                             leaderboardText = "Reaction mode"
                         } else if modePadding == 1400 {
@@ -4217,6 +4492,8 @@ struct ContentView: View {
                             leaderboardText = "Memory mode"
                         } else if modePadding == 5600 {
                             leaderboardText = "Color mode"
+                        } else if modePadding == 7000 {
+                            leaderboardText = "Picker mode"
                         }
                         withAnimation(.easeInOut(duration: 0.7)) {
                             modePadding += 1400
@@ -4288,8 +4565,8 @@ struct ContentView: View {
     
     var analyticsView: some View {
         ZStack {
-            SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
-                .ignoresSafeArea()
+            //SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+            //    .ignoresSafeArea()
             VStack(spacing: -20) {
                 Text("User analytics for")
                     .font(.largeTitle)
@@ -4380,7 +4657,7 @@ struct ContentView: View {
             untriedMode = "color"
         }
     }
-    
+    //MARK: User screen
     
     func userScreen() -> some View {
         ZStack {
@@ -4406,20 +4683,26 @@ struct ContentView: View {
                 HStack {
                     Image(systemName: "flame")
                         .font(.system(size: 40, weight: .regular, design: .default))
+                        .foregroundColor(darkMode ? .white : .black)
                     VStack(spacing: -5) {
                         Text("\(userStreaks[userLoggedIn])d")
                             .font(.largeTitle)
+                            .foregroundColor(darkMode ? .white : .black)
                         Text("Streak")
+                            .foregroundColor(darkMode ? .white : .black)
                     }
                 }.padding(.trailing, 560)
                 HStack {
                     VStack(spacing: -5) {
                         Text("\(userStreaks[userLoggedIn])d")
                             .font(.largeTitle)
+                            .foregroundColor(darkMode ? .white : .black)
                         Text("Total")
+                            .foregroundColor(darkMode ? .white : .black)
                     }
                     Image(systemName: "calendar")
                         .font(.system(size: 40, weight: .regular, design: .default))
+                        .foregroundColor(darkMode ? .white : .black)
                 }.padding(.leading, 560)
             }.frame(width: 680, height: 110)
                 .clipShape(RoundedRectangle(cornerRadius: 30))
@@ -4432,11 +4715,13 @@ struct ContentView: View {
                         let charAray = Array(usersBest)
                         Image(systemName: "chart.bar")
                             .font(.system(size: 40, weight: .regular, design: .default))
+                            .foregroundColor(darkMode ? .white : .black)
                         VStack(spacing: -10) {
                             Text("\(usersBest) mode")
                                 .font(getLeaderboardfont(index: Int(String(charAray[1]))! - 1))
                                 .foregroundColor(getLeaderboardColor(index: Int(String(charAray[1]))! - 1))
                             Text("Best rank")
+                                .foregroundColor(darkMode ? .white : .black)
                         }.padding(.trailing, 50)
                     }
                 }
@@ -4448,6 +4733,7 @@ struct ContentView: View {
                 if untriedMode != "none" {
                     Text("You haven't tried \(untriedMode) mode yet, give it a try!")
                         .font(.largeTitle)
+                        .foregroundColor(darkMode ? .white : .black)
                         .padding(.trailing, 100)
                     Button(action: {
                         if untriedMode.prefix(1).uppercased() != "" {
@@ -4457,6 +4743,7 @@ struct ContentView: View {
                         Image(systemName: "arrow.forward")
                             .font(.system(size: 40, weight: .regular, design: .default))
                             .frame(width: 60, height: 60)
+                            .foregroundColor(darkMode ? .white : .black)
                             .background(getProfileColor(index: userLoggedIn))
                             .clipShape(Circle())
                     }.buttonStyle(.plain)
@@ -4471,6 +4758,25 @@ struct ContentView: View {
     var topBar: some View {
         ZStack {
             SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+            Button(action: {
+                state = "loggedin"
+            }) {
+                Image(systemName: "house.circle")
+                    .frame(width: 22, height: 22)
+                    .background(Color.black.opacity(0.2))
+                    .clipShape(Circle())
+            }.buttonStyle(.plain)
+                .padding(.leading, 670)
+            Button(action: {
+                state = "menu"
+            }) {
+                Image(systemName: "list.bullet.circle")
+                    .frame(width: 22, height: 22)
+                    .background(Color.black.opacity(0.2))
+                    .clipShape(Circle())
+            }.buttonStyle(.plain)
+                .padding(.leading, 615)
+            
         }.frame(width: 700, height: 30)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .padding(.bottom, 630)
@@ -4482,7 +4788,7 @@ struct ContentView: View {
         ZStack {
             if darkMode {
                 Rectangle()
-                    .fill(Color(white: 0.15).opacity(bgLowOpacity))
+                    .fill(Color.black.opacity(bgLowOpacity))
                     .frame(width: 700, height: 630)
                     .ignoresSafeArea()
             } else {
