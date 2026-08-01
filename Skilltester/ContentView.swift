@@ -1186,63 +1186,85 @@ struct ContentView: View {
         ZStack {
             //SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
             if state == "menu" {
-                if getProfileColor(index: userLoggedIn) == Color.white.opacity(elementOpacity + 0.1) {
-                    Text("Menu")
-                        .bold()
-                        .foregroundColor(.black.opacity(0.8))
-                        .font(.system(size: 61, weight: .bold, design: .default))
-                        .padding(.bottom, 581)
-                } else {
+                
                     Text("Menu")
                         .bold()
                         .foregroundColor(getProfileColor(index: userLoggedIn))
                         .font(.system(size: 61, weight: .bold, design: .default))
                         .padding(.bottom, 581)
-                }
-                ScrollView {
-                    VStack (spacing: menuButtonSpacing) {
+                        .onAppear() {print("default menu text")}
+
+                ScrollView(showsIndicators: false) {
+                    VStack (spacing: menuButtonSpacing - 140) {
                         HStack (alignment: .top, spacing: menuButtonSpacing) {
                             Button(action: {
                                 print("clicked button 1 (Reflex)")
                                 state = "start R"
                             }) {
-                                Text("Reflex")
-                                    .bold()
-                                    .font(.title2)
+                                Image(systemName: "cursorarrow.rays")
+                                    .font(.system(size: 81, weight: .bold, design: .default))
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
-                                //.background(.ultraThinMaterial)
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white)
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
-                                
+                                    .overlay(alignment: .bottom) {
+                                        Text("Spam")
+                                            .bold()
+                                            .padding(.top, 130)
+                                            .font(.title2)
+                                            .frame(width: 200, height: 200)
+                                            .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                            .clipShape(RoundedRectangle(cornerRadius: 50))
+                                    }
                             }.buttonStyle(.plain)
+                                    .padding(.bottom, 140)
                             
                             Button(action: {
                                 print("clicked button 2")
                                 state = "start S"
                             }) {
-                                Text("Spam")
-                                    .bold()
-                                    .font(.title2)
+                                Image(systemName: "cursorarrow.motionlines")
+                                    .font(.system(size: 76, weight: .bold, design: .default))
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white)
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
+                                    .overlay(alignment: .bottom) {
+                                        Text("Spam")
+                                            .bold()
+                                            .padding(.top, 130)
+                                            .font(.title2)
+                                            .frame(width: 200, height: 200)
+                                            .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                            .clipShape(RoundedRectangle(cornerRadius: 50))
+                                            
+                                    }
                             }.buttonStyle(.plain)
+                                .padding(.bottom, 140)
                             
                             Button(action: {
                                 print("clicked button 3")
                                 state = "start T"
                             }) {
-                                Text("Time")
-                                    .bold()
-                                    .font(.title2)
+                                Image(systemName: "timer")
+                                    .font(.system(size: 76, weight: .bold, design: .default))
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white)
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
+                                    .overlay(alignment: .bottom) {
+                                        Text("Timer")
+                                            .bold()
+                                            .padding(.top, 130)
+                                            .font(.title2)
+                                            .frame(width: 200, height: 200)
+                                            .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                            .clipShape(RoundedRectangle(cornerRadius: 50))
+                                            
+                                    }
                                 
                             }.buttonStyle(.plain)
+                                .padding(.bottom, 140)
                         }.padding(.top, 20)
                         
                         HStack (alignment: .top, spacing: menuButtonSpacing) {
@@ -1250,30 +1272,48 @@ struct ContentView: View {
                                 print("clicked button 4")
                                 state = "start A"
                             }) {
-                                Text("Aim")
-                                    .bold()
-                                    .font(.title2)
+                                Image(systemName: "dot.circle.and.cursorarrow")
+                                    .font(.system(size: 76, weight: .bold, design: .default))
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white)
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
+                                    .overlay(alignment: .bottom) {
+                                        Text("Aim")
+                                            .bold()
+                                            .padding(.top, 130)
+                                            .font(.title2)
+                                            .frame(width: 200, height: 200)
+                                            .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                            .clipShape(RoundedRectangle(cornerRadius: 50))
+                                            
+                                    }
                                 
                             }.buttonStyle(.plain)
-                            
+                            .padding(.bottom, 140)
                             Button(action: {
                                 print("clicked button 5")
                                 state = "start M"
                             }) {
-                                Text("Memory")
-                                    .bold()
-                                    .font(.title2)
+                                Image(systemName: "square.grid.3x3.topleft.filled")
+                                    .font(.system(size: 76, weight: .bold, design: .default))
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white)
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
+                                    .overlay(alignment: .bottom) {
+                                        Text("Memory")
+                                            .bold()
+                                            .padding(.top, 130)
+                                            .font(.title2)
+                                            .frame(width: 200, height: 200)
+                                            .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                            .clipShape(RoundedRectangle(cornerRadius: 50))
+                                            
+                                    }
                                 
                             }.buttonStyle(.plain)
-                            
+                            .padding(.bottom, 140)
                             Button(action: {
                                 print("clicked button 6")
                                 colorOffset = 100
@@ -1281,30 +1321,51 @@ struct ContentView: View {
                                 colorRound = 0
                                 state = "start C"
                             }) {
-                                Text("Color")
-                                    .bold()
-                                    .font(.title2)
+                                Image(systemName: "square.grid.3x3.bottomright.filled")
+                                    .font(.system(size: 76, weight: .bold, design: .default))
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white)
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
+                                    .overlay(alignment: .bottom) {
+                                        Text("Color")
+                                            .bold()
+                                            .padding(.top, 130)
+                                            .font(.title2)
+                                            .frame(width: 200, height: 200)
+                                            .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                            .clipShape(RoundedRectangle(cornerRadius: 50))
+                                            
+                                    }
                                 
                             }.buttonStyle(.plain)
+                            .padding(.bottom, 140)
                         }
                         HStack (alignment: .top, spacing: menuButtonSpacing) {
                             Button(action: {
                                 print("clicked button 7")
                                 state = "start P"
                             }) {
-                                Text("Picker")
-                                    .bold()
-                                    .font(.title2)
+                                Image(systemName: "eyedropper.halffull")
+                                    .font(.system(size: 76, weight: .bold, design: .default))
                                     .frame(width: 200, height: 200)
-                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white)
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
+                                    .overlay(alignment: .bottom) {
+                                        Text("Picker")
+                                            .bold()
+                                            .padding(.top, 130)
+                                            .font(.title2)
+                                            .frame(width: 200, height: 200)
+                                            .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                            //.background(getProfileColor(index: userLoggedIn))
+                                            .clipShape(RoundedRectangle(cornerRadius: 50))
+                                            
+                                    }
                                 
                             }.buttonStyle(.plain)
+                                .padding(.bottom, 140)
                         }
                         
                         
@@ -1330,7 +1391,7 @@ struct ContentView: View {
                             
                         }
                     
-                }.frame(width: 660, height: 450)
+                }.frame(width: 640, height: 450)
                     .padding(.bottom, 40)
                     .clipShape(RoundedRectangle(cornerRadius: 50))
                 
