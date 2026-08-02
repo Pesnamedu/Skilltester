@@ -29,11 +29,15 @@ struct ContentView: View {
         if Date().weekDay != "Mon" {
             screenTimeReseted = false
         }
+        print("Startup bgOpacity: \(bgOpacity)")
+        print(UserPreferencesBgOpacity)
+        print(screenTimeMon)
         print(screenTimeReseted)
         print(lastStreakDays)
         print(userStreaks)
         print("-")
     }
+    
     
     @State private var mouseXY: NSPoint = .zero
     @State private var mouseMonitor: Any?
@@ -119,7 +123,7 @@ struct ContentView: View {
     }
     
     //MARK: SETUP variables
-    //@AppStorage("screenTimes") private var screenTimes: [Int] = []
+    @State private var startTutor: Bool = true
     
     @State private var state: String = "startup" // nezapomen zmenit na startup
     @AppStorage("users") private var users: [String] = []
@@ -744,6 +748,15 @@ struct ContentView: View {
         }
         UserPreferencesBgOpacity.remove(at: user)
         UserPreferencesElementOpacity.remove(at: user)
+        screenTimeMon.remove(at: user)
+        screenTimeTue.remove(at: user)
+        screenTimeWed.remove(at: user)
+        screenTimeThu.remove(at: user)
+        screenTimeFri.remove(at: user)
+        screenTimeSat.remove(at: user)
+        screenTimeSun.remove(at: user)
+        lastStreakDays.remove(at: user)
+        userStreaks.remove(at: user)
         print("After delete (deleting user number \(user))")
         print(userNames)
         print(userPass)
@@ -1169,13 +1182,20 @@ struct ContentView: View {
         }
     }
     func manageStreaks() {
-        if lastStreakDays[userLoggedIn] - 1 == dayOfWeekNum(day: Date().weekDay) || lastStreakDays[userLoggedIn] == dayOfWeekNum(day: Date().weekDay) + 6{
+        if lastStreakDays[userLoggedIn] + 1 == dayOfWeekNum(day: Date().weekDay) || lastStreakDays[userLoggedIn] == dayOfWeekNum(day: Date().weekDay) + 6{
             lastStreakDays[userLoggedIn] = dayOfWeekNum(day: Date().weekDay)
             userStreaks[userLoggedIn] = userStreaks[userLoggedIn] + 1
             print("Added a streak to \(userNames[userLoggedIn])")
         } else if abs(lastStreakDays[userLoggedIn] - dayOfWeekNum(day: Date().weekDay)) > 1 {
+            print("(\(abs(lastStreakDays[userLoggedIn] - dayOfWeekNum(day: Date().weekDay))) > 1)")
+            lastStreakDays[userLoggedIn] = dayOfWeekNum(day: Date().weekDay)
             userStreaks[userLoggedIn] = 0
             print("Removed streak from \(userNames[userLoggedIn])")
+            
+        } else {
+            print("Didnt do anything with \(userNames[userLoggedIn])'s streak bcs the day is same as the day the streak was added")
+            print(lastStreakDays)
+            print(userStreaks)
         }
     }
     
@@ -1366,6 +1386,7 @@ struct ContentView: View {
                                 
                             }.buttonStyle(.plain)
                                 .padding(.bottom, 140)
+                                .padding(.trailing, 400 + 2*menuButtonSpacing)
                         }
                         
                         
@@ -1420,6 +1441,14 @@ struct ContentView: View {
                 }.buttonStyle(.plain)
                     .padding(.top, 490)
                     .padding(.trailing, 590)
+                if startTutor {
+                    Text("Scroll down")
+                        .font(.title2)
+                        .padding(.top, 460)
+                    Image(systemName: "arrow.down")
+                        .font(.title2)
+                        .padding(.top, 500)
+                }
             }
         }
     }
@@ -2072,7 +2101,10 @@ struct ContentView: View {
     }
     
     //MARK: Time - start
-    
+    @State private var timerStartDate: Date = Date()
+    var timerText: String {
+        String(format: "%.2f", Double(Date().timeIntervalSince(timerStartDate)*100)/100)
+    }
     
     var timeView: some View {
         ZStack {
@@ -2108,6 +2140,7 @@ struct ContentView: View {
                     Button(action: {
                         state = "count T"
                         timeElapsed = 0
+                        timerStartDate = Date()
                         Task {
                             try? await Task.sleep(nanoseconds: UInt64((Float(minTime) / 2) * 1_000_000))
                             isViewBlocked = true
@@ -2130,9 +2163,10 @@ struct ContentView: View {
             if state == "count T" {
                 Button(action: {
                     state = "stopped T"
-                    timeStopped = timeElapsed
+                    print(timerText)
+                    timeStopped = Int(Double(timerText)! * 1000)
                     timeLogDates.append(Date().formatted(date: .omitted, time: .standard));
-                    timeLogValues.append(timeDifferenceText)
+                    timeLogValues.append(String(timeStopped))
                     
                     timeLogDates.append(String(userLoggedIn))
                     timeLogValues.append(String(userLoggedIn))
@@ -2147,7 +2181,7 @@ struct ContentView: View {
                 }.buttonStyle(.plain)
                     .keyboardShortcut(.space, modifiers: [])
                 if isViewBlocked == false {
-                    Text("\(timeElapsedText) s.")
+                    Text("\(timerText) s.")
                         .font(.system(size: 80, weight: .bold, design: .default))
                         .foregroundColor(.white)
                 }
@@ -2157,7 +2191,7 @@ struct ContentView: View {
                 Button(action: {
                     state = "results T"
                 }) {
-                    Text("\(timeStoppedText) s.")
+                    Text("\(timeStopped) s.")
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
@@ -2181,7 +2215,7 @@ struct ContentView: View {
                     
                     Text("You stopped at")
                         .padding(.bottom, 45)
-                    Text("\(timeStoppedText) / \(randomTimeText) s.")
+                    Text("\(timeStopped) / \(randomTimeText) s.")
                         .bold()
                         .font(.largeTitle)
                     Text("Difference: \(timeDifferenceText) s.")
@@ -2779,7 +2813,7 @@ struct ContentView: View {
                             ForEach(0..<currentLogDates.count, id: \.self) { index in
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 18)
-                                        .foregroundColor(darkMode ? .white : .black)
+                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
                                         .padding(.horizontal, 35)
                                     HStack {
                                         Text("Attempt: \(index + 1)")
@@ -2873,7 +2907,7 @@ struct ContentView: View {
                             ForEach(0..<currentLogDates.count, id: \.self) { index in
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 18)
-                                        .foregroundColor(darkMode ? .white : .black)
+                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
                                         .padding(.horizontal, 35)
                                     HStack {
                                         Text("Attempt: \(index + 1)")
@@ -3193,17 +3227,80 @@ struct ContentView: View {
             }
         }
     }
-     
+     //MARK: Tutor
     
     var tutorView: some View {
         ZStack {
-            Text("ts is tutorial")
+            HStack {
+                Image(systemName: "arrow.turn.left.up")
+                    .font(.title2)
+                Text("Drag the window with the top handle.")
+                    .font(.title2)
+                    
+                Image(systemName: "arrow.turn.right.up")
+                    .font(.title2)
+            }.padding(.bottom, 580)
+            ZStack {
+                Image(systemName: "cursorarrow.rays")
+                    .font(.system(size: 70, weight: .bold, design: .default))
+                    .padding(.bottom, 280)
+                Text("Test yourself in capabilities")
+                    .font(.title2)
+                    .padding(.bottom, 400)
+                HStack(spacing: 150) {
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 70, weight: .thin, design: .default))
+                        .padding(.bottom, 280)
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 70, weight: .thin, design: .default))
+                        .padding(.bottom, 280)
+                }
+            }
+            ZStack {
+                Image(systemName: "list.dash")
+                    .font(.system(size: 70, weight: .bold, design: .default))
+                    .padding(.bottom, 30)
+                Text("Get your test results")
+                    .font(.title2)
+                    .padding(.bottom, 130)
+                HStack(spacing: 150) {
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 70, weight: .thin, design: .default))
+                        .padding(.bottom, 30)
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 70, weight: .thin, design: .default))
+                        .padding(.bottom, 30)
+                }
+            }
+            ZStack {
+                Image(systemName: "chart.bar")
+                    .font(.system(size: 70, weight: .regular, design: .default))
+                    .padding(.top, 200)
+                Text("Compete with other users")
+                    .font(.title2)
+                    .padding(.top, 100)
+                /*
+                HStack(spacing: 200) {
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 70, weight: .thin, design: .default))
+                        .padding(.top, 200)
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 70, weight: .thin, design: .default))
+                        .padding(.top, 200)
+                }
+                 */
+            }
+            
             Button(action: {
                 state = "menu"
             }) {
                 Text("Back")
-                
-            }.padding(.top, 500)
+                    .font(.largeTitle)
+                    .frame(width: 180, height: 50)
+                    .background(Color.gray.opacity(elementOpacity - 0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 25))
+            }.buttonStyle(.plain)
+                .padding(.top, 500)
         }
     }
     
@@ -3218,6 +3315,7 @@ struct ContentView: View {
                         usersState = "login"
                         userOnLogin = Int(index - 1)
                         bgOpacity = UserPreferencesBgOpacity[userOnLogin]
+                        print("Set bgOpacity to userPreferences \(UserPreferencesBgOpacity[userOnLogin])")
                         elementOpacity = UserPreferencesElementOpacity[userOnLogin]
                         darkMode = userPreferencesDarkMode[userOnLogin]
                         if elementOpacity > 0.7 || userColor[userOnLogin] == "white" {
@@ -3363,11 +3461,12 @@ struct ContentView: View {
                             userLoggedIn = userOnLogin
                             lastLoggedIn = userLoggedIn
                             bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
+                            print("Set bgOpacity to userPreferences \(UserPreferencesBgOpacity[userOnLogin])")
                             elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
                             darkMode = userPreferencesDarkMode[userLoggedIn]
                             setUntriedMode(user: userLoggedIn)
                             manageStreaks()
-                            
+                            print("Tutor? \(startTutor)")
                             passwordInput = ""
                             passwordRepeat = ""
                             print("Last logged in: \(lastLoggedIn)")
@@ -3394,6 +3493,7 @@ struct ContentView: View {
                     
                     bgOpacity = 0.6
                     elementOpacity = 0.45
+                    print("set bgOpacity to default 0.6")
                 }) {
                     Image(systemName: "arrow.left")
                         .font(.largeTitle)
@@ -3405,6 +3505,11 @@ struct ContentView: View {
                     .keyboardShortcut(.return, modifiers: [])
                     .padding(.top, 280)
                     .padding(.trailing, 230)
+                Toggle("Tutorial on start", isOn: $startTutor)
+                    .padding(.top, 380)
+                    .onAppear() {
+                        startTutor = false
+                    }
             }
             //MARK: Brand new screen
             ZStack {
@@ -3461,6 +3566,7 @@ struct ContentView: View {
                         
                         bgOpacity = 0.6
                         elementOpacity = 0.45
+                        print("set bgOpacity to default 0.6 (brandNewScreen)")
                     }) {
                         Image(systemName: "arrow.left")
                             .font(.largeTitle)
@@ -3529,10 +3635,21 @@ struct ContentView: View {
                                     UserPreferencesBgOpacity.append(0.6)
                                     UserPreferencesElementOpacity.append(0.45)
                                     userPreferencesDarkMode.append(true)
+                                    lastStreakDays.append(dayOfWeekNum(day: Date().weekDay))
+                                    userStreaks.append(1)
+                                    screenTimeMon.append(0)
+                                    screenTimeTue.append(0)
+                                    screenTimeWed.append(0)
+                                    screenTimeThu.append(0)
+                                    screenTimeFri.append(0)
+                                    screenTimeSat.append(0)
+                                    screenTimeSun.append(0)
                                     passwordState = "done"
-                                    usersState = "choosing"
+                                    userOnLogin = userNames.count - 1
+                                    usersState = "login"
                                     passwordInput = ""
                                     passwordRepeat = ""
+                                    print("Tutor? \(startTutor)")
                                 } else {
                                     print("PASSWORDS ARE NOT MATCHING")
                                 }
@@ -3546,6 +3663,8 @@ struct ContentView: View {
                             }.buttonStyle(.plain)
                                 .keyboardShortcut(.return, modifiers: [])
                         }.padding(.top, 150)
+                        
+                        
                     }
                 }
             }.padding(.top, 200)
@@ -3580,15 +3699,15 @@ struct ContentView: View {
                             //print("Trying to get \(lastLoggedIn) from \(keepLoggedIn)")
                             userLoggedIn = lastLoggedIn
                             manageStreaks()
-                            
                             makeUsersBest(user: userLoggedIn)
                             print("UsersBest: \(usersBest)")
                             let charAray = Array(usersBest)
                             print(charAray)
                             print("Int from it: \(Int(String(charAray[1]))!)")
-                            
+                            startTutor = false
                             setUntriedMode(user: userLoggedIn)
                             bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
+                            
                             elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
                             darkMode = userPreferencesDarkMode[userLoggedIn]
                             usersState = "loggedin"
@@ -3624,7 +3743,7 @@ struct ContentView: View {
                     .font(.system(size: 81, weight: .bold, design: .default))
                     .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
             }.padding(.bottom, 500)
-            
+                .onAppear() {print("BGOPACITY\(bgOpacity)")}
             userScreen()
             
             ZStack {
@@ -3707,7 +3826,7 @@ struct ContentView: View {
             
             
             
-            //MARK: Click profile menu
+            //MARK: Expand profile menu
             
             
             if usersState == "userSettings" {
@@ -3726,6 +3845,7 @@ struct ContentView: View {
                             lastLoggedIn = 101
                             bgOpacity = 0.6
                             elementOpacity = 0.45
+                            print("Logout (bgOpacity = 0.6)")
                         }) {
                             Text("Log out")
                                 .font(.largeTitle)
@@ -3762,6 +3882,38 @@ struct ContentView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 35))
                     .padding(.top, 370)
                     .padding(.trailing, 461)
+                if startTutor {
+                    VStack(alignment: .leading, spacing: 20) {
+                        let tFont: Font = .title2
+                        let tCol: Color = .white
+                        HStack {
+                            Image(systemName: "arrow.left")
+                                .font(tFont)
+                                .foregroundColor(tCol)
+                            Text("Log out of this account")
+                                .font(tFont)
+                                .foregroundColor(tCol)
+                        }
+                        HStack {
+                            Image(systemName: "arrow.left")
+                                .font(tFont)
+                                .foregroundColor(tCol)
+                            Text("Change account name & password")
+                                .font(tFont)
+                                .foregroundColor(tCol)
+                        }
+                        HStack {
+                            Image(systemName: "arrow.left")
+                                .font(tFont)
+                                .foregroundColor(tCol)
+                            Text("Close this menu")
+                                .font(tFont)
+                                .foregroundColor(tCol)
+                        }
+                    }.padding(.top, 400)
+                        .padding(.leading, 50)
+                        .zIndex(1)
+                }
             }
         }.onAppear() {
             print("UsersBest: \(usersBest)")
@@ -3898,8 +4050,12 @@ struct ContentView: View {
                             .onChange(of: bgOpacity) { newBgValue in
                                 if bgOpacity >= 0.8 {
                                     UserPreferencesBgOpacity[userLoggedIn] = bgOpacity
+                                    print("set bgOpacity \(bgOpacity) userPreferences \(UserPreferencesBgOpacity[userLoggedIn])")
                                 } else if !darkMode {
                                     bgOpacity = 0.8
+                                    print("Changed opacity of background (too small for lightMode)")
+                                } else {
+                                    UserPreferencesBgOpacity[userLoggedIn] = bgOpacity
                                 }
                             }
                         Text("More opaque")
@@ -3927,7 +4083,7 @@ struct ContentView: View {
                             }
                             if bgOpacity <= 0.8 {
                                 bgOpacity = 0.8
-                                print("toggle changed bgOpa")
+                                print("toggle changed bgOpacity")
                             }
                         }
                         
@@ -4719,7 +4875,19 @@ struct ContentView: View {
         }
     }
     //MARK: User screen
-    
+    @State private var unimprovedMode: Int = Int.random(in: 0...6)
+    func getMode(mode: Int) -> String {
+        switch mode {
+        case 0: return "spam"
+        case 1: return "reaction"
+        case 2: return "time"
+        case 3: return "memory"
+        case 4: return "color"
+        case 5: return "picker"
+        case 6: return "aim"
+        default: return "error"
+        }
+    }
     func userScreen() -> some View {
         ZStack {
             
@@ -4804,7 +4972,27 @@ struct ContentView: View {
                         Image(systemName: "arrow.forward")
                             .font(.system(size: 40, weight: .regular, design: .default))
                             .frame(width: 60, height: 60)
-                            .foregroundColor(darkMode ? .white : .black)
+                            .foregroundColor(darkMode ? textColor : .black)
+                            .background(getProfileColor(index: userLoggedIn))
+                            .clipShape(Circle())
+                    }.buttonStyle(.plain)
+                        .padding(.leading, 500)
+                } else {
+                    
+                    Text("Improve your score in \(getMode(mode: unimprovedMode)) mode!")
+                        .font(.largeTitle)
+                        .foregroundColor(darkMode ? textColor : .white)
+                        .padding(.trailing, 100)
+                    Button(action: {
+                        if untriedMode.prefix(1).uppercased() != "" {
+                            state = "start \(getMode(mode: unimprovedMode).prefix(1).uppercased())"
+                            unimprovedMode = Int.random(in: 0...6)
+                        }
+                    }) {
+                        Image(systemName: "arrow.forward")
+                            .font(.system(size: 40, weight: .regular, design: .default))
+                            .frame(width: 60, height: 60)
+                            .foregroundColor(darkMode ? textColor : .black)
                             .background(getProfileColor(index: userLoggedIn))
                             .clipShape(Circle())
                     }.buttonStyle(.plain)
@@ -4813,31 +5001,149 @@ struct ContentView: View {
             }.frame(width: 680, height: 110)
                 .clipShape(RoundedRectangle(cornerRadius: 30))
                 .padding(.top, 230)
+            if state == "loggedin" && startTutor {
+                userTutor()
+            }
         }
     }
+    //MARK: User tutorial
+    func userTutor() -> some View {
+        ZStack{
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                    .ignoresSafeArea()
+                Text("Tutorial")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 80)
+                HStack {
+                    Image(systemName: "arrow.turn.left.up")
+                        .font(.title2)
+                    Text("Drag the window with the top handle.")
+                        .font(.title2)
+                        
+                    Image(systemName: "arrow.turn.right.up")
+                        .font(.title2)
+                }.padding(.bottom, 580)
+                if mouseXY.y > 602 {
+                    Group {
+                        Text("Go to menu")
+                            .font(.title2)
+                            .padding(.bottom, 505)
+                            .padding(.leading, 480)
+                        Rectangle()
+                            .frame(width: 1, height: 50)
+                            .padding(.bottom, 550)
+                            .padding(.leading, 615)
+                        Rectangle()
+                            .frame(width: 20, height: 1)
+                            .padding(.bottom, 500)
+                            .padding(.leading, 595)
+                    }
+                    Group {
+                        Text("Go home")
+                            .font(.title2)
+                            .padding(.bottom, 405)
+                            .padding(.leading, 500)
+                        Rectangle()
+                            .frame(width: 1, height: 100)
+                            .padding(.bottom, 500)
+                            .padding(.leading, 670)
+                        Rectangle()
+                            .frame(width: 40, height: 1)
+                            .padding(.bottom, 400)
+                            .padding(.leading, 630)
+                    }
+                }
+                if usersState != "userSettings" {
+                    ZStack {
+                        Text("Play different gamemodes")
+                            .font(.title2)
+                            .padding(.leading, 450)
+                        Image(systemName: "arrow.down")
+                            .padding(.leading, 450)
+                            .padding(.top, 30)
+                        Group {
+                            Text("Customize appearance")
+                                .font(.title2)
+                                .padding(.trailing, 180)
+                                .padding(.bottom, 140)
+                            Rectangle()
+                                .frame(width: 1, height: 80)
+                                .padding(.bottom, 60)
+                                .padding(.trailing, 420)
+                            
+                            Rectangle()
+                                .frame(width: 30, height: 1)
+                                .padding(.bottom, 140)
+                                .padding(.trailing, 390)
+                        }
+                        Text("View Screen Time")
+                            .font(.title2)
+                        Image(systemName: "arrow.down")
+                            .padding(.trailing, 70)
+                            .padding(.top, 30)
+                        Group {
+                            Text("View leaderboards")
+                                .font(.title2)
+                                .padding(.bottom, 70)
+                                .padding(.trailing, 35)
+                            Rectangle()
+                                .frame(width: 1, height: 45)
+                                .padding(.bottom, 25)
+                                .padding(.trailing, 240)
+                            Rectangle()
+                                .frame(width: 30, height: 1)
+                                .padding(.bottom, 70)
+                                .padding(.trailing, 210)
+                        }
+                        Text("Click to expand")
+                            .font(.title2)
+                            .padding(.trailing, 570)
+                        Image(systemName: "arrow.down")
+                            .padding(.trailing, 580)
+                            .padding(.top, 30)
+                    }.padding(.top, 350)
+                }
+                Button(action: {
+                    startTutor = false
+                }) {
+                    Text("End tutorial")
+                        .font(.title2)
+                        .frame(width: 150, height: 50)
+                        .background(Color.black.opacity(elementOpacity))
+                        .clipShape(Capsule())
+                }.buttonStyle(.plain)
+            }.frame(width: 700, height: 650)
+                .padding(.bottom, 5)
+        }
+    }
+    //MARK: TopBar
     
     var topBar: some View {
         ZStack {
             SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
-            Button(action: {
-                state = "loggedin"
-            }) {
-                Image(systemName: "house.circle")
-                    .frame(width: 22, height: 22)
-                    .background(Color.black.opacity(0.2))
-                    .clipShape(Circle())
-            }.buttonStyle(.plain)
-                .padding(.leading, 670)
-            Button(action: {
-                state = "menu"
-            }) {
-                Image(systemName: "list.bullet.circle")
-                    .frame(width: 22, height: 22)
-                    .background(Color.black.opacity(0.2))
-                    .clipShape(Circle())
-            }.buttonStyle(.plain)
-                .padding(.leading, 615)
-            
+            if state != "startup" && state != "login" {
+                Button(action: {
+                    state = "loggedin"
+                }) {
+                    Image(systemName: "house.circle")
+                        .frame(width: 22, height: 22)
+                        .background(Color.black.opacity(0.2))
+                        .clipShape(Circle())
+                }.buttonStyle(.plain)
+                    .padding(.leading, 670)
+                Button(action: {
+                    state = "menu"
+                }) {
+                    Image(systemName: "list.bullet.circle")
+                        .frame(width: 22, height: 22)
+                        .background(Color.black.opacity(0.2))
+                        .clipShape(Circle())
+                }.buttonStyle(.plain)
+                    .padding(.leading, 615)
+                
+            }
         }.frame(width: 700, height: 30)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .padding(.bottom, 630)
