@@ -1381,12 +1381,35 @@ struct ContentView: View {
                                             .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
                                             //.background(getProfileColor(index: userLoggedIn))
                                             .clipShape(RoundedRectangle(cornerRadius: 50))
-                                            
                                     }
-                                
                             }.buttonStyle(.plain)
                                 .padding(.bottom, 140)
-                                .padding(.trailing, 400 + 2*menuButtonSpacing)
+                                //.padding(.trailing, menuButtonSpacing)
+                            
+                            Button(action: {
+                                print("clicked button 8")
+                                state = "start P"
+                            }) {
+                                Image(systemName: "character.cursor.ibeam")
+                                    .font(.system(size: 76, weight: .bold, design: .default))
+                                    .frame(width: 200, height: 200)
+                                    .foregroundColor(darkMode ? textColor.opacity(0.8) : .white)
+                                    .background(getProfileColor(index: userLoggedIn))
+                                    .clipShape(RoundedRectangle(cornerRadius: 50))
+                                    .overlay(alignment: .bottom) {
+                                        Text("Typing")
+                                            .bold()
+                                            .padding(.top, 130)
+                                            .font(.title2)
+                                            .frame(width: 200, height: 200)
+                                            .foregroundColor(darkMode ? textColor.opacity(0.8) : .white.opacity(0.8))
+                                            //.background(getProfileColor(index: userLoggedIn))
+                                            .clipShape(RoundedRectangle(cornerRadius: 50))
+                                            
+                                    }
+                            }.buttonStyle(.plain)
+                                .padding(.bottom, 140)
+                                .padding(.trailing, 200 + menuButtonSpacing)
                         }
                         
                         
@@ -3227,7 +3250,14 @@ struct ContentView: View {
             }
         }
     }
-     //MARK: Tutor
+    //MARK: Typing test
+    var typeTextView: some View {
+        ZStack {
+            
+        }
+    }
+    
+     //MARK: Menu tutor
     
     var tutorView: some View {
         ZStack {
