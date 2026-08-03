@@ -451,9 +451,26 @@ struct ContentView: View {
     }
     
     //MARK: PICKER variables
+    
     var pickerOffsetText: String {
         String(format: "%.2f", round(pickerOffsets[pickerRound]*100)/100)
     }
+    
+    //MARK: Typing variables
+    @State private var randomSentences: [String] = [
+        "This is a random sentence for the typing test.",
+        "There is a dog that floats up in the sky.",
+        "No man ever has fallen into a manhole cover.",
+        "USB cable transferes data and can even charge your phone.",
+        "Debugging is like detective solving his own crime.",
+        "The instructions for the project are attached to this email.",
+        "The value of variables can change over time.",
+        //"Tuples can be used by functions to return multiple pieces of data at once.",
+        "For in loops iterate over a sequence of values.",
+        "Adding an exclamation mark is force unwrapping in swift.",
+        "Tomorows weather is not looking good acording to Windy."
+        //"Variables and constants are always initialized and array bounds are always checked."
+    ]
     
     //MARK: LOG LISTS
     
@@ -485,6 +502,9 @@ struct ContentView: View {
     @AppStorage("pickerLogBestV") private var pickerLogBestV: [String] = []
     @AppStorage("pickerLogWorstV") private var pickerLogWorstV: [String] = []
     @AppStorage("pickerLogAvaV") private var pickerLogAvaV: [String] = []
+    
+    @AppStorage("typeLogValues") private var typeLogValues: [String] = []
+    @AppStorage("typeLogDates") private var typeLogDates: [String] = []
     
     
     @AppStorage("resetetST") private var screenTimeReseted: Bool = true
@@ -963,6 +983,14 @@ struct ContentView: View {
                 }
                 idx += 1
             }
+        } else if log == "X" {
+            while idx != typeLogDates.count/2 {
+                if typeLogDates[userInLog(pos: idx)] == String(user) {
+                    currentLogDates.append(typeLogDates[valueInLog(pos: idx)])
+                    currentLogVal1.append(typeLogValues[valueInLog(pos: idx)])
+                }
+                idx += 1
+            }
         }
     }
     //MARK: clearAllLogs
@@ -1000,6 +1028,7 @@ struct ContentView: View {
     @State private var bestMemoryValues: [Int] = []
     @State private var bestColorValues: [Int] = []
     @State private var bestPickerValues: [Int] = []
+    @State private var bestTypeValues: [Int] = []
     
     @State private var spamLeaderboard: [Int] = []
     @State private var reactLeaderboard: [Int] = []
@@ -1008,6 +1037,7 @@ struct ContentView: View {
     @State private var memoryLeaderboard: [Int] = []
     @State private var colorLeaderboard: [Int] = []
     @State private var pickerLeaderboard: [Int] = []
+    @State private var typeLeaderboard: [Int] = []
     
     func makeLogLeaderboard(mode: String) {
         if mode == "spam" {
@@ -1102,6 +1132,19 @@ struct ContentView: View {
             pickerLeaderboard = bestPickerValues.sorted()
             print("Best values: \(bestPickerValues)")
             print("Leaderboard: \(pickerLeaderboard)")
+        } else if mode == "type" {
+            bestTypeValues.removeAll()
+            typeLeaderboard.removeAll()
+            for user in 0...userNames.count - 1 {
+                makeCurrentUserLog(log: "A", user: user)
+                print("Curren log for user\(user): \(currentLogVal1)")
+                if !currentLogVal1.isEmpty {
+                    bestTypeValues.append(Int(currentLogVal1.min()!)!)
+                } else { bestTypeValues.append(100000 + user) }
+            }
+            typeLeaderboard = bestTypeValues.sorted()
+            print("Best values: \(bestTypeValues)")
+            print("Leaderboard: \(typeLeaderboard)")
         }
     }
     @State private var usersBest: String = ""
@@ -1117,12 +1160,14 @@ struct ContentView: View {
         makeLogLeaderboard(mode: "memory")
         makeLogLeaderboard(mode: "color")
         makeLogLeaderboard(mode: "picker")
+        makeLogLeaderboard(mode: "type")
         soloBestValue.append(spamLeaderboard.firstIndex(of: bestSpamValues[user])!)
         soloBestValue.append(reactLeaderboard.firstIndex(of: bestReactValues[user])!)
         soloBestValue.append(timeLeaderboard.firstIndex(of: bestTimeValues[user])!)
         soloBestValue.append(aimLeaderboard.firstIndex(of: bestAimValues[user])!)
         soloBestValue.append(memoryLeaderboard.firstIndex(of: bestMemoryValues[user])!)
         soloBestValue.append(colorLeaderboard.firstIndex(of: bestColorValues[user])!)
+        soloBestValue.append(typeLeaderboard.firstIndex(of: bestTypeValues[user])!)
         let indexPos = soloBestValue.firstIndex(of: soloBestValue.min()!)
         if indexPos == 0 {
             soloBestMode = "spam"
@@ -1138,6 +1183,8 @@ struct ContentView: View {
             soloBestMode = "color"
         } else if indexPos == 6 {
             soloBestMode = "picker"
+        } else if indexPos == 7 {
+            soloBestMode = "typing"
         }
         usersBest = String("#\(soloBestValue.min()! + 1) in \(soloBestMode)")
         print("UsersBest: \(usersBest)")
@@ -1179,6 +1226,12 @@ struct ContentView: View {
             pickerLogAvaV.append(String(format: "%.2f", round(pickerOffsets.reduce(0.0, +)/Double(pickerOffsets.count) * 100)/100))
             pickerLogAvaV.append(String(userLoggedIn))
             print("Added everything into picker logs")
+        } else if log == "type" {
+            typeLogDates.append(formattedDate)
+            typeLogDates.append(String(userLoggedIn))
+            typeLogValues.append(String(avgLpsText))
+            typeLogValues.append(String(userLoggedIn))
+            print("Added everything into color logs")
         }
     }
     func manageStreaks() {
@@ -1388,7 +1441,7 @@ struct ContentView: View {
                             
                             Button(action: {
                                 print("clicked button 8")
-                                state = "start P"
+                                state = "start X"
                             }) {
                                 Image(systemName: "character.cursor.ibeam")
                                     .font(.system(size: 76, weight: .bold, design: .default))
@@ -2960,6 +3013,7 @@ struct ContentView: View {
             }
         }
     }
+    //MARK: Picker - start
     
     @State private var hueAList: [Double] = []
     @State private var brightnessAList: [Double] = []
@@ -3251,9 +3305,221 @@ struct ContentView: View {
         }
     }
     //MARK: Typing test
+    
+    func getCharColor(index: Int) -> Color{
+        if index < currentChar {
+            return .white
+        } else {
+            return .gray
+        }
+    }
+    var avgLpsText: String {
+        String(format: "%.2f", Double(totalLetters)/totalTime)
+    }
+    
+    @State private var randomSentence: String = "NONE"
+    @State private var chosenSentences: [Int] = []
+    @State private var randomNum: Int = 0
+    @State private var sentenceRound: Int = 0
+    @State private var currentChar: Int = 0
+    @State private var inputReady: Bool = true
+    @State private var keyPressed: String = "None"
+    @State private var invisText: String = ""
+    @State private var strArray: [String] = []
+    @State private var pressDate: Date = Date()
+    @State private var totalLetters: Int = 0
+    @State private var totalTime: Double = 0
+    @State private var startTypingTime: Date = Date()
+    @FocusState private var focused: Bool
     var typeTextView: some View {
         ZStack {
-            
+            if state == "start X" {
+                Button(action: {
+                    while chosenSentences.count < 3 {
+                        randomNum = Int.random(in: 0..<randomSentences.count)
+                        if !chosenSentences.contains(randomNum) {
+                            chosenSentences.append(randomNum)
+                        }
+                    }
+                    print(chosenSentences)
+                    sentenceRound = 0
+                    randomSentence = randomSentences[chosenSentences[sentenceRound]]
+                    strArray = randomSentence.map { String($0) }
+                    currentChar = 0
+                    totalLetters = 0
+                    totalTime = 0
+                    inputReady = true
+                    state = "typing X"
+                    startTypingTime = Date()
+                }) {
+                    Text("Start")
+                        .font(.largeTitle)
+                        .bold()
+                        .frame(width: 700, height: 650)
+                        .background(Color.green.opacity(bgOpacity))
+                        .clipShape(Rectangle())
+                }.buttonStyle(.plain)
+                    .ignoresSafeArea()
+                
+                navigationBar(kind: "start")
+            }
+            if state == "typing X" {
+                
+                Rectangle()
+                    .frame(width: 700, height: 650)
+                    .foregroundColor(.black.opacity(bgOpacity))
+                    .ignoresSafeArea()
+                RoundedRectangle(cornerRadius: 15)
+                    .foregroundColor(.black.opacity(elementOpacity))
+                    .frame(width: 600, height: 25)
+                    .padding(.bottom, 10)
+                //let charArray: = Array(randomSentence)
+                if inputReady {
+                    ZStack(alignment: .topLeading) {
+                        ForEach(0..<strArray.count, id: \.self) { index in
+                            Text(strArray[index])
+                                .font(.system(size: 15, weight: .regular, design: .monospaced))
+                                .foregroundColor(getCharColor(index: index))
+                                .padding(.leading, CGFloat(10*index))
+                            //.padding(.top, charArray.count)
+                        }
+                        if currentChar < strArray.count {
+                            Text("_")
+                                .font(.system(size: 15, weight: .regular, design: .monospaced))
+                                .padding(.leading, CGFloat(10*currentChar))
+                                .padding(.bottom, 10)
+                        }
+                    }
+                }
+                if sentenceRound-1 == 0 {
+                    Text(randomSentences[chosenSentences[sentenceRound-1]])
+                        .font(.system(size: 15, weight: .regular, design: .monospaced))
+                        .foregroundColor(.white)
+                        .padding(.bottom, 60)
+                }
+                if sentenceRound-2 == 0 {
+                    Text(randomSentences[chosenSentences[sentenceRound-2]])
+                        .font(.system(size: 15, weight: .regular, design: .monospaced))
+                        .foregroundColor(.white)
+                        .padding(.bottom, 60)
+                    Text(randomSentences[chosenSentences[sentenceRound-1]])
+                        .font(.system(size: 15, weight: .regular, design: .monospaced))
+                        .foregroundColor(.white)
+                        .padding(.bottom, 110)
+                }
+                
+                if sentenceRound+1 < 3 {
+                    Text(randomSentences[chosenSentences[sentenceRound + 1]])
+                        .font(.system(size: 15, weight: .regular, design: .monospaced))
+                        .foregroundColor(.gray)
+                        .padding(.top, 40)
+                }
+                if sentenceRound+2 < 3 {
+                //    Text(randomSentences[chosenSentences[sentenceRound + 1]])
+                //        .font(.system(size: 20, weight: .regular, design: .monospaced))
+                //        .padding(.top, 40)
+                    Text(randomSentences[chosenSentences[sentenceRound + 2]])
+                        .font(.system(size: 15, weight: .regular, design: .monospaced))
+                        .foregroundColor(.gray)
+                        .padding(.top, 90)
+                }
+                
+                Text("Avg lps: \(Double(totalLetters)/totalTime)")
+                    .font(.title2)
+                    .padding(.top, 300)
+                ZStack {
+                    let invisFielfOffset: CGFloat = 700
+                    if currentChar < strArray.count {
+                        Text(keyPressed)
+                            .padding(.top, invisFielfOffset)
+                        TextField("", text: $invisText)
+                            .focused($focused)
+                            .opacity(0.3)
+                            .padding(.top, invisFielfOffset + 30)
+                            .onChange(of: invisText) { newValue in
+                                if let endChar = newValue.last {
+                                    keyPressed = String(endChar)
+                                    invisText = ""
+                                    if keyPressed == strArray[currentChar] {
+                                        totalTime += Double(Date().timeIntervalSince(pressDate))
+                                        pressDate = Date()
+                                        currentChar += 1
+                                        totalLetters += 1
+                                    }
+                                }
+                            }
+                            .onAppear() {
+                                focused = true
+                            }
+                    } else {
+                        Text("end of sentence")
+                            .padding(.top, invisFielfOffset)
+                            .onAppear() {
+                                if sentenceRound < 2 {
+                                    sentenceRound += 1
+                                    inputReady = false
+                                    randomSentence = randomSentences[chosenSentences[sentenceRound]]
+                                    strArray.removeAll()
+                                    strArray = randomSentence.map { String($0) }
+                                    currentChar = 0
+                                    inputReady = true
+                                } else {
+                                    writeToLog(log: "type")
+                                    state = "results X"
+                                }
+                            }
+                    }
+                }
+                
+            }
+            if state == "results X" {
+                Text("\(avgLpsText) letters per second.")
+                    .font(.largeTitle)
+                
+                navigationBar(kind: "results")
+            }
+            if state == "log X" {
+                if 0 < spamLogValues.count && 0 < spamLogDates.count {
+                    ScrollView {
+                        VStack {
+                            ForEach(0..<currentLogDates.count, id: \.self) { index in
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .foregroundColor(Color.black.opacity(getExistenceById(index: index)))
+                                        .padding(.horizontal, 35)
+                                    
+                                    HStack {
+                                        Text("Attempt: \(index + 1)")
+                                            .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
+                                            .padding(.leading, 40)
+                                        Spacer()
+                                        Text("\(currentLogVal1[index]) letters per second.)")
+                                            .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
+                                        Spacer()
+                                        Text("\(currentLogDates[index])")
+                                            .font(.title2)
+                                            .foregroundColor(darkMode ? .white : .black)
+                                            .padding(.trailing, 40)
+                                    }.onAppear() {
+                                        
+                                    }
+                                
+                                }.onAppear() {
+                                    print("Im line number \(index), returned: \(userInLog(pos: index)) ")
+                                }
+                            }
+                        }.frame(maxWidth: .infinity)
+                    }.frame(height: 400)
+
+                } else {
+                    Text("No log stored.")
+                        .font(.title2)
+                }
+                
+                navigationBar(kind: "log")
+            }
         }
     }
     
@@ -5211,6 +5477,8 @@ struct ContentView: View {
                 colorView
             } else if state.hasSuffix("P") {
                 pickerView
+            } else if state.hasSuffix("X") {
+                typeTextView
             } else if state == "tutor" {
                 tutorView
             } else if state == "startup" {
