@@ -29,6 +29,7 @@ struct ContentView: View {
         if Date().weekDay != "Mon" {
             screenTimeReseted = false
         }
+        print(pickerLogAvaV)
         print("Startup bgOpacity: \(bgOpacity)")
         print(UserPreferencesBgOpacity)
         print(screenTimeMon)
@@ -453,7 +454,7 @@ struct ContentView: View {
     //MARK: PICKER variables
     
     var pickerOffsetText: String {
-        String(format: "%.2f", round(pickerOffsets[pickerRound]*100)/100)
+        String("\(pickerOffsets[pickerRound])%")
     }
     
     //MARK: Typing variables
@@ -581,7 +582,7 @@ struct ContentView: View {
         ZStack {
             if kind == "start" {
                 ZStack {
-                    if !state.hasSuffix("M") && !state.hasSuffix("C") && !state.hasSuffix("P") {
+                    if !state.hasSuffix("M") && !state.hasSuffix("C") && !state.hasSuffix("P") && !state.hasSuffix("X") {
                         Button(action: {
                             slider3Value = Double(testCountGoal)
                             state = "settings \(state.suffix(1))"
@@ -1028,7 +1029,7 @@ struct ContentView: View {
     @State private var bestMemoryValues: [Int] = []
     @State private var bestColorValues: [Int] = []
     @State private var bestPickerValues: [Int] = []
-    @State private var bestTypeValues: [Int] = []
+    @State private var bestTypeValues: [Double] = []
     
     @State private var spamLeaderboard: [Int] = []
     @State private var reactLeaderboard: [Int] = []
@@ -1037,7 +1038,7 @@ struct ContentView: View {
     @State private var memoryLeaderboard: [Int] = []
     @State private var colorLeaderboard: [Int] = []
     @State private var pickerLeaderboard: [Int] = []
-    @State private var typeLeaderboard: [Int] = []
+    @State private var typeLeaderboard: [Double] = []
     
     func makeLogLeaderboard(mode: String) {
         if mode == "spam" {
@@ -1074,7 +1075,7 @@ struct ContentView: View {
                 makeCurrentUserLog(log: "T", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
-                    bestTimeValues.append(Double(currentLogVal1.min()!)!)
+                    bestTimeValues.append(floor(100*Double(currentLogVal1.min()!)!)/100)
                 } else { bestTimeValues.append(Double(100000 + user)) }
             }
             timeLeaderboard = bestTimeValues.sorted()
@@ -1120,29 +1121,32 @@ struct ContentView: View {
             print("Best values: \(bestColorValues)")
             print("Leaderboard: \(colorLeaderboard)")
         } else if mode == "picker" {
+            print("PICKER")
             bestPickerValues.removeAll()
             pickerLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
-                makeCurrentUserLog(log: "A", user: user)
+                makeCurrentUserLog(log: "P", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
-                    bestPickerValues.append(Int(currentLogVal1.min()!)!)
-                } else { bestPickerValues.append(100000 + user) }
+                    bestPickerValues.append(Int(Double(currentLogVal1.max()!)!))
+                } else { bestPickerValues.append(0 - user) }
             }
-            pickerLeaderboard = bestPickerValues.sorted()
+            pickerLeaderboard = bestPickerValues.sorted(by: >)
             print("Best values: \(bestPickerValues)")
             print("Leaderboard: \(pickerLeaderboard)")
         } else if mode == "type" {
+            print("TYPING")
             bestTypeValues.removeAll()
             typeLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
-                makeCurrentUserLog(log: "A", user: user)
+                makeCurrentUserLog(log: "X", user: user)
                 print("Curren log for user\(user): \(currentLogVal1)")
                 if !currentLogVal1.isEmpty {
-                    bestTypeValues.append(Int(currentLogVal1.min()!)!)
-                } else { bestTypeValues.append(100000 + user) }
+                    bestTypeValues.append(floor(100*Double(currentLogVal1.max()!)!)/100)
+                    print("Added \(floor(100*Double(currentLogVal1.max()!)!)/100)")
+                } else { bestTypeValues.append(0.0 - Double(user)) }
             }
-            typeLeaderboard = bestTypeValues.sorted()
+            typeLeaderboard = bestTypeValues.sorted(by: >)
             print("Best values: \(bestTypeValues)")
             print("Leaderboard: \(typeLeaderboard)")
         }
@@ -1485,13 +1489,14 @@ struct ContentView: View {
                             makeLogLeaderboard(mode: "color")
                             print("PICKER")
                             makeLogLeaderboard(mode: "picker")
+                            print("TYPING")
+                            makeLogLeaderboard(mode: "type")
                             
                         }
                     
-                }.frame(width: 640, height: 450)
-                    .padding(.bottom, 40)
+                }.frame(width: 635, height: 450)
                     .clipShape(RoundedRectangle(cornerRadius: 50))
-                
+                    .padding(.bottom, 40)
                 Button(action: {
                     state = "tutor"
                 }) {
@@ -3034,7 +3039,7 @@ struct ContentView: View {
     }
     func calcColorOffset() {
         let pr = pickerRound
-        pickerOffsets.append(round(100 - (100 * abs(hueAList[pr] - hueQList[pr]) + abs(brightnessAList[pr] - brightnessQList[pr]))))
+        pickerOffsets.append(round(100 - (100 * (abs(hueAList[pr] - hueQList[pr]) + abs(brightnessAList[pr] - brightnessQList[pr])))))
     }
     @State private var pickerRound: Int = 0
     @State private var colorSlider: Double = 0.2
@@ -3261,7 +3266,7 @@ struct ContentView: View {
                         
                     }
                 }.padding(.bottom, 420)
-                Text("Avarage offset: \(pickerOffsets.reduce(0.0, +) / Double(pickerOffsets.count))")
+                Text("Avarage acuracy: \(String(format: "%.1f", pickerOffsets.reduce(0.0, +) / Double(pickerOffsets.count)))%")
                     .font(.largeTitle)
                     .bold()
                 navigationBar(kind: "results")
@@ -3367,11 +3372,11 @@ struct ContentView: View {
                 
                 Rectangle()
                     .frame(width: 700, height: 650)
-                    .foregroundColor(.black.opacity(bgOpacity))
+                    .foregroundColor(.blue.opacity(bgOpacity))
                     .ignoresSafeArea()
                 RoundedRectangle(cornerRadius: 15)
                     .foregroundColor(.black.opacity(elementOpacity))
-                    .frame(width: 600, height: 25)
+                    .frame(width: 650, height: 25)
                     .padding(.bottom, 10)
                 //let charArray: = Array(randomSentence)
                 if inputReady {
@@ -3415,9 +3420,6 @@ struct ContentView: View {
                         .padding(.top, 40)
                 }
                 if sentenceRound+2 < 3 {
-                //    Text(randomSentences[chosenSentences[sentenceRound + 1]])
-                //        .font(.system(size: 20, weight: .regular, design: .monospaced))
-                //        .padding(.top, 40)
                     Text(randomSentences[chosenSentences[sentenceRound + 2]])
                         .font(.system(size: 15, weight: .regular, design: .monospaced))
                         .foregroundColor(.gray)
@@ -4087,6 +4089,7 @@ struct ContentView: View {
                     makeLogLeaderboard(mode: "memory")
                     makeLogLeaderboard(mode: "color")
                     makeLogLeaderboard(mode: "picker")
+                    makeLogLeaderboard(mode: "type")
                     
                     state = "user results"
                 }) {
@@ -4838,7 +4841,7 @@ struct ContentView: View {
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
                             } else {
-                                Text("#\(index+1). \(userNames[bestTimeValues.firstIndex(of: timeLeaderboard[index])!]) \(timeLeaderboard[index])s.")
+                                Text("#\(index+1). \(userNames[bestTimeValues.firstIndex(of: timeLeaderboard[index])!]) \(String(format: "%.2f", timeLeaderboard[index]))s.")
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
                             }
@@ -4927,18 +4930,18 @@ struct ContentView: View {
             
             ZStack {
                 SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
-                // COLOR
+                // PICKER
                 VStack {
                     ScrollView {
                         ForEach(0...userNames.count - 1, id: \.self) {index in
                             if pickerLeaderboard.isEmpty {
                                 EmptyView()
-                            } else if pickerLeaderboard[index] >= 10000 {
-                                Text("#\(index+1). \(userNames[bestPickerValues.firstIndex(of: pickerLeaderboard[index])!]) - offset.")
+                            } else if pickerLeaderboard[index] <= 0 {
+                                Text("#\(index+1). \(userNames[bestPickerValues.firstIndex(of: pickerLeaderboard[index])!]) -% acur.")
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
                             } else {
-                                Text("#\(index+1). \(userNames[bestPickerValues.firstIndex(of: pickerLeaderboard[index])!]) \(pickerLeaderboard[index]) offset.")
+                                Text("#\(index+1). \(userNames[bestPickerValues.firstIndex(of: pickerLeaderboard[index])!]) \(pickerLeaderboard[index])% acur.")
                                     .font(getLeaderboardfont(index: index))
                                     .foregroundColor(getLeaderboardColor(index: index))
                             }
@@ -4949,6 +4952,31 @@ struct ContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 30))
                 .padding(.top, 10)
                 .padding(.leading, CGFloat(8400 - modePadding))
+            
+            ZStack {
+                SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                // TYPING
+                VStack {
+                    ScrollView {
+                        ForEach(0...userNames.count - 1, id: \.self) {index in
+                            if typeLeaderboard.isEmpty {
+                                EmptyView()
+                            } else if typeLeaderboard[index] <= 0 {
+                                Text("#\(index+1). \(userNames[bestTypeValues.firstIndex(of: typeLeaderboard[index])!]) - lps.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            } else {
+                                Text("#\(index+1). \(userNames[bestTypeValues.firstIndex(of: typeLeaderboard[index])!]) \(String(format: "%.2f", typeLeaderboard[index])) lps.")
+                                    .font(getLeaderboardfont(index: index))
+                                    .foregroundColor(getLeaderboardColor(index: index))
+                            }
+                        }
+                    }.padding(.top, 5)
+                }
+            }.frame(width: 600, height: 390)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .padding(.top, 10)
+                .padding(.leading, CGFloat(9800 - modePadding))
             
             ZStack {
                 Button(action: {
@@ -4978,6 +5006,8 @@ struct ContentView: View {
                             leaderboardText = "Memory mode"
                         } else if modePadding == 8400 {
                             leaderboardText = "Color mode"
+                        } else if modePadding == 9800 {
+                            leaderboardText = "Picker mode"
                         }
                         withAnimation(.easeInOut(duration: 0.7)) {
                             modePadding -= 1400
@@ -4994,7 +5024,7 @@ struct ContentView: View {
                     .padding(.trailing, 520)
                 
                 Button(action: {
-                    if modePadding != 8400 {
+                    if modePadding != 9800 {
                         if modePadding == 0 {
                             leaderboardText = "Reaction mode"
                         } else if modePadding == 1400 {
@@ -5007,6 +5037,8 @@ struct ContentView: View {
                             leaderboardText = "Color mode"
                         } else if modePadding == 7000 {
                             leaderboardText = "Picker mode"
+                        } else if modePadding == 8400 {
+                            leaderboardText = "Typing mode"
                         }
                         withAnimation(.easeInOut(duration: 0.7)) {
                             modePadding += 1400
