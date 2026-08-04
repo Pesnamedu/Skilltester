@@ -1285,7 +1285,7 @@ struct ContentView: View {
                                     .background(getProfileColor(index: userLoggedIn))
                                     .clipShape(RoundedRectangle(cornerRadius: 50))
                                     .overlay(alignment: .bottom) {
-                                        Text("Spam")
+                                        Text("Reaction")
                                             .bold()
                                             .padding(.top, 130)
                                             .font(.title2)
@@ -1440,7 +1440,7 @@ struct ContentView: View {
                                             .clipShape(RoundedRectangle(cornerRadius: 50))
                                     }
                             }.buttonStyle(.plain)
-                                .padding(.bottom, 140)
+                                .padding(.bottom, 20)
                                 //.padding(.trailing, menuButtonSpacing)
                             
                             Button(action: {
@@ -1465,7 +1465,7 @@ struct ContentView: View {
                                             
                                     }
                             }.buttonStyle(.plain)
-                                .padding(.bottom, 140)
+                                .padding(.bottom, 20)
                                 .padding(.trailing, 200 + menuButtonSpacing)
                         }
                         
@@ -1651,7 +1651,7 @@ struct ContentView: View {
             
             //MARK: Spam - settings
             if state == "settings S" {
-                ZStack {
+                
                     Text("Settings")
                         .bold()
                         .font(.largeTitle)
@@ -1670,7 +1670,8 @@ struct ContentView: View {
                     }.padding(.top, 500)
                         .buttonStyle(.plain)
                         .keyboardShortcut(.space, modifiers: [.shift])
-                    
+                ZStack {
+                    SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
                     ZStack {
                         Text("Spam duration:")
                             .padding(.bottom, 45)
@@ -1686,7 +1687,8 @@ struct ContentView: View {
                     }
                     
                     
-                }
+                }.frame(width: 600, height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 30))
             }
             
             //MARK: Spam - log
@@ -2067,76 +2069,83 @@ struct ContentView: View {
                         .buttonStyle(.plain)
                         .keyboardShortcut(.space, modifiers: [.shift])
                     
-                    VStack(spacing: 1) {
-                        Text("Wait time:")
-                            .font(.title2)
-                        ZStack {
-                            Text("Min. wait time:")
-                                .padding(.trailing, 350)
-                            Slider(value: $slider1Value, in: 0.5...8, step: 0.5)
-                                .tint(.green)
-                                .frame(width: 250)
-                                .onChange(of: slider1Value) { newValue in
-                                    saveMessage = "Press Save to save values."
-                                }
-                            Text("\(slider1ValueText) s.")
-                                .padding(.leading, 305)
-                        }
-                        ZStack {
-                            Text("Max. wait time:")
-                                .padding(.trailing, 350)
-                            Slider(value: $slider2Value, in: 1.5...9, step: 0.5)
-                                .tint(.green)
-                                .frame(width: 250)
-                                .onChange(of: slider2Value) { newValue in
-                                    saveMessage = "Press Save to save values."
-                                }
-                            Text("\(slider2ValueText) s.")
-                                .padding(.leading, 305)
-                        }
-                        HStack {
-                            Button(action: {
-                                print("Save button clicked.")
-                                if slider2Value >= slider1Value + 1 {
-                                    minWaitTime = Double(slider1Value)
-                                    maxWaitTime = Double(slider2Value)
-                                    saveMessage = "Changes Saved."
-                                    print("Saved changes.")
-                                } else if slider1Value > slider2Value{
-                                    saveMessage = "Min. wait time has to be smaller than Max. wait!"
-                                    print("Min is large than Max; didnt save.")
-                                } else if slider1Value == slider2Value || slider1Value == slider2Value - 0.5 {
-                                    saveMessage = "Min. and Max. wait have to be atleast 1 second apart!"
-                                    print("Min and Max not 1s or more part; didnt save.")
-                                }
+                    ZStack {
+                        SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                        VStack(spacing: 1) {
+                            Text("Wait time:")
+                                .font(.title2)
+                            ZStack {
+                                Text("Min. wait time:")
+                                    .padding(.trailing, 350)
+                                Slider(value: $slider1Value, in: 0.5...8, step: 0.5)
+                                    .tint(.green)
+                                    .frame(width: 250)
+                                    .onChange(of: slider1Value) { newValue in
+                                        saveMessage = "Press Save to save values."
+                                    }
+                                Text("\(slider1ValueText) s.")
+                                    .padding(.leading, 305)
+                            }
+                            ZStack {
+                                Text("Max. wait time:")
+                                    .padding(.trailing, 350)
+                                Slider(value: $slider2Value, in: 1.5...9, step: 0.5)
+                                    .tint(.green)
+                                    .frame(width: 250)
+                                    .onChange(of: slider2Value) { newValue in
+                                        saveMessage = "Press Save to save values."
+                                    }
+                                Text("\(slider2ValueText) s.")
+                                    .padding(.leading, 305)
+                            }
+                            HStack {
+                                Button(action: {
+                                    print("Save button clicked.")
+                                    if slider2Value >= slider1Value + 1 {
+                                        minWaitTime = Double(slider1Value)
+                                        maxWaitTime = Double(slider2Value)
+                                        saveMessage = "Changes Saved."
+                                        print("Saved changes.")
+                                    } else if slider1Value > slider2Value{
+                                        saveMessage = "Min. wait time has to be smaller than Max. wait!"
+                                        print("Min is large than Max; didnt save.")
+                                    } else if slider1Value == slider2Value || slider1Value == slider2Value - 0.5 {
+                                        saveMessage = "Min. and Max. wait have to be atleast 1 second apart!"
+                                        print("Min and Max not 1s or more part; didnt save.")
+                                    }
+                                    
+                                }) {
+                                    Text("Save")
+                                        .bold()
+                                        .font(.title2)
+                                        .frame(width: 56, height: 24)
+                                        .background(Color.green)
+                                        .clipShape(Capsule())
+                                }.buttonStyle(.plain)
                                 
-                            }) {
-                                Text("Save")
-                                    .bold()
-                                    .font(.title2)
-                                    .frame(width: 56, height: 24)
-                                    .background(Color.green)
-                                    .clipShape(Capsule())
-                            }.buttonStyle(.plain)
+                                Text(saveMessage)
+                            }
                             
-                            Text(saveMessage)
-                        }
-                        
-                        Text("Number of rounds:")
-                            .font(.title2)
-                            .padding(.top, 20)
-                        ZStack {
-                            Slider(value: $slider3Value, in: 3...10, step: 1)
-                                .tint(.green)
-                                .frame(width: 250)
+                            Text("Number of rounds:")
+                                .font(.title2)
+                                .padding(.top, 20)
+                            ZStack {
+                                Slider(value: $slider3Value, in: 3...10, step: 1)
+                                    .tint(.green)
+                                    .frame(width: 250)
                                 
-                            Text("\(slider3ValueText) rounds.")
-                                .padding(.leading, 320)
-                        }
+                                Text("\(slider3ValueText) rounds.")
+                                    .padding(.leading, 320)
+                            }
+                            
+                        }//.padding(.bottom, 320)
+                    }.frame(width: 600, height: 300)
+                        .clipShape(RoundedRectangle(cornerRadius: 30))
+                        .padding(.bottom, 20)
                         
-                    }.padding(.bottom, 320)
                     
-                }.padding(.vertical, 10)
+                }
+                .padding(.vertical, 10)
                     .navigationTitle("Skilltester - Reaction time, Settings")
                 
             }
@@ -2417,6 +2426,8 @@ struct ContentView: View {
                         .font(.largeTitle)
                 }.buttonStyle(.plain)
                 
+                Text("You will shoot \(targetCount) rounds.")
+                    .padding(.top, 45)
                 
                 navigationBar(kind: "start")
             }
@@ -2776,6 +2787,9 @@ struct ContentView: View {
                         .font(.largeTitle)
                 }.buttonStyle(.plain)
                 
+                Text("Infinite rounds.")
+                    .padding(.top, 45)
+                
                 navigationBar(kind: "start")
             }
             
@@ -2946,6 +2960,9 @@ struct ContentView: View {
                 }.buttonStyle(.plain)
                     .ignoresSafeArea()
                 
+                Text("Infinite rounds.")
+                    .padding(.top, 45)
+                
                 navigationBar(kind: "start")
             }
             
@@ -3063,6 +3080,9 @@ struct ContentView: View {
                         .clipShape(Rectangle())
                 }.buttonStyle(.plain)
                     .ignoresSafeArea()
+                
+                Text("You will do 5 rounds.")
+                    .padding(.top, 45)
                 
                 navigationBar(kind: "start")
             }
@@ -3365,6 +3385,8 @@ struct ContentView: View {
                         .clipShape(Rectangle())
                 }.buttonStyle(.plain)
                     .ignoresSafeArea()
+                Text("You will type 3 sentences.")
+                    .padding(.top, 45)
                 
                 navigationBar(kind: "start")
             }
