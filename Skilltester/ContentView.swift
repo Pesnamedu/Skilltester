@@ -3616,7 +3616,7 @@ struct ContentView: View {
             }
         }
     }
-    
+    @State private var loginMessage: String = ""
     //MARK: STARTUP
     var StartupView: some View {
         ZStack {
@@ -3794,6 +3794,7 @@ struct ContentView: View {
                 Toggle("Tutorial on start", isOn: $startTutor)
                     .toggleStyle(.switch)
                     .font(.title2)
+                    .tint(getProfileColor(index: userOnLogin))
                     .foregroundColor(.white)
                     .padding(.top, 380)
                     .onAppear() {
@@ -3802,6 +3803,9 @@ struct ContentView: View {
             }
             //MARK: Brand new screen
             ZStack {
+                Text(loginMessage)
+                    .font(.title2)
+                    .padding(.top, 300)
                 if usersState == "none" {
                     Text("Add User")
                         .font(.largeTitle)
@@ -3828,9 +3832,23 @@ struct ContentView: View {
                             .frame(width: 190, height: 40)
                             .background(Color.gray.opacity(0.3))
                             .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .offset(x: shakeMod ? 0 : 10)
+                            .animation(
+                                .linear(duration: Double(0.05)).repeatCount(2, autoreverses: true),
+                                value: shakeMod
+                                )
                         Button(action: {
                             if nameInput.count >= 4 {
                                 passwordState = "input"
+                                loginMessage = ""
+                            } else {
+                                loginMessage = "Name has to be atleast 4 characters."
+                                shakeMod.toggle()
+                                Task {
+                                    try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
+                                    shakeMod.toggle()
+                                }
+                                
                             }
                         }) {
                             Image(systemName: "arrow.right")
@@ -3841,6 +3859,11 @@ struct ContentView: View {
                                 .clipShape(Circle())
                         }.buttonStyle(.plain)
                             .keyboardShortcut(.return, modifiers: [])
+                            .offset(x: shakeMod ? 0 : 10)
+                            .animation(
+                                .linear(duration: Double(0.05)).repeatCount(2, autoreverses: true),
+                                value: shakeMod
+                                )
                         
                     }.padding(.top, 1)
                     Button(action: {
@@ -3881,22 +3904,39 @@ struct ContentView: View {
                             .frame(width: 190, height: 40)
                             .background(Color.gray.opacity(0.3))
                             .clipShape(RoundedRectangle(cornerRadius: 20))
-                        Button(action: {
-                            if nameInput.count > 0 {
-                                passwordState = "repeat"
-                            } else {
-                                //SOMEEFFECT
-                            }
-                        }) {
-                            Image(systemName: "arrow.right")
-                                .font(.largeTitle)
-                                .foregroundColor(.gray)
-                                .frame(width: 30, height: 30)
-                                .background(Color.gray.opacity(0.2))
-                                .clipShape(Circle())
-                        }.buttonStyle(.plain)
-                            .keyboardShortcut(.return, modifiers: [])
-                        
+                            .offset(x: shakeMod ? 0 : 10)
+                            .animation(
+                                .linear(duration: Double(0.05)).repeatCount(2, autoreverses: true),
+                                value: shakeMod
+                                )
+                        if passwordState == "input" {
+                            Button(action: {
+                                if passwordInput != "" {
+                                    passwordState = "repeat"
+                                    loginMessage = ""
+                                } else {
+                                    loginMessage = "You have to choose some password."
+                                    shakeMod.toggle()
+                                    Task {
+                                        try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
+                                        shakeMod.toggle()
+                                    }
+                                }
+                            }) {
+                                Image(systemName: "arrow.right")
+                                    .font(.largeTitle)
+                                    .foregroundColor(.gray)
+                                    .frame(width: 30, height: 30)
+                                    .background(Color.gray.opacity(0.2))
+                                    .clipShape(Circle())
+                            }.buttonStyle(.plain)
+                                .keyboardShortcut(.return, modifiers: [])
+                                .offset(x: shakeMod ? 0 : 10)
+                                .animation(
+                                    .linear(duration: Double(0.05)).repeatCount(2, autoreverses: true),
+                                    value: shakeMod
+                                )
+                        }
                     }.padding(.top, 65)
                     if passwordState == "repeat" {
                         HStack(spacing: -35) {
@@ -3914,29 +3954,45 @@ struct ContentView: View {
                                     )
                             Button(action: {
                                 if passwordInput == passwordRepeat {
-                                    //MARK: User created
-                                    userNames.append(nameInput)
-                                    userPass.append(passwordInput)
-                                    userColor.append("blue")
-                                    UserPreferencesBgOpacity.append(0.6)
-                                    UserPreferencesElementOpacity.append(0.45)
-                                    userPreferencesDarkMode.append(true)
-                                    lastStreakDays.append(dayOfWeekNum(day: Date().weekDay))
-                                    userStreaks.append(1)
-                                    screenTimeMon.append(0)
-                                    screenTimeTue.append(0)
-                                    screenTimeWed.append(0)
-                                    screenTimeThu.append(0)
-                                    screenTimeFri.append(0)
-                                    screenTimeSat.append(0)
-                                    screenTimeSun.append(0)
-                                    passwordState = "done"
-                                    userOnLogin = userNames.count - 1
-                                    usersState = "login"
-                                    passwordInput = ""
-                                    passwordRepeat = ""
+                                    if passwordInput != "" {
+                                        //MARK: User created
+                                        userNames.append(nameInput)
+                                        userPass.append(passwordInput)
+                                        userColor.append("blue")
+                                        UserPreferencesBgOpacity.append(0.6)
+                                        UserPreferencesElementOpacity.append(0.45)
+                                        userPreferencesDarkMode.append(true)
+                                        lastStreakDays.append(dayOfWeekNum(day: Date().weekDay))
+                                        userStreaks.append(1)
+                                        screenTimeMon.append(0)
+                                        screenTimeTue.append(0)
+                                        screenTimeWed.append(0)
+                                        screenTimeThu.append(0)
+                                        screenTimeFri.append(0)
+                                        screenTimeSat.append(0)
+                                        screenTimeSun.append(0)
+                                        passwordState = "done"
+                                        userOnLogin = userNames.count - 1
+                                        usersState = "login"
+                                        passwordInput = ""
+                                        passwordRepeat = ""
+                                        loginMessage = ""
+                                    } else {
+                                        shakeMod.toggle()
+                                        Task {
+                                            try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
+                                            shakeMod.toggle()
+                                        }
+                                        loginMessage = "Passwords are blank."
+                                    }
                                 } else {
+                                    
                                     shakeMod.toggle()
+                                    Task {
+                                        try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
+                                        shakeMod.toggle()
+                                    }
+                                    loginMessage = "Passwords dont match."
                                 }
                             }) {
                                 Image(systemName: "arrow.right")
@@ -3947,6 +4003,11 @@ struct ContentView: View {
                                     .clipShape(Circle())
                             }.buttonStyle(.plain)
                                 .keyboardShortcut(.return, modifiers: [])
+                                .offset(x: shakeMod ? 0 : 10)
+                                .animation(
+                                    .linear(duration: Double(0.05)).repeatCount(2, autoreverses: true),
+                                    value: shakeMod
+                                    )
                         }.padding(.top, 150)
                         
                         
