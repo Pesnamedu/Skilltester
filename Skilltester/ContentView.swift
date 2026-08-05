@@ -294,7 +294,11 @@ struct ContentView: View {
         } else if clickTimes[index] == clickTimes.max() {
             return .red
         } else {
-            return .white
+            if darkMode {
+                return .white
+            } else {
+                return .black
+            }
         }
     }
     func getExistenceById(index: Int) -> Double{
@@ -303,6 +307,11 @@ struct ContentView: View {
         } else {
             return 0.1
         }
+    }
+    func getRLinePos() -> CGFloat {
+        guard !clickTimes.isEmpty else {return 0}
+        return -116 + CGFloat(Float(avaTime) / Float(clickTimes.max()!)) * 420
+        
     }
     
     @AppStorage("minWaitTime") private var minWaitTime: Double = 1.5
@@ -344,7 +353,7 @@ struct ContentView: View {
         String(format: "%.0f", Float(spamCount) / (0.0001 + Float(timeElapsed))*1000)
     }
     //MARK: TIME variables
-    @State private var timeStopped: Int = 0
+    @State private var timeStopped: Double = 0
     @State private var isViewBlocked: Bool = false
     @State private var timeStopGoal: Int = 0
     @State private var randomTime: Int = 0
@@ -358,8 +367,8 @@ struct ContentView: View {
     var timeStoppedText: String {
         String(format: "%.1f", round(Float(timeStopped) / 100)/10)
     }
-    var timeDifference: Int {
-        Int(abs(randomTime - timeStopped))
+    var timeDifference: Double {
+        Double(abs(Double(randomTime) - timeStopped))
     }
     var timeDifferenceText: String {
         String(format: "%.2f", abs((Float(timeStoppedText) ?? 1) - (Float(randomTimeText) ?? 1)))
@@ -397,7 +406,11 @@ struct ContentView: View {
         } else if timeToHit[index] == timeToHit.max() {
             return .red
         } else {
-            return .white
+            if darkMode {
+                return .white
+            } else {
+                return .black
+            }
         }
     }
     var avaTimeToHit: Int {
@@ -636,6 +649,8 @@ struct ContentView: View {
             } else if kind == "results" {
                 ZStack {
                     Button(action: {
+                        clickTimes.removeAll()
+                        timeToHit.removeAll()
                         state = "start \(state.suffix(1))"
                     }) {
                         Text("Start again")
@@ -786,6 +801,7 @@ struct ContentView: View {
         print(UserPreferencesBgOpacity)
         print(UserPreferencesElementOpacity)
     }
+    //MARK: Delete user log
     @State private var idx: Int = 0
     func deleteUserLog(log: String, user: Int) {
         idx = 0
@@ -865,7 +881,7 @@ struct ContentView: View {
                     colorLogValues.remove(at: valueInLog(pos: idx))
                 }
             }
-        } else if log == "A" {
+        } else if log == "P" {
             while idx != pickerLogDates.count/2 {
                 if pickerLogDates[userInLog(pos: idx)] != String(user) {
                     idx += 1
@@ -878,6 +894,17 @@ struct ContentView: View {
                     pickerLogAvaV.remove(at: valueInLog(pos: idx))
                     pickerLogDates.remove(at: valueInLog(pos: idx))
                     pickerLogDates.remove(at: valueInLog(pos: idx))
+                }
+            }
+        } else if log == "X" {
+            while idx != typeLogDates.count/2 {
+                if typeLogDates[userInLog(pos: idx)] != String(user) {
+                    idx += 1
+                } else {
+                    typeLogValues.remove(at: valueInLog(pos: idx))
+                    typeLogValues.remove(at: valueInLog(pos: idx))
+                    typeLogDates.remove(at: valueInLog(pos: idx))
+                    typeLogDates.remove(at: valueInLog(pos: idx))
                 }
             }
         }
@@ -1524,6 +1551,7 @@ struct ContentView: View {
                     .padding(.trailing, 590)
                 if startTutor {
                     Text("Scroll down")
+                        .foregroundColor(darkMode ? .white : .black)
                         .font(.title2)
                         .padding(.top, 460)
                     Image(systemName: "arrow.down")
@@ -1655,6 +1683,7 @@ struct ContentView: View {
                     Text("Settings")
                         .bold()
                         .font(.largeTitle)
+                        .foregroundColor(darkMode ? .white : .black)
                         .padding(.bottom, 530)
                     
                     Button(action: {
@@ -1693,6 +1722,10 @@ struct ContentView: View {
             
             //MARK: Spam - log
             if state == "log S" {
+                Text("Log")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 530)
                 if 0 < spamLogValues.count && 0 < spamLogDates.count {
                     ScrollView {
                         VStack {
@@ -1726,6 +1759,7 @@ struct ContentView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
+                        .padding(.bottom, 50)
 
                 } else {
                     Text("No log stored.")
@@ -1738,7 +1772,9 @@ struct ContentView: View {
     }
     
     //MARK: Reaction - start
-    
+    func getRBarWidth(index: Int) -> CGFloat {
+        return CGFloat((Float(clickTimes[index]) / Float(clickTimes.max()!)) * 420)
+    }
     
     var reactView: some View {
         ZStack {
@@ -1847,7 +1883,7 @@ struct ContentView: View {
                     randomWait = Double.random(in: minWaitTime...maxWaitTime)
                     print("Waiting randomly \(randomWait)")
                     if testCount <= testCountGoal {
-                        print("starting new game.. (\(testCount)/5)")
+                        print("starting new game.. (\(testCount)/\(testCountGoal)")
                         state = "wait R"
                         print("Waiting..")
                         Task {
@@ -1954,7 +1990,7 @@ struct ContentView: View {
             //MARK: Reaction end
             if state == "end R" {
                 Button(action: {
-                    state = "results R"
+                    //state = "results R"
                     testCount = 0
                 }) {
                     Text("End")
@@ -1984,49 +2020,51 @@ struct ContentView: View {
                     Text("Results")
                         .bold()
                         .font(.largeTitle)
+                        .foregroundColor(darkMode ? .white : .black)
                         .padding(.bottom, 530)
                         .padding(.horizontal, 200)
                     
                     navigationBar(kind: "results")
                 }
-                
-                ZStack(alignment: .topLeading) {
+                ZStack(alignment: .top) {
+                    
                     VStack {
                         ForEach(0..<clickTimes.count, id: \.self) { index in
                             ZStack {
-                                if clickTimes[index] <= 3000 {
-                                    Text("Run: \(index + 1). \(Int(clickTimes[index])) ms.")
-                                        .foregroundColor(getColorById(index: index))
-                                        .font(.title3)
-                                        .padding(.trailing, 550)
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .size(width: CGFloat(clickTimes[index]/(clickTimes.max() ?? 150)*520), height: 15)
-                                        .padding(.top, 100/(CGFloat(clickTimes.count)*CGFloat(clickTimes.count)))
-                                        .padding(.leading, 130)
-                                        .foregroundColor(getColorById(index: index))
-                                } else {
-                                    Text("error")
-                                }
+                                Text("\(index + 1). Reaction:")
+                                    .foregroundColor(getColorById(index: index))
+                                    .font(.title2)
+                                    .padding(.trailing, 500)
+                                    //.padding(.top, getTargetPadding(index: index))
+                                Text("\(String(format: "%.0f", clickTimes[index])) ms.")
+                                    .foregroundColor(getColorById(index: index))
+                                    .font(.title2)
+                                    .padding(.trailing, 300)
+                                    //.padding(.top, getTargetPadding(index: index))
+                                    .onAppear() {
+                                        print(clickTimes[index])
+                                    }
+                                RoundedRectangle(cornerRadius: 8)
+                                    .foregroundColor(getColorById(index: index))
+                                    .frame(width: getRBarWidth(index: index), height: 15)
+                                    //.padding(.top, getTargetPadding(index: index))
+                                    .padding(.leading, getRBarWidth(index: index) - 180)
                             }
                         }
-                    }.frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.leading, 20)
-                        .padding(.bottom, 400)
-                        .padding(.top, 18 * CGFloat(clickTimes.count))
-                    
+                         
+                    }.padding(.bottom, 150)
+                        .padding(.trailing, 50)
+                         
                     RoundedRectangle(cornerRadius: 8)
-                        .size(width: 2, height: 25*CGFloat(clickTimes.count) + 20 + 300/pow(CGFloat(clickTimes.count), 2))
-                        .padding(.top, dynamicAvaLinePadding)
-                        .padding(.leading, dynamicAvaLine)
+                        .frame(width: 2, height: CGFloat(28 * clickTimes.count))
                         .foregroundColor(.blue)
-                    
+                        .padding(.leading, getRLinePos())
+                        .padding(.bottom, CGFloat(460 - 24 * clickTimes.count))
                     Text("Avarage")
                         .foregroundColor(.blue)
-                        .padding(.top, dynamicAvaLinePadding + (25*CGFloat(clickTimes.count)+20 + 300/pow(CGFloat(clickTimes.count), 2)))
-                        .padding(.leading, dynamicAvaLine)
-                    
-                }
-                
+                        .padding(.top, CGFloat(28*clickTimes.count))
+                        .padding(.leading, getRLinePos())
+                }.padding(.top, 50)
                 HStack {
                     Text("Best: \(Int(clickTimes.min() ?? 0.0))ms")
                         .bold()
@@ -2051,6 +2089,7 @@ struct ContentView: View {
                     Text("Settings")
                         .bold()
                         .font(.largeTitle)
+                        .foregroundColor(darkMode ? .white : .black)
                         .padding(.horizontal, 10)
                         .padding(.bottom, 550)
                     
@@ -2152,6 +2191,10 @@ struct ContentView: View {
             
             //MARK: Reaction log
             if state == "log R" {
+                Text("Log")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 530)
                 if 0 < reactLogDates.count {
                     ScrollView {
                         VStack {
@@ -2180,6 +2223,7 @@ struct ContentView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
+                        .padding(.bottom, 50)
                 } else {
                     Text("No log stored.")
                         .font(.title2)
@@ -2254,9 +2298,9 @@ struct ContentView: View {
                 Button(action: {
                     state = "stopped T"
                     print(timerText)
-                    timeStopped = Int(Double(timerText)! * 1000)
+                    timeStopped = Double(timerText)! * 1000
                     timeLogDates.append(Date().formatted(date: .omitted, time: .standard));
-                    timeLogValues.append(String(timeStopped))
+                    timeLogValues.append(timeDifferenceText)
                     
                     timeLogDates.append(String(userLoggedIn))
                     timeLogValues.append(String(userLoggedIn))
@@ -2281,7 +2325,7 @@ struct ContentView: View {
                 Button(action: {
                     state = "results T"
                 }) {
-                    Text("\(timeStopped) s.")
+                    Text("\(String(format: "%.2f", round(timeStopped)/1000)) s.")
                         .padding(.horizontal, 50)
                         .padding(.vertical, 50)
                         .frame(minWidth: 700, minHeight: 600)
@@ -2305,7 +2349,7 @@ struct ContentView: View {
                     
                     Text("You stopped at")
                         .padding(.bottom, 45)
-                    Text("\(timeStopped) / \(randomTimeText) s.")
+                    Text("\(String(format: "%.2f", timeStopped/1000)) / \(randomTimeText) s.")
                         .bold()
                         .font(.largeTitle)
                     Text("Difference: \(timeDifferenceText) s.")
@@ -2321,6 +2365,7 @@ struct ContentView: View {
                     Text("Settings")
                         .bold()
                         .font(.largeTitle)
+                        .foregroundColor(darkMode ? .white : .black)
                         .padding(.bottom, 530)
                     
                     Button(action: {
@@ -2347,23 +2392,34 @@ struct ContentView: View {
                         .buttonStyle(.plain)
                         .keyboardShortcut(.space, modifiers: [.shift])
                     ZStack {
-                        Slider(value: $slider5Value, in: 0...3)
-                            .tint(.green)
-                            .frame(width: 250)
-                        Text("Wait time: ")
-                            .font(.title3)
-                            .foregroundColor(.white)
-                            .padding(.trailing, 330)
-                        Text("\(slider5Text)")
-                            .font(.title3)
-                            .foregroundColor(.white)
-                            .padding(.leading, 300)
-                    }
+                        SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                        Text("Wait time")
+                            .font(.title2)
+                            .padding(.bottom, 40)
+                        ZStack {
+                            Slider(value: $slider5Value, in: 0...3)
+                                .tint(.green)
+                                .frame(width: 250)
+                            Text("Wait time: ")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .padding(.trailing, 340)
+                            Text("\(slider5Text)")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .padding(.leading, 320)
+                        }
+                    }.frame(width: 600, height: 100)
+                        .clipShape(RoundedRectangle(cornerRadius: 30))
                 }
             }
             
             //MARK: Time - log
             if state == "log T" {
+                Text("Log")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 530)
                 if 0 < timeLogValues.count && 0 < timeLogDates.count {
                     ScrollView {
                         VStack {
@@ -2391,6 +2447,7 @@ struct ContentView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
+                        .padding(.bottom, 50)
 
                 } else {
                     Text("No log stored.")
@@ -2433,16 +2490,28 @@ struct ContentView: View {
             }
             //MARK: Aim - settings
             if state == "settings A" {
+                Text("Settings")
+                    .bold()
+                    .font(.largeTitle)
+                    .foregroundColor(darkMode ? .white : .black)
+                    .padding(.bottom, 530)
                 ZStack {
-                    Slider(value: $slider6Value, in: 3...15, step: 1)
-                        .frame(width: 250)
-                        .onChange(of: slider6Value) { newValue in
-                            targetCount = Int(slider6Value)
-                        }
-                        .onAppear() {slider6Value = Double(targetCount)}
-                    Text("\(targetCount) targets")
-                        .padding(.leading, 325)
-                }
+                    SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
+                    Text("Target count")
+                        .font(.title2)
+                        .padding(.bottom, 40)
+                    ZStack {
+                        Slider(value: $slider6Value, in: 3...15, step: 1)
+                            .frame(width: 250)
+                            .onChange(of: slider6Value) { newValue in
+                                targetCount = Int(slider6Value)
+                            }
+                            .onAppear() {slider6Value = Double(targetCount)}
+                        Text("\(targetCount) targets")
+                            .padding(.leading, 325)
+                    }
+                }.frame(width: 600, height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 30))
                 Button(action: {
                     state = "start A"
                     
@@ -2529,11 +2598,12 @@ struct ContentView: View {
             
             
             if state == "results A" {
-                ZStack {
-                    Text("Results")
-                        .font(.largeTitle)
-                        .bold()
-                        .padding(.bottom, 580)
+                Text("Results")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 580)
+                ZStack(alignment: .top) {
+                    
                     VStack {
                         ForEach(0..<timeToHit.count, id: \.self) { index in
                             ZStack {
@@ -2562,38 +2632,40 @@ struct ContentView: View {
                         .padding(.trailing, 50)
                          
                     RoundedRectangle(cornerRadius: 8)
-                        .frame(width: 2, height: CGFloat(26 * timeToHit.count))
+                        .frame(width: 2, height: CGFloat(28 * timeToHit.count))
                         .foregroundColor(.blue)
                         .padding(.leading, getTargetAvaLinePos())
                         .padding(.bottom, CGFloat(460 - 24 * targetCount))
                     Text("Avarage")
                         .foregroundColor(.blue)
-                        .padding(.top, CGFloat(-270 + 40*targetCount))
+                        .padding(.top, CGFloat(28*targetCount))
                         .padding(.leading, getTargetAvaLinePos())
-                    
-                    
-                    HStack(spacing: 21) {
-                        Text("Best: \(timeToHit.min()!)ms")
-                            .font(.title2)
-                            .bold()
-                            .foregroundColor(.green)
-                        Text("Avarage: \(avaTimeToHit)ms")
-                            .font(.title2)
-                            .bold()
-                            .foregroundColor(.blue)
-                        Text("Worst \(timeToHit.max()!)ms")
-                            .font(.title2)
-                            .bold()
-                            .foregroundColor(.red)
-                    }.padding(.top, 400)
-                    
-                    navigationBar(kind: "results")
-                }
+                }.padding(.top, 50)
+                HStack(spacing: 21) {
+                    Text("Best: \(timeToHit.min()!)ms")
+                        .font(.title2)
+                        .bold()
+                        .foregroundColor(.green)
+                    Text("Avarage: \(avaTimeToHit)ms")
+                        .font(.title2)
+                        .bold()
+                        .foregroundColor(.blue)
+                    Text("Worst \(timeToHit.max()!)ms")
+                        .font(.title2)
+                        .bold()
+                        .foregroundColor(.red)
+                }.padding(.top, 400)
+                
+                navigationBar(kind: "results")
             }
             //MARK: Aim - log
             
             
             if state == "log A" {
+                Text("Log")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 530)
                 ScrollView {
                     VStack {
                         if currentLogDates.count > 0 {
@@ -2626,6 +2698,7 @@ struct ContentView: View {
                         }
                     }.frame(maxWidth: .infinity)
                 }.frame(height: 400)
+                    .padding(.bottom, 50)
                 
                 navigationBar(kind: "log")
             }
@@ -2902,6 +2975,10 @@ struct ContentView: View {
             //MARK: Memory - log
             
             if state == "log M" {
+                Text("Log")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 530)
                 if !currentLogDates.isEmpty {
                     ScrollView {
                         VStack {
@@ -2929,6 +3006,7 @@ struct ContentView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
+                        .padding(.bottom, 50)
                 } else {
                     Text("No log stored.")
                         .font(.title2)
@@ -2999,6 +3077,10 @@ struct ContentView: View {
             }
             
             if state == "log C" {
+                Text("Log")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 530)
                 if !currentLogDates.isEmpty {
                     ScrollView {
                         VStack {
@@ -3026,6 +3108,7 @@ struct ContentView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
+                        .padding(.bottom, 50)
                 } else {
                     Text("No log stored.")
                         .font(.title2)
@@ -3292,6 +3375,10 @@ struct ContentView: View {
                 navigationBar(kind: "results")
             }
             if state == "log P" {
+                Text("Log")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 530)
                 ScrollView {
                     VStack {
                         if currentLogDates.count > 0 {
@@ -3324,6 +3411,7 @@ struct ContentView: View {
                         }
                     }.frame(maxWidth: .infinity)
                 }.frame(height: 400)
+                    .padding(.bottom, 50)
                 
                 navigationBar(kind: "log")
             }
@@ -3503,6 +3591,10 @@ struct ContentView: View {
                 navigationBar(kind: "results")
             }
             if state == "log X" {
+                Text("Log")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.bottom, 530)
                 if 0 < spamLogValues.count && 0 < spamLogDates.count {
                     ScrollView {
                         VStack {
@@ -3518,7 +3610,7 @@ struct ContentView: View {
                                             .foregroundColor(darkMode ? .white : .black)
                                             .padding(.leading, 40)
                                         Spacer()
-                                        Text("\(currentLogVal1[index]) letters per second.)")
+                                        Text("\(currentLogVal1[index]) letters per second.")
                                             .font(.title2)
                                             .foregroundColor(darkMode ? .white : .black)
                                         Spacer()
@@ -3536,6 +3628,7 @@ struct ContentView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }.frame(height: 400)
+                        .padding(.bottom, 50)
 
                 } else {
                     Text("No log stored.")
@@ -3771,6 +3864,11 @@ struct ContentView: View {
                         .frame(width: 190, height: 40)
                         .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.black.opacity(elementOpacity))
                         .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .offset(x: shakeMod ? 0 : 10)
+                        .animation(
+                            .linear(duration: Double(0.05)).repeatCount(2, autoreverses: true),
+                            value: shakeMod
+                            )
                     
                     Button(action: {
                         if passwordInput == userPass[userOnLogin] {
@@ -3793,17 +3891,30 @@ struct ContentView: View {
                         } else {
                             print("INCORRECT PASSWORD ON LOGIN")
                             passwordInput = ""
+                            shakeMod.toggle()
+                            Task {
+                                try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
+                                shakeMod.toggle()
+                            }
+                            
                         }
                     }) {
-                        Image(systemName: "arrow.right")
-                            .font(.largeTitle)
+                        Image(systemName: "arrow.right.circle")
+                            .font(.system(size: 30, weight: .regular, design: .default))
                             .foregroundColor(darkMode ? .black : .white)
                             .frame(width: 30, height: 30)
-                            .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.black.opacity(elementOpacity))
+                            //.background(darkMode ? Color.gray.opacity(elementOpacity) : Color.black.opacity(elementOpacity))
                             .clipShape(Circle())
+                            .offset(x: shakeMod ? 0 : 10)
+                            .animation(
+                                .linear(duration: Double(0.05)).repeatCount(2, autoreverses: true),
+                                value: shakeMod
+                                )
+                            
                     }.buttonStyle(.plain)
                         .keyboardShortcut(.return, modifiers: [])
                 }.padding(.top, 280)
+                    .padding(.trailing, 25)
                 
                 Button(action: {
                     usersState = "choosing"
@@ -3815,8 +3926,8 @@ struct ContentView: View {
                     elementOpacity = 0.45
                     print("set bgOpacity to default 0.6")
                 }) {
-                    Image(systemName: "arrow.left")
-                        .font(.largeTitle)
+                    Image(systemName: "arrow.left.circle")
+                        .font(.system(size: 30, weight: .regular, design: .default))
                         .foregroundColor(darkMode ? .black : .white)
                         .frame(width: 40, height: 40)
                         .background(darkMode ? Color.gray.opacity(elementOpacity) : Color.black.opacity(elementOpacity))
@@ -3824,8 +3935,16 @@ struct ContentView: View {
                 }.buttonStyle(.plain)
                     .keyboardShortcut(.return, modifiers: [])
                     .padding(.top, 280)
-                    .padding(.trailing, 230)
+                    .padding(.trailing, 245)
+                Capsule()
+                    .frame(width: 180, height: 30)
+                    .foregroundColor(darkMode ? .clear : .black.opacity(0.5))
+                    .padding(.top, 380)
+                
                 Toggle("Tutorial on start", isOn: $startTutor)
+                    .toggleStyle(.switch)
+                    .font(.title2)
+                    .foregroundColor(.white)
                     .padding(.top, 380)
                     .onAppear() {
                         startTutor = false
@@ -3944,6 +4063,11 @@ struct ContentView: View {
                                 .frame(width: 190, height: 40)
                                 .background(Color.gray.opacity(0.3))
                                 .clipShape(RoundedRectangle(cornerRadius: 20))
+                                .offset(x: shakeMod ? 0 : 10)
+                                .animation(
+                                    .linear(duration: Double(0.05)).repeatCount(4, autoreverses: true),
+                                    value: shakeMod
+                                    )
                             Button(action: {
                                 if passwordInput == passwordRepeat {
                                     //MARK: User created
@@ -3972,6 +4096,7 @@ struct ContentView: View {
                                     print("Tutor? \(startTutor)")
                                 } else {
                                     print("PASSWORDS ARE NOT MATCHING")
+                                    shakeMod.toggle()
                                 }
                             }) {
                                 Image(systemName: "arrow.right")
@@ -4151,6 +4276,12 @@ struct ContentView: View {
             
             
             if usersState == "userSettings" {
+                if startTutor {
+                    Rectangle()
+                        .frame(width: 700, height: 650)
+                        .foregroundColor(.black.opacity(0.65))
+                        .ignoresSafeArea()
+                }
                 ZStack {
                     SmoothBlur(material: .hudWindow, blendMode: .withinWindow)
                     VStack {
@@ -4204,7 +4335,7 @@ struct ContentView: View {
                     .padding(.top, 370)
                     .padding(.trailing, 461)
                 if startTutor {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 35) {
                         let tFont: Font = .title2
                         let tCol: Color = .white
                         HStack {
@@ -4231,7 +4362,7 @@ struct ContentView: View {
                                 .font(tFont)
                                 .foregroundColor(tCol)
                         }
-                    }.padding(.top, 400)
+                    }.padding(.top, 375)
                         .padding(.leading, 50)
                         .zIndex(1)
                 }
@@ -4539,6 +4670,8 @@ struct ContentView: View {
                                         deleteUserLog(log: "A", user: accountUnderEdit)
                                         deleteUserLog(log: "M", user: accountUnderEdit)
                                         deleteUserLog(log: "C", user: accountUnderEdit)
+                                        deleteUserLog(log: "P", user: accountUnderEdit)
+                                        deleteUserLog(log: "X", user: accountUnderEdit)
                                         deleteUser(user: accountUnderEdit)
                                         
                                     } else {
@@ -4556,6 +4689,8 @@ struct ContentView: View {
                                         deleteUserLog(log: "A", user: accountUnderEdit)
                                         deleteUserLog(log: "M", user: accountUnderEdit)
                                         deleteUserLog(log: "C", user: accountUnderEdit)
+                                        deleteUserLog(log: "P", user: accountUnderEdit)
+                                        deleteUserLog(log: "X", user: accountUnderEdit)
                                         deleteUser(user: accountUnderEdit)
                                     }
                                 } else {
@@ -5223,6 +5358,12 @@ struct ContentView: View {
         if !colorLogDates.contains(String(userLoggedIn)) {
             untriedMode = "color"
         }
+        if !pickerLogDates.contains(String(userLoggedIn)) {
+            untriedMode = "picker"
+        }
+        if !typeLogDates.contains(String(userLoggedIn)) {
+            untriedMode = "typing"
+        }
     }
     //MARK: User screen
     @State private var unimprovedMode: Int = Int.random(in: 0...6)
@@ -5235,6 +5376,7 @@ struct ContentView: View {
         case 4: return "color"
         case 5: return "picker"
         case 6: return "aim"
+        case 7: return "typing"
         default: return "error"
         }
     }
@@ -5336,7 +5478,7 @@ struct ContentView: View {
                     Button(action: {
                         if untriedMode.prefix(1).uppercased() != "" {
                             state = "start \(getMode(mode: unimprovedMode).prefix(1).uppercased())"
-                            unimprovedMode = Int.random(in: 0...6)
+                            unimprovedMode = Int.random(in: 0...7)
                         }
                     }) {
                         Image(systemName: "arrow.forward")
@@ -5500,6 +5642,28 @@ struct ContentView: View {
             .ignoresSafeArea()
     }
     
+    @State private var shakeMod: Bool = false
+    /*
+    func shake(dur: Double, num: Int, intensity: Double) {
+        shakeMod = intensity
+        for _ in 0...num {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                shakeMod -= intensity
+            }
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(dur * 1_000_000_000))
+            }
+            withAnimation(.easeInOut(duration: 0.2)) {
+                shakeMod += intensity
+            }
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(dur * 1_000_000_000))
+            }
+        }
+        shakeMod = 0
+    }
+     */
+    
     //MARK: BODY
     var body: some View {
         ZStack {
@@ -5514,7 +5678,8 @@ struct ContentView: View {
                     .frame(width: 700, height: 630)
                     .ignoresSafeArea()
             }
-                
+            
+            
             if state == "menu" {
                 menuView
             } else if state.hasSuffix("S") {
