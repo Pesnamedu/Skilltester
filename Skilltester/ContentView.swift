@@ -29,14 +29,7 @@ struct ContentView: View {
         if Date().weekDay != "Mon" {
             screenTimeReseted = false
         }
-        print(pickerLogAvaV)
-        print("Startup bgOpacity: \(bgOpacity)")
-        print(UserPreferencesBgOpacity)
-        print(screenTimeMon)
-        print(screenTimeReseted)
-        print(lastStreakDays)
-        print(userStreaks)
-        print("-")
+
     }
     
     
@@ -137,7 +130,6 @@ struct ContentView: View {
             if index < userNames.count {
                 return String(String(userNames[index]).prefix(1))
             } else {
-                print("index out of range")
                 return "%"
             }
             
@@ -599,7 +591,7 @@ struct ContentView: View {
                         Button(action: {
                             slider3Value = Double(testCountGoal)
                             state = "settings \(state.suffix(1))"
-                            print("sending user to settings \(slider3Value)")
+                            
                         }) {
                             Text("Settings")
                                 .bold()
@@ -615,7 +607,7 @@ struct ContentView: View {
                     Button(action: {
                         state = "menu"
                         clickTimes.removeAll()
-                        print("Pressed back; sending to \(state)")
+                        
                     }) {
                         Text("Back")
                             .bold()
@@ -699,7 +691,7 @@ struct ContentView: View {
             } else if kind == "log" {
                 ZStack {
                     Button(action: {
-                        print(sentFrom)
+                        
                         if sentFrom == "results \(state.suffix(1))" {
                             state = "results \(state.suffix(1))"
                         } else if sentFrom == "start \(state.suffix(1))" {
@@ -769,13 +761,6 @@ struct ContentView: View {
     }
     //MARK: deleteUser
     func deleteUser(user: Int) {
-        print("Before delete (deleting user number \(user))")
-        print(userNames)
-        print(userPass)
-        print(userColor)
-        print(keepLoggedIn)
-        print(UserPreferencesBgOpacity)
-        print(UserPreferencesElementOpacity)
         userNames.remove(at: user)
         userPass.remove(at: user)
         userColor.remove(at: user)
@@ -793,13 +778,6 @@ struct ContentView: View {
         screenTimeSun.remove(at: user)
         lastStreakDays.remove(at: user)
         userStreaks.remove(at: user)
-        print("After delete (deleting user number \(user))")
-        print(userNames)
-        print(userPass)
-        print(userColor)
-        print(keepLoggedIn)
-        print(UserPreferencesBgOpacity)
-        print(UserPreferencesElementOpacity)
     }
     //MARK: Delete user log
     @State private var idx: Int = 0
@@ -1073,116 +1051,107 @@ struct ContentView: View {
             spamLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
                 makeCurrentUserLog(log: "S", user: user)
-                print("Curren log for user\(user): \(currentLogVal1)")
+                
                 if !currentLogVal1.isEmpty {
                     bestSpamValues.append(Int(currentLogVal1.max()!)!)
                 } else { bestSpamValues.append(0 - user) }
             }
             spamLeaderboard = bestSpamValues.sorted(by: >)
-            print("Best values: \(bestSpamValues)")
-            print("Leaderboard: \(spamLeaderboard)")
+
             
         } else if mode == "react" {
             bestReactValues.removeAll()
             reactLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
                 makeCurrentUserLog(log: "R", user: user)
-                print("Curren log for user\(user): \(currentLogVal1)")
+
                 if !currentLogVal1.isEmpty {
                     bestReactValues.append(Int(currentLogVal1.min()!) ?? 67)
                 } else { bestReactValues.append(100000 + user) }
             }
             reactLeaderboard = bestReactValues.sorted()
-            print("Best values: \(bestReactValues)")
-            print("Leaderboard: \(reactLeaderboard)")
+
         } else if mode == "time" {
             bestTimeValues.removeAll()
             timeLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
                 makeCurrentUserLog(log: "T", user: user)
-                print("Curren log for user\(user): \(currentLogVal1)")
+
                 if !currentLogVal1.isEmpty {
                     bestTimeValues.append(floor(100*Double(currentLogVal1.min()!)!)/100)
                 } else { bestTimeValues.append(Double(100000 + user)) }
             }
             timeLeaderboard = bestTimeValues.sorted()
-            print("Best values: \(bestTimeValues)")
-            print("Leaderboard: \(timeLeaderboard)")
+
         } else if mode == "aim" {
             bestAimValues.removeAll()
             aimLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
                 makeCurrentUserLog(log: "A", user: user)
-                print("Curren log for user\(user): \(currentLogVal1)")
+
                 if !currentLogVal1.isEmpty {
                     bestAimValues.append(Int(currentLogVal1.min()!)!)
                 } else { bestAimValues.append(100000 + user) }
             }
             aimLeaderboard = bestAimValues.sorted()
-            print("Best values: \(bestAimValues)")
-            print("Leaderboard: \(aimLeaderboard)")
+
         } else if mode == "memory" {
             bestMemoryValues.removeAll()
             memoryLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
                 makeCurrentUserLog(log: "M", user: user)
-                print("Curren log for user\(user): \(currentLogVal1)")
+
                 if !currentLogVal1.isEmpty {
                     bestMemoryValues.append(Int(currentLogVal1.max()!)!)
                 } else { bestMemoryValues.append(0 - user)}
             }
             memoryLeaderboard = bestMemoryValues.sorted(by: >)
-            print("Best values: \(bestMemoryValues)")
-            print("Leaderboard: \(memoryLeaderboard)")
+
         }  else if mode == "color" {
             bestColorValues.removeAll()
             colorLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
                 makeCurrentUserLog(log: "C", user: user)
-                print("Curren log for user\(user): \(currentLogVal1)")
+
                 if !currentLogVal1.isEmpty {
                     bestColorValues.append(Int(currentLogVal1.max()!)!)
                 } else { bestColorValues.append(0 - user)}
             }
             colorLeaderboard = bestColorValues.sorted(by: >)
-            print("Best values: \(bestColorValues)")
-            print("Leaderboard: \(colorLeaderboard)")
+
         } else if mode == "picker" {
-            print("PICKER")
+
             bestPickerValues.removeAll()
             pickerLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
                 makeCurrentUserLog(log: "P", user: user)
-                print("Curren log for user\(user): \(currentLogVal1)")
+
                 if !currentLogVal1.isEmpty {
                     bestPickerValues.append(Int(Double(currentLogVal1.max()!)!))
                 } else { bestPickerValues.append(0 - user) }
             }
             pickerLeaderboard = bestPickerValues.sorted(by: >)
-            print("Best values: \(bestPickerValues)")
-            print("Leaderboard: \(pickerLeaderboard)")
+
         } else if mode == "type" {
-            print("TYPING")
+
             bestTypeValues.removeAll()
             typeLeaderboard.removeAll()
             for user in 0...userNames.count - 1 {
                 makeCurrentUserLog(log: "X", user: user)
-                print("Curren log for user\(user): \(currentLogVal1)")
+
                 if !currentLogVal1.isEmpty {
                     bestTypeValues.append(floor(100*Double(currentLogVal1.max()!)!)/100)
-                    print("Added \(floor(100*Double(currentLogVal1.max()!)!)/100)")
                 } else { bestTypeValues.append(0.0 - Double(user)) }
             }
             typeLeaderboard = bestTypeValues.sorted(by: >)
-            print("Best values: \(bestTypeValues)")
-            print("Leaderboard: \(typeLeaderboard)")
+
         }
     }
     @State private var usersBest: String = ""
     @State private var soloBestValue: [Int] = []
     @State private var soloBestMode: String = ""
     func makeUsersBest(user: Int) {
-        print("Making users best for user \(userNames[user])")
+
         soloBestValue.removeAll()
         makeLogLeaderboard(mode: "spam")
         makeLogLeaderboard(mode: "react")
@@ -1218,7 +1187,6 @@ struct ContentView: View {
             soloBestMode = "typing"
         }
         usersBest = String("#\(soloBestValue.min()! + 1) in \(soloBestMode)")
-        print("UsersBest: \(usersBest)")
     }
     
     //MARK: writeToLog
@@ -1232,21 +1200,16 @@ struct ContentView: View {
             aimLogWorstV.append(String(userLoggedIn))
             aimLogAvaV.append(String(avaTimeToHit))
             aimLogAvaV.append(String(userLoggedIn))
-            print("Added everything into aim logs")
         } else if log == "memory" {
             memoryLogDates.append(formattedDate)
             memoryLogDates.append(String(userLoggedIn))
             memoryLogValues.append(String(squareCount - 1))
             memoryLogValues.append(String(userLoggedIn))
-            print("Added everything into memory logs")
-            print(memoryLogDates)
-            print(memoryLogValues)
         } else if log == "color" {
             colorLogDates.append(formattedDate)
             colorLogDates.append(String(userLoggedIn))
             colorLogValues.append(String(colorRound))
             colorLogValues.append(String(userLoggedIn))
-            print("Added everything into color logs")
         } else if log == "picker" {
             pickerLogDates.append(formattedDate)
             pickerLogDates.append(String(userLoggedIn))
@@ -1256,30 +1219,20 @@ struct ContentView: View {
             pickerLogWorstV.append(String(userLoggedIn))
             pickerLogAvaV.append(String(format: "%.2f", round(pickerOffsets.reduce(0.0, +)/Double(pickerOffsets.count) * 100)/100))
             pickerLogAvaV.append(String(userLoggedIn))
-            print("Added everything into picker logs")
         } else if log == "type" {
             typeLogDates.append(formattedDate)
             typeLogDates.append(String(userLoggedIn))
             typeLogValues.append(String(avgLpsText))
             typeLogValues.append(String(userLoggedIn))
-            print("Added everything into color logs")
         }
     }
     func manageStreaks() {
         if lastStreakDays[userLoggedIn] + 1 == dayOfWeekNum(day: Date().weekDay) || lastStreakDays[userLoggedIn] == dayOfWeekNum(day: Date().weekDay) + 6{
             lastStreakDays[userLoggedIn] = dayOfWeekNum(day: Date().weekDay)
             userStreaks[userLoggedIn] = userStreaks[userLoggedIn] + 1
-            print("Added a streak to \(userNames[userLoggedIn])")
         } else if abs(lastStreakDays[userLoggedIn] - dayOfWeekNum(day: Date().weekDay)) > 1 {
-            print("(\(abs(lastStreakDays[userLoggedIn] - dayOfWeekNum(day: Date().weekDay))) > 1)")
             lastStreakDays[userLoggedIn] = dayOfWeekNum(day: Date().weekDay)
             userStreaks[userLoggedIn] = 0
-            print("Removed streak from \(userNames[userLoggedIn])")
-            
-        } else {
-            print("Didnt do anything with \(userNames[userLoggedIn])'s streak bcs the day is same as the day the streak was added")
-            print(lastStreakDays)
-            print(userStreaks)
         }
     }
     
@@ -1296,13 +1249,11 @@ struct ContentView: View {
                         .foregroundColor(getProfileColor(index: userLoggedIn))
                         .font(.system(size: 61, weight: .bold, design: .default))
                         .padding(.bottom, 581)
-                        .onAppear() {print("default menu text")}
 
                 ScrollView(showsIndicators: false) {
                     VStack (spacing: menuButtonSpacing - 140) {
                         HStack (alignment: .top, spacing: menuButtonSpacing) {
                             Button(action: {
-                                print("clicked button 1 (Reflex)")
                                 state = "start R"
                             }) {
                                 Image(systemName: "cursorarrow.rays")
@@ -1324,7 +1275,6 @@ struct ContentView: View {
                                     .padding(.bottom, 140)
                             
                             Button(action: {
-                                print("clicked button 2")
                                 state = "start S"
                             }) {
                                 Image(systemName: "cursorarrow.motionlines")
@@ -1347,7 +1297,6 @@ struct ContentView: View {
                                 .padding(.bottom, 140)
                             
                             Button(action: {
-                                print("clicked button 3")
                                 state = "start T"
                             }) {
                                 Image(systemName: "timer")
@@ -1373,7 +1322,6 @@ struct ContentView: View {
                         
                         HStack (alignment: .top, spacing: menuButtonSpacing) {
                             Button(action: {
-                                print("clicked button 4")
                                 state = "start A"
                             }) {
                                 Image(systemName: "dot.circle.and.cursorarrow")
@@ -1396,7 +1344,6 @@ struct ContentView: View {
                             }.buttonStyle(.plain)
                             .padding(.bottom, 140)
                             Button(action: {
-                                print("clicked button 5")
                                 state = "start M"
                             }) {
                                 Image(systemName: "square.grid.3x3.topleft.filled")
@@ -1419,7 +1366,6 @@ struct ContentView: View {
                             }.buttonStyle(.plain)
                             .padding(.bottom, 140)
                             Button(action: {
-                                print("clicked button 6")
                                 colorOffset = 100
                                 colorOffsetEasing = 0
                                 colorRound = 0
@@ -1447,7 +1393,6 @@ struct ContentView: View {
                         }
                         HStack (alignment: .top, spacing: menuButtonSpacing) {
                             Button(action: {
-                                print("clicked button 7")
                                 state = "start P"
                             }) {
                                 Image(systemName: "eyedropper.halffull")
@@ -1471,7 +1416,6 @@ struct ContentView: View {
                                 //.padding(.trailing, menuButtonSpacing)
                             
                             Button(action: {
-                                print("clicked button 8")
                                 state = "start X"
                             }) {
                                 Image(systemName: "character.cursor.ibeam")
@@ -1498,28 +1442,6 @@ struct ContentView: View {
                         
                         
                     }.navigationTitle("Menu")
-                        .onAppear() {
-                            print("DATE: \(formattedDate)")
-                            print("In Menu.")
-                            //clearAllLogs()
-                            print("SPAM")
-                            makeLogLeaderboard(mode: "spam")
-                            print("REACTION")
-                            makeLogLeaderboard(mode: "react")
-                            print("TIME")
-                            makeLogLeaderboard(mode: "time")
-                            print("AIM")
-                            makeLogLeaderboard(mode: "aim")
-                            print("MEMORY")
-                            makeLogLeaderboard(mode: "memory")
-                            print("COLOR")
-                            makeLogLeaderboard(mode: "color")
-                            print("PICKER")
-                            makeLogLeaderboard(mode: "picker")
-                            print("TYPING")
-                            makeLogLeaderboard(mode: "type")
-                            
-                        }
                     
                 }.frame(width: 635, height: 450)
                     .clipShape(RoundedRectangle(cornerRadius: 50))
@@ -1574,13 +1496,11 @@ struct ContentView: View {
                         timeElapsed = 0
                         spamCount = 0
                         state = "spamming S"
-                        print("Started spamming")
                         Task {
                             try? await Task.sleep(nanoseconds: UInt64(spamWaitTime * 1_000_000_000))
                             state = "spammed S"
                             timeElapsed = 0
                             cps = spamCount / spamWaitTime
-                            print("saving spam data to log")
                             spamLogValues.append(String(cps))
                             spamLogValues.append(String(userLoggedIn))
                             spamLogDates.append(formattedDate)
@@ -1617,7 +1537,6 @@ struct ContentView: View {
             if state == "spamming S" {
                 Button(action: {
                     spamCount += 1
-                    //print(spamCount / (timeElapsed + 0.00001))
                 }) {
                     Text("Spam!")
                         .bold()
@@ -1638,7 +1557,6 @@ struct ContentView: View {
             if state == "spammed S" {
                 
                 Button(action: {
-                    print("Clicked \(spamCount) times, over \(spamWaitTime) s. (Rate of \(cps) cps.")
                     state = "results S"
                 }) {
                     Text("Done.")
@@ -1753,8 +1671,6 @@ struct ContentView: View {
                                         
                                     }
                                 
-                                }.onAppear() {
-                                    print("Im line number \(index), returned: \(userInLog(pos: index)) ")
                                 }
                             }
                         }.frame(maxWidth: .infinity)
@@ -1782,16 +1698,12 @@ struct ContentView: View {
                 ZStack {
                     Button(action: {
                         randomWait = Double.random(in: minWaitTime...maxWaitTime)
-                        print("Waiting randomly \(randomWait)")
-                        print("starting game..")
                         state = "wait R"
-                        print("Waiting..")
                         testCount += 1
                         Task {
                             try? await Task.sleep(nanoseconds: UInt64(randomWait * 1_000_000_000))
                             
                             if state == "wait R" {
-                                print("Done waiting!")
                                 isMeasuring = true
                                 state = "click R"
                                 timeElapsed = 0
@@ -1803,7 +1715,6 @@ struct ContentView: View {
                                         result = 3000
                                         //clickTimes.append(Float(result))
                                         //testCount += 1
-                                        print("user didnt to click")
                                     }
                                 }
                             }
@@ -1834,7 +1745,6 @@ struct ContentView: View {
             if state == "wait R" {
                 Button(action: {
                     state = "prefired R"
-                    print("Prefired.")
                 }) {
                     Text("Wait for green")
                         .bold()
@@ -1857,7 +1767,6 @@ struct ContentView: View {
                     clickTimes.append(Float(result))
                     testCount += 1
                     
-                    print("Clicked at \(result) ms!")
                     state = "clicked R"
                 }) {
                     Text("Click!")
@@ -1881,16 +1790,12 @@ struct ContentView: View {
             if state == "clicked R" {
                 Button(action: {
                     randomWait = Double.random(in: minWaitTime...maxWaitTime)
-                    print("Waiting randomly \(randomWait)")
                     if testCount <= testCountGoal {
-                        print("starting new game.. (\(testCount)/\(testCountGoal)")
                         state = "wait R"
-                        print("Waiting..")
                         Task {
                             try? await Task.sleep(nanoseconds: UInt64(randomWait * 1_000_000_000))
                             
                             if state == "wait R" {
-                                print("Done waiting!")
                                 isMeasuring = true
                                 state = "click R"
                                 timeElapsed = 0
@@ -1902,16 +1807,12 @@ struct ContentView: View {
                                         result = 3000
                                         //clickTimes.append(Float(result))
                                         //testCount += 1
-                                        print("user didnt to click")
                                     }
                                 }
                             }
                         }
                     } else {
-                        print("End")
-                        print(clickTimes)
                         state = "end R"
-                        print(avaTime)
                         timeElapsed = 0
                         Task {
                             try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
@@ -1954,16 +1855,12 @@ struct ContentView: View {
             //MARK: Reaction prefire
             if state == "prefired R" {
                 Button(action: {
-                    print("starting game..")
                     state = "wait R"
-                    print("Waiting..")
                     randomWait = Double.random(in: minWaitTime...maxWaitTime)
-                    print("Waiting randomly \(randomWait)")
                     Task {
                         try? await Task.sleep(nanoseconds: UInt64(randomWait) * 1_000_000_000)
                         
                         if state == "wait R" {
-                            print("Done waiting!")
                             isMeasuring = true
                             state = "click R"
                             timeElapsed = 0
@@ -2041,9 +1938,6 @@ struct ContentView: View {
                                     .font(.title2)
                                     .padding(.trailing, 300)
                                     //.padding(.top, getTargetPadding(index: index))
-                                    .onAppear() {
-                                        print(clickTimes[index])
-                                    }
                                 RoundedRectangle(cornerRadius: 8)
                                     .foregroundColor(getColorById(index: index))
                                     .frame(width: getRBarWidth(index: index), height: 15)
@@ -2096,7 +1990,6 @@ struct ContentView: View {
                     Button(action: {
                         state = "start R"
                         testCountGoal = Int(slider3Value)
-                        print("Pressed back; sending to \(state)")
                     }) {
                         Text("Back")
                             .bold()
@@ -2139,18 +2032,14 @@ struct ContentView: View {
                             }
                             HStack {
                                 Button(action: {
-                                    print("Save button clicked.")
                                     if slider2Value >= slider1Value + 1 {
                                         minWaitTime = Double(slider1Value)
                                         maxWaitTime = Double(slider2Value)
                                         saveMessage = "Changes Saved."
-                                        print("Saved changes.")
                                     } else if slider1Value > slider2Value{
                                         saveMessage = "Min. wait time has to be smaller than Max. wait!"
-                                        print("Min is large than Max; didnt save.")
                                     } else if slider1Value == slider2Value || slider1Value == slider2Value - 0.5 {
                                         saveMessage = "Min. and Max. wait have to be atleast 1 second apart!"
-                                        print("Min and Max not 1s or more part; didnt save.")
                                     }
                                     
                                 }) {
@@ -2250,7 +2139,6 @@ struct ContentView: View {
                         state = "make time T"
                         isViewBlocked = false
                         timeElapsed = 0
-                        print("Random time is \(randomTime) ms")
                     }) {
                         Text("Start")
                             .bold()
@@ -2297,7 +2185,6 @@ struct ContentView: View {
             if state == "count T" {
                 Button(action: {
                     state = "stopped T"
-                    print(timerText)
                     timeStopped = Double(timerText)! * 1000
                     timeLogDates.append(Date().formatted(date: .omitted, time: .standard));
                     timeLogValues.append(timeDifferenceText)
@@ -2469,9 +2356,7 @@ struct ContentView: View {
                 Button(action: {
                     showingTarget = 0
                     missedTargets = 0
-                    print(timeToHit)
                     timeToHit.removeAll()
-                    print(timeToHit)
                     state = "shooting A"
                 }) {
                     Text("start")
@@ -2535,8 +2420,6 @@ struct ContentView: View {
             if state == "shooting A" {
                 Button(action: {
                     missedTargets += 1
-                    print("Missed!")
-                    print(timeToHit)
                 }) {
                     Rectangle()
                         .frame(width: 700, height: 800)
@@ -2546,11 +2429,9 @@ struct ContentView: View {
                     ForEach(0...targetCount, id: \.self) { index in
                         if index == showingTarget {
                             Button(action: {
-                                print("shot target")
                                 if showingTarget < targetCount {
                                     showingTarget += 1
                                     timeToHit.append(Int(Date().timeIntervalSince(targetSpawnDate) * 1000))
-                                    print(timeToHit)
                                 } else {
                                     state = "end A"
                                     Task {
@@ -2558,10 +2439,6 @@ struct ContentView: View {
                                         state = "results A"
                                         writeToLog(log: "aim")
                                         //makeCurrentUserLog(log: "aim", user: userLoggedIn)
-                                        print(currentLogVal1)
-                                        print(currentLogVal2)
-                                        print(currentLogVal3)
-                                        print(currentLogDates)
                                     }
                                 }
                             }) {
@@ -2617,9 +2494,6 @@ struct ContentView: View {
                                     .font(.title2)
                                     .padding(.trailing, 300)
                                     //.padding(.top, getTargetPadding(index: index))
-                                    .onAppear() {
-                                        print(timeToHit)
-                                    }
                                 RoundedRectangle(cornerRadius: 8)
                                     .foregroundColor(getTargetColor(index: index))
                                     .frame(width: getTargetBarWidth(index: index), height: 15)
@@ -2727,23 +2601,17 @@ struct ContentView: View {
         for _ in 0...count - 1 {
             randInt = Int.random(in: 0...posCount)
             if valsReplaced.contains(randInt) {
-                print("ValsRelpaced contained randInt, searching for new RANDOM one.")
                 regenerate = true
                 while regenerate {
-                    print(randInt)
-                    print(valsReplaced)
                     if !valsReplaced.contains(randInt) {
-                        print("Found and changed random position.")
                         squareAnswers[randInt] = 1
                         valsReplaced.append(randInt)
                         regenerate = false
                     } else {
-                        print("List contains randInt, regenerated it.")
                         randInt = Int.random(in: 0...posCount)
                     }
                 }
             } else {
-                print("Changed random position")
                 squareAnswers[randInt] = 1
                 valsReplaced.append(randInt)
             }
@@ -2805,7 +2673,6 @@ struct ContentView: View {
                         }
                     }  else if phase == "guess C" {
                         if index == rightColor {
-                            print("Passed round \(colorRound) with offset \(colorOffset).")
                             state = "guessed C"
                             colorRound += 1
                             Task {
@@ -2817,7 +2684,6 @@ struct ContentView: View {
                                 }
                                 rightColor = Int.random(in: 0...15)
                                 makeColorsList(offset: colorOffset)
-                                print("Next up is button \(rightColor); offset \(colorOffset).")
                                 try? await Task.sleep(nanoseconds: UInt64(0.25 * 1_000_000_000))
                                 state = "guess C"
                             }
@@ -2933,10 +2799,8 @@ struct ContentView: View {
                                 squareRowCount += 1
                             }
                             generateSquaresList(count: squareCount, rows: squareRowCount)
-                            print("all good, starting new round with \(squareCount) squares")
                             state = "showing M"
                         } else {
-                            print("no good, sending to results")
                             state = "results M"
                             
                             writeToLog(log: "memory")
@@ -3150,8 +3014,6 @@ struct ContentView: View {
                 Button(action: {
                     makeHueAList(count: 5)
                     makeBrightnessAList(count: 5)
-                    print(hueAList)
-                    print(brightnessAList)
                     
                     state = "show P"
                 }) {
@@ -3454,7 +3316,6 @@ struct ContentView: View {
                             chosenSentences.append(randomNum)
                         }
                     }
-                    print(chosenSentences)
                     sentenceRound = 0
                     randomSentence = randomSentences[chosenSentences[sentenceRound]]
                     strArray = randomSentence.map { String($0) }
@@ -3622,8 +3483,6 @@ struct ContentView: View {
                                         
                                     }
                                 
-                                }.onAppear() {
-                                    print("Im line number \(index), returned: \(userInLog(pos: index)) ")
                                 }
                             }
                         }.frame(maxWidth: .infinity)
@@ -3728,7 +3587,6 @@ struct ContentView: View {
                         usersState = "login"
                         userOnLogin = Int(index - 1)
                         bgOpacity = UserPreferencesBgOpacity[userOnLogin]
-                        print("Set bgOpacity to userPreferences \(UserPreferencesBgOpacity[userOnLogin])")
                         elementOpacity = UserPreferencesElementOpacity[userOnLogin]
                         darkMode = userPreferencesDarkMode[userOnLogin]
                         if elementOpacity > 0.7 || userColor[userOnLogin] == "white" {
@@ -3737,7 +3595,6 @@ struct ContentView: View {
                             textColor = .white
                         }
                     } else if state == "userSettings" {
-                        print("clicked me inside of user settings")
                         adminEditState = "editing"
                         accountUnderEdit = Int(index - 1)
                         nameInput = getProfileName(index: accountUnderEdit)
@@ -3816,7 +3673,6 @@ struct ContentView: View {
             //MARK: Creating user
             if usersState == "creating" {
                 Button(action: {
-                    print("ADD USER")
                 }) {
                     Text("+")
                         .font(.system(size: 110, weight: .thin, design: .default))
@@ -3872,24 +3728,19 @@ struct ContentView: View {
                     
                     Button(action: {
                         if passwordInput == userPass[userOnLogin] {
-                            print("USER NAME: \(userNames[userOnLogin]) SIGNED IN")
                             makeUsersBest(user: userOnLogin)
                             usersState = "loggedin"
                             state = "loggedin"
                             userLoggedIn = userOnLogin
                             lastLoggedIn = userLoggedIn
                             bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
-                            print("Set bgOpacity to userPreferences \(UserPreferencesBgOpacity[userOnLogin])")
                             elementOpacity = UserPreferencesElementOpacity[userLoggedIn]
                             darkMode = userPreferencesDarkMode[userLoggedIn]
                             setUntriedMode(user: userLoggedIn)
                             manageStreaks()
-                            print("Tutor? \(startTutor)")
                             passwordInput = ""
                             passwordRepeat = ""
-                            print("Last logged in: \(lastLoggedIn)")
                         } else {
-                            print("INCORRECT PASSWORD ON LOGIN")
                             passwordInput = ""
                             shakeMod.toggle()
                             Task {
@@ -3924,7 +3775,6 @@ struct ContentView: View {
                     
                     bgOpacity = 0.6
                     elementOpacity = 0.45
-                    print("set bgOpacity to default 0.6")
                 }) {
                     Image(systemName: "arrow.left.circle")
                         .font(.system(size: 30, weight: .regular, design: .default))
@@ -3957,7 +3807,6 @@ struct ContentView: View {
                         .font(.largeTitle)
                         .foregroundColor(Color.white.opacity(0.8))
                     Button(action: {
-                        print("Pressed add user.")
                         usersState = "creating"
                         passwordState = "name"
                     }) {
@@ -3981,10 +3830,7 @@ struct ContentView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                         Button(action: {
                             if nameInput.count >= 4 {
-                                print("USER NAME: \(nameInput)")
                                 passwordState = "input"
-                            } else {
-                                print("USER NAME NOT LONG ENOUGH")
                             }
                         }) {
                             Image(systemName: "arrow.right")
@@ -4005,7 +3851,6 @@ struct ContentView: View {
                         
                         bgOpacity = 0.6
                         elementOpacity = 0.45
-                        print("set bgOpacity to default 0.6 (brandNewScreen)")
                     }) {
                         Image(systemName: "arrow.left")
                             .font(.largeTitle)
@@ -4038,10 +3883,9 @@ struct ContentView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                         Button(action: {
                             if nameInput.count > 0 {
-                                print("USER PASSWORD: \(passwordInput)")
                                 passwordState = "repeat"
                             } else {
-                                print("PASSWORD NOT LONG ENOUGH")
+                                //SOMEEFFECT
                             }
                         }) {
                             Image(systemName: "arrow.right")
@@ -4071,8 +3915,6 @@ struct ContentView: View {
                             Button(action: {
                                 if passwordInput == passwordRepeat {
                                     //MARK: User created
-                                    print("USER PASSWORD (final): \(passwordRepeat)")
-                                    print("USER PROFILE CREATED")
                                     userNames.append(nameInput)
                                     userPass.append(passwordInput)
                                     userColor.append("blue")
@@ -4093,9 +3935,7 @@ struct ContentView: View {
                                     usersState = "login"
                                     passwordInput = ""
                                     passwordRepeat = ""
-                                    print("Tutor? \(startTutor)")
                                 } else {
-                                    print("PASSWORDS ARE NOT MATCHING")
                                     shakeMod.toggle()
                                 }
                             }) {
@@ -4116,7 +3956,6 @@ struct ContentView: View {
             
         //MARK: Auto login
         }.onAppear {
-            print(userPreferencesDarkMode)
             if isOnFresh {
                 if resetOnLaunch {
                     userNames.removeAll()
@@ -4128,27 +3967,17 @@ struct ContentView: View {
                     
                 }
                 
-                print("\(howManyButtons) buttons")
-                print("\(userNames.count) users")
-                
-                print("Keep logged in: \(keepLoggedIn)")
-                print(lastLoggedIn)
                 if userNames.count > 0 {
                     if keepLoggedIn.isEmpty || !keepLoggedIn.contains(lastLoggedIn){
                         passwordState = "done"
                         usersState = "choosing"
-                        print(elementOpacity)
                         
                     } else {
                         if lastLoggedIn < 100 {
-                            //print("Trying to get \(lastLoggedIn) from \(keepLoggedIn)")
                             userLoggedIn = lastLoggedIn
                             manageStreaks()
                             makeUsersBest(user: userLoggedIn)
-                            print("UsersBest: \(usersBest)")
-                            let charAray = Array(usersBest)
-                            print(charAray)
-                            print("Int from it: \(Int(String(charAray[1]))!)")
+                            //let charAray = Array(usersBest)
                             startTutor = false
                             setUntriedMode(user: userLoggedIn)
                             bgOpacity = UserPreferencesBgOpacity[userLoggedIn]
@@ -4188,7 +4017,6 @@ struct ContentView: View {
                     .font(.system(size: 81, weight: .bold, design: .default))
                     .foregroundColor(darkMode ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
             }.padding(.bottom, 500)
-                .onAppear() {print("BGOPACITY\(bgOpacity)")}
             userScreen()
             
             ZStack {
@@ -4250,10 +4078,7 @@ struct ContentView: View {
                     .padding(.trailing, 250)
                 
                 Button(action: {
-                    print("ENTERING ANALYTICS")
                     loadAnalyticsData()
-                    print(graphValList)
-                    print(graphTextList)
                     state = "analytics"
                 }) {
                     Image(systemName: "chart.pie")
@@ -4290,14 +4115,12 @@ struct ContentView: View {
                             usersState = "choosing"
                             state = "startup"
                             if !keepLoggedIn.isEmpty {
-                                print("Users to keep logged in: \(keepLoggedIn)")
                             }
                             nameInput = ""
                             passwordInput = ""
                             lastLoggedIn = 101
                             bgOpacity = 0.6
                             elementOpacity = 0.45
-                            print("Logout (bgOpacity = 0.6)")
                         }) {
                             Text("Log out")
                                 .font(.largeTitle)
@@ -4367,8 +4190,6 @@ struct ContentView: View {
                         .zIndex(1)
                 }
             }
-        }.onAppear() {
-            print("UsersBest: \(usersBest)")
         }
     }
     
@@ -4431,7 +4252,6 @@ struct ContentView: View {
                             } else {
                                 
                                 Button(action: {
-                                    print("Button returned \(getButtonColor(index: index))")
                                     if getButtonColorName(index: index) == "white" && darkMode {
                                         userColor[userLoggedIn] = getButtonColorName(index: index)
                                     } else if getButtonColorName(index: index) == "white" && !darkMode {
@@ -4502,10 +4322,8 @@ struct ContentView: View {
                             .onChange(of: bgOpacity) { newBgValue in
                                 if bgOpacity >= 0.8 {
                                     UserPreferencesBgOpacity[userLoggedIn] = bgOpacity
-                                    print("set bgOpacity \(bgOpacity) userPreferences \(UserPreferencesBgOpacity[userLoggedIn])")
                                 } else if !darkMode {
                                     bgOpacity = 0.8
-                                    print("Changed opacity of background (too small for lightMode)")
                                 } else {
                                     UserPreferencesBgOpacity[userLoggedIn] = bgOpacity
                                 }
@@ -4535,7 +4353,6 @@ struct ContentView: View {
                             }
                             if bgOpacity <= 0.8 {
                                 bgOpacity = 0.8
-                                print("toggle changed bgOpacity")
                             }
                         }
                         
@@ -4545,7 +4362,6 @@ struct ContentView: View {
                 .padding(.top, 340)
             
             Button(action: {
-                print("Back to userView")
                 state = "loggedin"
                 usersState = "loggedin"
             }) {
@@ -4639,7 +4455,6 @@ struct ContentView: View {
 
                             if isAdmin.contains(userLoggedIn) {
                                 Button(action: {
-                                    print("Chosing users to edit")
                                     adminEditState = "none"
                                     isPasswordVisible = false
                                     saveUserMessage = "none"
@@ -4659,7 +4474,6 @@ struct ContentView: View {
                             }
                             //MARK: Deleting user
                             Button(action: {
-                                print("Delete user pressed.")
                                 if !isAdmin.contains(accountUnderEdit) {
                                     if isAdmin.contains(userLoggedIn) {
                                         adminEditState = "none"
@@ -4708,7 +4522,6 @@ struct ContentView: View {
                             
                             //MARK: Save user change
                             Button(action: {
-                                print("Saved users name & password.")
                                 if nameInput.count >= 4 {
                                     userNames[accountUnderEdit] = nameInput
                                     saveUserError = "none"
@@ -4845,7 +4658,6 @@ struct ContentView: View {
                                 } else {
                                     keepLoggedIn.remove(at: keepLoggedIn.firstIndex(of: userLoggedIn) ?? 0)
                                 }
-                                print(keepLoggedIn)
                             }
                         
                     }
@@ -4870,7 +4682,6 @@ struct ContentView: View {
                 }
             
             Button(action: {
-                print("Back to userView")
                 state = "loggedin"
                 usersState = "loggedin"
                 adminEditState = "none"
@@ -5137,7 +4948,6 @@ struct ContentView: View {
             
             ZStack {
                 Button(action: {
-                    print("Back to userView")
                     state = "loggedin"
                     usersState = "loggedin"
                     adminEditState = "none"
@@ -5170,7 +4980,6 @@ struct ContentView: View {
                             modePadding -= 1400
                         }
                     }
-                    print("Left arrow pressed; paddding: \(modePadding)")
                 }) {
                     Image(systemName: "arrow.left")
                         .font(.largeTitle)
@@ -5201,7 +5010,6 @@ struct ContentView: View {
                             modePadding += 1400
                         }
                     }
-                    print("Right arrow pressed; paddding: \(modePadding)")
                 }) {
                     Image(systemName: "arrow.right")
                         .font(.largeTitle)
@@ -5260,9 +5068,6 @@ struct ContentView: View {
             maxVal = 1440
         }
         
-        print("LOADED ANALYTICS DATA")
-        print(graphValList)
-        print(graphTextList)
     }
     
     var analyticsView: some View {
@@ -5286,10 +5091,7 @@ struct ContentView: View {
             Text("Daily avarage \(getScreenTimeAvarage())")
                 .font(.title3)
                 .padding(.bottom, 270)
-                .onAppear() {
-                    print(graphValList)
-                    print(graphTextList)
-                }
+            
             if maxVal > 0 {
                 graph(maxWidth: 500, maxHeight: 300, barWidth: 50, color: .blue, valueCount: graphValList.count, maxValue: Double(maxVal))
             } else {
@@ -5304,7 +5106,6 @@ struct ContentView: View {
             */
             
             Button(action: {
-                print("Back to userView")
                 state = "loggedin"
                 usersState = "loggedin"
                 adminEditState = "none"
@@ -5747,8 +5548,6 @@ struct ContentView: View {
             }
         }
         .onAppear() {
-            print(userNames)
-            print(userPass)
             setupMouse()
         }
         .onDisappear() {
