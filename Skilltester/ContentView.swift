@@ -255,7 +255,7 @@ struct ContentView: View {
     @State private var isMeasuring: Bool = false
     @State private var result = 0
     @State private var clickTimes: [Float] = []
-    @AppStorage("testCount") private var testCount: Int = 0
+    @State private var testCount: Int = 0
     @State private var startTimer: Date = Date()
     
     //@State private var avaTime: Float = 0
@@ -527,7 +527,7 @@ struct ContentView: View {
     @AppStorage("STsun") private var screenTimeSun: [Int] = []
     
     @AppStorage("streak") private var userStreaks: [Int] = []
-    @AppStorage("lastStreak") private var lastStreakDays: [Int] = [6, 6, 6, 6, 6]
+    @AppStorage("lastStreak") private var lastStreakDays: [Int] = []
     
     func getScreenTimeAvarage() -> String {
         guard userLoggedIn < 100, !graphValList.isEmpty else {return "error"}
@@ -1024,6 +1024,14 @@ struct ContentView: View {
         
         colorLogDates.removeAll()
         colorLogValues.removeAll()
+        
+        pickerLogDates.removeAll()
+        pickerLogBestV.removeAll()
+        pickerLogWorstV.removeAll()
+        pickerLogAvaV.removeAll()
+        
+        typeLogDates.removeAll()
+        typeLogValues.removeAll()
     }
     
     //MARK: makeLogLeaderboard
@@ -4746,6 +4754,7 @@ struct ContentView: View {
                 state = "loggedin"
                 usersState = "loggedin"
                 adminEditState = "none"
+                expandedEraseAll = false
             }) {
                 Text("Back")
                     .font(.largeTitle)
@@ -4754,10 +4763,59 @@ struct ContentView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 30))
             }.buttonStyle(.plain)
                 .padding(.top, 500)
+                .padding(.trailing, 500)
+
+            HStack(spacing: -35) {
+                
+                Image(systemName: "xmark.octagon")
+                    .font(.largeTitle)
+                Button(action: {
+                    expandedEraseAll.toggle()
+                }) {
+                    Text("Erase all")
+                        .font(.title2)
+                        .frame(width: 140, height: 50)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Capsule())
+                }.buttonStyle(.plain)
+            }.padding(.top, 500)
+                .padding(.leading, 450)
+            if expandedEraseAll {
+                Button(action: {
+                    clearAllLogs()
+                    userNames.removeAll()
+                    userPass.removeAll()
+                    userColor.removeAll()
+                    keepLoggedIn = []
+                    lastLoggedIn = 101
+                    UserPreferencesBgOpacity.removeAll()
+                    userPreferencesDarkMode.removeAll()
+                    UserPreferencesElementOpacity.removeAll()
+                    userStreaks.removeAll()
+                    lastStreakDays.removeAll()
+                    screenTimeMon.removeAll()
+                    screenTimeTue.removeAll()
+                    screenTimeWed.removeAll()
+                    screenTimeThu.removeAll()
+                    screenTimeFri.removeAll()
+                    screenTimeSat.removeAll()
+                    screenTimeSun.removeAll()
+                    state = "startup"
+                    usersState = "none"
+                }) {
+                    Text("Confirm")
+                        .font(.largeTitle)
+                        .frame(width: 120, height: 50)
+                        .background(Color.red.opacity(0.5))
+                        .clipShape(Capsule())
+                }.buttonStyle(.plain)
+                    .padding(.top, 410)
+                    .padding(.leading, 440)
+            }
         }
     }
     //MARK: User leaderboard
-    
+    @State private var expandedEraseAll: Bool = false
     func getLeaderboardfont(index: Int) -> Font {
         if index == 0 {
             return .system(size: 60, weight: .bold, design: .default)
